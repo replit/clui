@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session from '../index';
+import Session from '../Session';
 import { act } from 'react-dom/test-utils';
 import { expectIndex } from '../../testUtil';
 
@@ -8,8 +8,8 @@ describe('session.reset()', () => {
   it('resets session', () => {
     const wrapper = mount(
       <Session>
-        <div className="a">a</div>
-        <div className="b">b</div>
+        <i className="a" />
+        <i className="b" />
       </Session>,
     );
 

@@ -10,6 +10,9 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c && rm -rf dist/__tests__ dist/setupEnzyme.d.ts",
+    "docz:dev": "docz dev --host 0.0.0.0 --typescript",
+    "docz:build": "docz build",
+    "docz:serve": "docz build && docz serve",
     "test": "jest"
   },
   "author": "",
@@ -19,6 +22,7 @@
     "@types/enzyme-adapter-react-16": "^1.0.5",
     "@types/jest": "^24.0.23",
     "@types/react-dom": "^16.9.4",
+    "docz": "^2.2.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "enzyme-to-json": "^3.4.3",

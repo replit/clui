@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { CLUISession } from '../index';
+import Session, { CLUISession } from '../Session';
 
 describe('session.length', () => {
   it('sets the length', () => {

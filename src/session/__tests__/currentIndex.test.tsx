@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session from '../index';
+import Session from '../Session';
 import { act } from 'react-dom/test-utils';
 import { expectIndex } from '../../testUtil';
 
@@ -8,9 +8,9 @@ describe('session.next()', () => {
   it('updates currentIndex', () => {
     const wrapper = mount(
       <Session>
-        <i className="a">a</i>
-        <i className="b">b</i>
-        <i className="c">c</i>
+        <i className="a" />
+        <i className="b" />
+        <i className="c" />
       </Session>,
     );
 

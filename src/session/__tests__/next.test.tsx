@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session from '../index';
+import Session, { CLUISession } from '../Session';
 import { act } from 'react-dom/test-utils';
 import { expectIndex } from '../../testUtil';
-import { CLUISession } from '../../Session';
 
 describe('session.next()', () => {
   it('shows next node', () => {
     const wrapper = mount(
       <Session>
-        <i className="a">a</i>
-        <i className="b">b</i>
-        <i className="c">c</i>
+        <i className="a" />
+        <i className="b" />
+        <i className="c" />
       </Session>,
     );
 
@@ -63,7 +62,7 @@ describe('session.next()', () => {
     const onDone = jest.fn();
     const wrapper = mount(
       <Session onDone={onDone}>
-        <i className="a">a</i>
+        <i className="a" />
       </Session>,
     );
 
@@ -79,9 +78,9 @@ describe('session.next()', () => {
   it('calls next if nested within another <Session>', () => {
     const wrapper = mount(
       <Session>
-        <i className="a">a</i>
+        <i className="a" />
         <Session>
-          <i className="b">ab</i>
+          <i className="b" />
         </Session>
       </Session>,
     );

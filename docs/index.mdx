@@ -1,0 +1,45 @@
+---
+name: Session
+---
+
+import {Session, Step, Do} from '../src/session'
+import { Playground, Props } from 'docz'
+import Typing from './Typing'
+
+# Session
+
+<Props of={Session} />
+
+## Basic usage
+
+<Playground>
+  <Session>
+    <Do>
+      {session => (
+        <button onClick={session ? session.next : undefined}>
+          next a
+        </button>
+      )}
+    </Do>
+    <button>next b</button>
+  </Session>
+</Playground>
+
+```tsx
+export const Typing = ({ session, text, speed = 10 }: Props) => {
+  const items = text.split('').map((s, i) => (
+    <Wait key={s + i} time={speed}>
+      {s}
+    </Wait>
+  ));
+
+  return <Session onDone={session ? session.next : undefined}>{items}</Session>;
+};
+```
+
+<Playground>
+  <Session>
+    <Typing text="hello " speed={1000} />
+    <Typing text="world..." speed={1000} />
+  </Session>
+</Playground>
