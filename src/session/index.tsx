@@ -9,6 +9,7 @@ export interface CLUISession {
   reset: () => any;
   insert: (...els: Array<React.ReactElement>) => any;
   currentIndex: number;
+  length: number;
 }
 
 interface State {
@@ -19,24 +20,37 @@ interface State {
 type Action =
   | {
       type: 'SET_INDEX';
+      index: number;
+    }
+  | {
+      type: 'INSERT';
+      index: number;
+      nodes: Array<React.ReactElement>;
     }
   | {
       type: 'RESET';
-    }
-  | {
-      type: 'NEXT';
+      nodes: Array<React.ReactElement>;
     };
 
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case 'NEXT':
+    case 'SET_INDEX':
       return {
         ...state,
+        currentIndex: action.index,
+      };
+    case 'INSERT':
+      return {
+        nodes: [
+          ...state.nodes.slice(0, action.index),
+          ...action.nodes,
+          ...state.nodes.slice(action.index),
+        ],
         currentIndex: state.currentIndex + 1,
       };
     case 'RESET':
       return {
-        ...state,
+        nodes: action.nodes,
         currentIndex: 0,
       };
     default:
@@ -81,34 +95,58 @@ const Session = (props: Props) => {
   ]);
 
   const reset = useCallback(() => {
-    dispatch({ type: 'RESET' });
+    dispatch({ type: 'RESET', nodes: children });
   }, [dispatch]);
 
-  const next = useCallback(() => {
-    if (currentNodes.length < nodes.length) {
-      dispatch({ type: 'NEXT' });
+  const session = useCallback<(i: number) => CLUISession>(
+    (index: number) => ({
+      next: () => {
+        if (state.currentIndex !== index) {
+          return;
+        }
 
-      return;
-    }
+        if (nodes[index + 1]) {
+          dispatch({ type: 'SET_INDEX', index: index + 1 });
 
-    if (props.onDone) {
-      props.onDone();
-    }
+          return;
+        }
 
-    if (props.session) {
-      props.session.next();
-    }
-  }, [dispatch, props.session, props.onDone, currentNodes, nodes]);
+        if (index === nodes.length - 1) {
+          if (props.onDone) {
+            props.onDone();
+          }
 
-  const session = useMemo<CLUISession>(
-    () => ({ next, reset, currentIndex: state.currentIndex }),
-    [next, state.currentIndex],
+          if (props.session) {
+            props.session.next();
+          }
+        }
+      },
+      insert: (...nodes: Array<React.ReactElement>) => {
+        if (state.currentIndex !== index) {
+          return;
+        }
+
+        dispatch({ type: 'INSERT', nodes, index: index + 1 });
+      },
+      reset,
+      currentIndex: state.currentIndex,
+      length: nodes.length,
+    }),
+    [
+      dispatch,
+      reset,
+      props.session,
+      props.onDone,
+      state.currentIndex,
+      nodes,
+      currentNodes,
+    ],
   );
 
   return (
     <>
-      {React.Children.map(currentNodes, element =>
-        React.cloneElement(element, { session }),
+      {React.Children.map(currentNodes, (element, index) =>
+        React.cloneElement(element, { session: session(index) }),
       )}
     </>
   );

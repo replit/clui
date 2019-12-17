@@ -18,6 +18,7 @@
     "@types/enzyme": "^3.10.4",
     "@types/enzyme-adapter-react-16": "^1.0.5",
     "@types/jest": "^24.0.23",
+    "@types/react-dom": "^16.9.4",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "enzyme-to-json": "^3.4.3",
@@ -35,8 +36,12 @@
     "react": ">=16",
     "react-dom": ">=16"
   },
-   "prettier": {
+  "prettier": {
     "trailingComma": "all",
     "singleQuote": true
+  },
+  "dependencies": {
+    "arcsecond": "^2.0.3",
+    "downshift": "^3.4.8"
   }
 }
