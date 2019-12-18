@@ -1,50 +1,54 @@
-import React, { useReducer, useMemo, useCallback } from 'react';
+import React, {
+  useReducer,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
 import reducer, { Action, State } from './reducer';
 
-export interface CLUISessionItem<S = {}> {
-  session?: CLUISession<S>;
+export interface ISessionItemProps<S = {}> {
+  item?: ISessionItem<S>;
 }
 
-export interface CLUISession<S = {}> {
-  next: () => any;
-  reset: () => any;
-  remove: () => any;
-  replace: (node: React.ReactElement) => any;
-  insert: (...nodes: Array<React.ReactElement>) => any;
+export interface ISession<C = any> {
+  reset: () => void;
   currentIndex: number;
   length: number;
-  state: S;
-  setState<K extends keyof S>(
-    state:
-      | ((prevState: Readonly<S>) => Pick<S, K> | S | null)
-      | (Pick<S, K> | S | null),
-  ): void;
+  context: C;
 }
 
-interface Props<S> extends CLUISessionItem<S> {
+export interface ISessionItem<C = any> {
+  index: number;
+  next: () => ISessionItem;
+  previous: () => ISessionItem;
+  remove: () => ISessionItem;
+  replace: (node: React.ReactElement) => ISessionItem;
+  insertAfter: (...nodes: Array<React.ReactElement>) => ISessionItem;
+  insertBefore: (...nodes: Array<React.ReactElement>) => ISessionItem;
+  session: ISession<C>;
+}
+
+interface Props<C> extends ISessionItemProps<C> {
   onDone?: () => any;
   children: React.ReactNode;
   initialIndex?: number;
-  initialState?: S;
+  context?: C;
 }
 
-function Session<S = {}>(props: Props<S>) {
+function Session<C = any>(props: Props<C>) {
   const children = useMemo(
     () => React.Children.toArray(props.children).filter(React.isValidElement),
     [props.children],
   );
 
-  const [state, dispatch] = useReducer<React.Reducer<State<S>, Action<S>>>(
-    reducer,
-    {
-      currentIndex:
-        props.initialIndex !== undefined
-          ? Math.min(props.initialIndex, children.length - 1)
-          : 0,
-      nodes: children.map((_, index) => index),
-      state: props.initialState,
-    },
-  );
+  const [state, dispatch] = useReducer<React.Reducer<State, Action>>(reducer, {
+    currentIndex:
+      props.initialIndex !== undefined
+        ? Math.min(props.initialIndex, children.length - 1)
+        : 0,
+    nodes: children.map((_, index) => index),
+  });
 
   const nodes = useMemo(
     () =>
@@ -60,7 +64,7 @@ function Session<S = {}>(props: Props<S>) {
         },
         [],
       ),
-    [state, children],
+    [state.nodes, children],
   );
 
   const currentNodes = useMemo(() => nodes.slice(0, state.currentIndex + 1), [
@@ -72,76 +76,104 @@ function Session<S = {}>(props: Props<S>) {
     dispatch({ type: 'RESET', nodes: children });
   }, [dispatch]);
 
-  const setState: CLUISession['setState'] = useCallback(
-    newState => {
-      dispatch({
-        type: 'SET_STATE',
-        state:
-          typeof newState === 'function' ? newState(state.state) : newState,
-      });
-    },
-    [dispatch],
+  const session = useMemo<ISession>(
+    () => ({
+      reset,
+      currentIndex: state.currentIndex,
+      length: nodes.length,
+      context: props.context,
+    }),
+    [nodes.length, reset, state.currentIndex, props.context],
   );
 
-  const session = useCallback<(i: number) => CLUISession>(
+  const item = useCallback<(i: number) => ISessionItem>(
     (index: number) => {
-      return {
+      let indexOffset = 0;
+      let lengthOffset = 0;
+
+      const ret = {
         next: () => {
-          if (state.currentIndex !== index) {
-            return;
-          }
+          dispatch({
+            type: 'SET_INDEX',
+            index: index + indexOffset + 1,
+          });
 
-          if (nodes[index + 1]) {
-            dispatch({ type: 'SET_INDEX', index: index + 1 });
-
-            return;
-          }
-
-          if (index === nodes.length - 1) {
-            if (props.onDone) {
-              props.onDone();
-            }
-
-            if (props.session) {
-              props.session.next();
-            }
-          }
+          return ret;
         },
-        insert: (...nodes: Array<React.ReactElement>) => {
-          if (state.currentIndex !== index) {
-            return;
-          }
+        previous: () => {
+          dispatch({
+            type: 'SET_INDEX',
+            index: index + indexOffset - 1,
+          });
 
-          dispatch({ type: 'INSERT', nodes, index: index + 1 });
+          return ret;
+        },
+        insertAfter: (...nodes: Array<React.ReactElement>) => {
+          dispatch({ type: 'INSERT_AFTER', nodes, index });
+          lengthOffset += nodes.length;
+
+          return ret;
+        },
+        insertBefore: (...nodes: Array<React.ReactElement>) => {
+          indexOffset += nodes.length;
+          lengthOffset += nodes.length;
+          dispatch({ type: 'INSERT_BEFORE', nodes, index });
+
+          return ret;
         },
         replace: (node: React.ReactElement) => {
           dispatch({ type: 'REPLACE', index, node });
+
+          return ret;
         },
         remove: () => {
+          lengthOffset -= 1;
           dispatch({ type: 'REMOVE', index });
+
+          return ret;
         },
-        setState,
-        reset,
-        state: state.state,
-        currentIndex: state.currentIndex,
-        length: nodes.length,
+        get index() {
+          return index + indexOffset;
+        },
+        get session() {
+          return {
+            ...session,
+            length: session.length + lengthOffset,
+          };
+        },
       };
+
+      return ret;
     },
     [
       dispatch,
-      reset,
-      props.session,
       props.onDone,
       state.currentIndex,
       nodes,
       currentNodes,
+      props.item,
+      session,
     ],
   );
+
+  useEffect(() => {
+    if (state.currentIndex < nodes.length - 1) {
+      return;
+    }
+
+    if (props.onDone) {
+      props.onDone();
+    }
+
+    if (props.item) {
+      props.item.next();
+    }
+  }, [props.onDone, props.item, nodes.length, state.currentIndex]);
 
   return (
     <>
       {React.Children.map(currentNodes, (element, index) =>
-        React.cloneElement(element, { session: session(index) }),
+        React.cloneElement(element, { item: item(index) }),
       )}
     </>
   );

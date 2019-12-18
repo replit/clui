@@ -1,18 +1,27 @@
 import React from 'react';
 
-export interface State<S> {
-  state: S;
+export interface State {
   currentIndex: number;
   nodes: Array<React.ReactElement | number>;
 }
 
-export type Action<S> =
+export type Action =
   | {
       type: 'SET_INDEX';
       index: number;
     }
   | {
       type: 'INSERT';
+      index: number;
+      nodes: Array<React.ReactElement>;
+    }
+  | {
+      type: 'INSERT_AFTER';
+      index: number;
+      nodes: Array<React.ReactElement>;
+    }
+  | {
+      type: 'INSERT_BEFORE';
       index: number;
       nodes: Array<React.ReactElement>;
     }
@@ -26,24 +35,12 @@ export type Action<S> =
       node: React.ReactElement;
     }
   | {
-      type: 'SET_STATE';
-      state: S;
-    }
-  | {
       type: 'RESET';
       nodes: Array<React.ReactElement>;
     };
 
-const reducer = <S>(state: State<S>, action: Action<S>) => {
+const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case 'SET_STATE':
-      return {
-        ...state,
-        state: {
-          ...state.state,
-          ...action.state,
-        },
-      };
     case 'REPLACE':
       const nodes = [...state.nodes];
       nodes[action.index] = action.node;
@@ -58,7 +55,10 @@ const reducer = <S>(state: State<S>, action: Action<S>) => {
     case 'SET_INDEX':
       return {
         ...state,
-        currentIndex: action.index,
+        currentIndex: Math.max(
+          Math.min(action.index, state.nodes.length - 1),
+          0,
+        ),
       };
     case 'INSERT':
       return {
@@ -69,6 +69,25 @@ const reducer = <S>(state: State<S>, action: Action<S>) => {
           ...state.nodes.slice(action.index),
         ],
         currentIndex: state.currentIndex + 1,
+      };
+    case 'INSERT_BEFORE':
+      return {
+        ...state,
+        currentIndex: state.currentIndex + action.nodes.length,
+        nodes: [
+          ...state.nodes.slice(0, action.index),
+          ...action.nodes,
+          ...state.nodes.slice(action.index),
+        ],
+      };
+    case 'INSERT_AFTER':
+      return {
+        ...state,
+        nodes: [
+          ...state.nodes.slice(0, action.index + 1),
+          ...action.nodes,
+          ...state.nodes.slice(action.index + 1),
+        ],
       };
     case 'RESET':
       return {

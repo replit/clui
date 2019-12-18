@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { CLUISessionItem } from './Session';
+import { SessionItem } from './Session';
 
-interface Props extends CLUISessionItem {
+interface Props extends SessionItem {
   children?: React.ReactNode;
   time?: number;
 }

@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { CLUISession } from '../Session';
+import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
-import { expectIndex } from '../../testUtil';
 
-describe('session.next()', () => {
-  it('shows next node', () => {
+describe('item.next()', () => {
+  it('shows next element', () => {
     const wrapper = mount(
       <Session>
         <i className="a" />
@@ -19,8 +18,9 @@ describe('session.next()', () => {
     expect(wrapper.find('.b').length).toEqual(0);
     expect(wrapper.find('.c').length).toEqual(0);
 
-    // @ts-ignore
-    act(() => currentStep.prop('session').next());
+    act(() => {
+      (currentStep.prop('item') as ISessionItem).next();
+    });
     wrapper.update();
     currentStep = wrapper.find('.b');
 
@@ -28,14 +28,15 @@ describe('session.next()', () => {
     expect(currentStep.length).toEqual(1);
     expect(wrapper.find('.c').length).toEqual(0);
 
-    // @ts-ignore
-    act(() => currentStep.prop('session').next());
+    act(() => {
+      (currentStep.prop('item') as ISessionItem).next();
+    });
     wrapper.update();
 
     expect(wrapper.find('.c').length).toEqual(1);
   });
 
-  it('keeps currentIndex less than or equal to total length', () => {
+  it('keeps index less than or equal to total length', () => {
     const wrapper = mount(
       <Session>
         <i className="a" />
@@ -43,34 +44,36 @@ describe('session.next()', () => {
       </Session>,
     );
 
-    expectIndex(wrapper, 0)('a');
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(0);
 
-    // @ts-ignore
-    act(() => (wrapper.find('.a').prop('session') as CLUISession).next());
+    act(() => {
+      (wrapper.find('.a').prop('item') as ISessionItem).next();
+    });
     wrapper.update();
 
-    expectIndex(wrapper, 1)('b');
+    expect(
+      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
 
-    // @ts-ignore
-    act(() => (wrapper.find('.b').prop('session') as CLUISession).next());
+    act(() => {
+      (wrapper.find('.b').prop('item') as ISessionItem).next();
+    });
     wrapper.update();
 
-    expectIndex(wrapper, 1)('b');
+    expect(
+      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
   });
 
   it('calls onDone when at last child', () => {
     const onDone = jest.fn();
-    const wrapper = mount(
+    mount(
       <Session onDone={onDone}>
         <i className="a" />
       </Session>,
     );
-
-    expect(onDone).toHaveBeenCalledTimes(0);
-
-    // @ts-ignore
-    act(() => (wrapper.find('.a').prop('session') as CLUISession).next());
-    wrapper.update();
 
     expect(onDone).toHaveBeenCalledTimes(1);
   });
@@ -88,15 +91,16 @@ describe('session.next()', () => {
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(0);
 
-    // @ts-ignore
-    act(() => (wrapper.find('.a').prop('session') as CLUISession).next());
+    act(() => {
+      (wrapper.find('.a').prop('item') as ISessionItem).next();
+    });
     wrapper.update();
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(1);
   });
 
-  it('does not advance when callind next multiple times from same element', () => {
+  it('does not advance when called next multiple times from same element', () => {
     const wrapper = mount(
       <Session>
         <i className="a" />
@@ -107,21 +111,24 @@ describe('session.next()', () => {
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(
-      (wrapper.find('.a').prop('session') as CLUISession).currentIndex,
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
     ).toEqual(0);
     expect(wrapper.find('.b').length).toEqual(0);
 
-    // @ts-ignore
-    act(() => (wrapper.find('.a').prop('session') as CLUISession).next());
+    act(() => {
+      (wrapper.find('.a').prop('item') as ISessionItem).next();
+    });
     wrapper.update();
     expect(
-      (wrapper.find('.a').prop('session') as CLUISession).currentIndex,
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
     ).toEqual(1);
 
-    act(() => (wrapper.find('.a').prop('session') as CLUISession).next());
+    act(() => {
+      (wrapper.find('.a').prop('item') as ISessionItem).next();
+    });
     wrapper.update();
     expect(
-      (wrapper.find('.a').prop('session') as CLUISession).currentIndex,
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
     ).toEqual(1);
   });
 });

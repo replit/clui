@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { CLUISessionItem } from '../src/session/Session';
+import { SessionItem } from '../src/session/Session';
 import { Session, Wait } from '../src/session';
 
-interface Props extends CLUISessionItem {
+interface Props extends SessionItem {
   text: string;
   speed?: number;
 }

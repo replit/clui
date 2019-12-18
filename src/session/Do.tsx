@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { CLUISessionItem, CLUISession } from './Session';
+import { SessionItem, Session } from './Session';
 
-interface Props extends CLUISessionItem {
-  children: (session?: CLUISession) => React.ReactElement<any>;
+interface Props extends SessionItem {
+  children: (session?: Session) => React.ReactElement<any>;
 }
 
 const Do = ({ session, children }: Props) => children(session);

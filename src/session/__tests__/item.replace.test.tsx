@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { CLUISession } from '../Session';
+import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
 
 describe('session.replace()', () => {
-  it('removes node', () => {
+  it('replaces element', () => {
     const wrapper = mount(
       <Session initialIndex={1}>
         <i className="a" />
@@ -15,21 +15,21 @@ describe('session.replace()', () => {
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(1);
     expect(
-      (wrapper.find('.b').prop('session') as CLUISession).currentIndex,
+      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
     ).toEqual(1);
 
-    act(() =>
-      (wrapper.find('.b').prop('session') as CLUISession).replace(
+    act(() => {
+      (wrapper.find('.b').prop('item') as ISessionItem).replace(
         <i className="c" />,
-      ),
-    );
+      );
+    });
     wrapper.update();
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(0);
     expect(wrapper.find('.c').length).toEqual(1);
     expect(
-      (wrapper.find('.c').prop('session') as CLUISession).currentIndex,
+      (wrapper.find('.c').prop('item') as ISessionItem).session.currentIndex,
     ).toEqual(1);
   });
 });
