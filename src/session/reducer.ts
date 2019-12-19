@@ -1,7 +1,7 @@
 /*
  * Manages the state for a `Session`
  */
-import React from "react";
+import React from 'react';
 
 /*
  * The state for a `Session`
@@ -21,46 +21,46 @@ export interface State {
 
 export type Action =
   | {
-      type: "SET_INDEX";
+      type: 'SET_INDEX';
       index: number;
     }
   | {
-      type: "INSERT";
-      index: number;
-      nodes: Array<React.ReactElement>;
-    }
-  | {
-      type: "INSERT_AFTER";
+      type: 'INSERT';
       index: number;
       nodes: Array<React.ReactElement>;
     }
   | {
-      type: "INSERT_BEFORE";
+      type: 'INSERT_AFTER';
       index: number;
       nodes: Array<React.ReactElement>;
     }
   | {
-      type: "REMOVE";
+      type: 'INSERT_BEFORE';
+      index: number;
+      nodes: Array<React.ReactElement>;
+    }
+  | {
+      type: 'REMOVE';
       index: number;
     }
   | {
-      type: "REPLACE";
+      type: 'REPLACE';
       index: number;
       node: React.ReactElement;
     }
   | {
-      type: "RESET";
+      type: 'RESET';
       nodes: Array<React.ReactElement>;
     };
 
 const reducer = (state: State, action: Action) => {
   switch (action.type) {
-    case "REPLACE":
+    case 'REPLACE':
       const nodes = [...state.nodes];
       nodes[action.index] = action.node;
 
       return { ...state, nodes };
-    case "REMOVE":
+    case 'REMOVE':
       const filterdNodes = state.nodes.filter((_, i) => i !== action.index);
       return {
         ...state,
@@ -68,50 +68,47 @@ const reducer = (state: State, action: Action) => {
           state.currentIndex > filterdNodes.length - 1
             ? filterdNodes.length - 1
             : state.currentIndex,
-        nodes: filterdNodes
+        nodes: filterdNodes,
       };
-    case "SET_INDEX":
+    case 'SET_INDEX':
       return {
         ...state,
-        currentIndex: Math.max(
-          Math.min(action.index, state.nodes.length - 1),
-          0
-        )
+        currentIndex: Math.max(Math.min(action.index, state.nodes.length - 1), 0),
       };
-    case "INSERT":
+    case 'INSERT':
       return {
         ...state,
         nodes: [
           ...state.nodes.slice(0, action.index),
           ...action.nodes,
-          ...state.nodes.slice(action.index)
+          ...state.nodes.slice(action.index),
         ],
-        currentIndex: state.currentIndex + 1
+        currentIndex: state.currentIndex + 1,
       };
-    case "INSERT_BEFORE":
+    case 'INSERT_BEFORE':
       return {
         ...state,
         currentIndex: state.currentIndex + action.nodes.length,
         nodes: [
           ...state.nodes.slice(0, action.index),
           ...action.nodes,
-          ...state.nodes.slice(action.index)
-        ]
+          ...state.nodes.slice(action.index),
+        ],
       };
-    case "INSERT_AFTER":
+    case 'INSERT_AFTER':
       return {
         ...state,
         nodes: [
           ...state.nodes.slice(0, action.index + 1),
           ...action.nodes,
-          ...state.nodes.slice(action.index + 1)
-        ]
+          ...state.nodes.slice(action.index + 1),
+        ],
       };
-    case "RESET":
+    case 'RESET':
       return {
         ...state,
         nodes: action.nodes,
-        currentIndex: 0
+        currentIndex: 0,
       };
     default:
       return state;

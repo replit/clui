@@ -51,8 +51,6 @@ describe('Session', () => {
       </Session>,
     );
 
-    expect(
-      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
-    ).toEqual(1);
+    expect((wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
   });
 });

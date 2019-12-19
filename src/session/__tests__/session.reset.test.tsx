@@ -36,9 +36,7 @@ describe('session.reset()', () => {
     );
 
     act(() => {
-      (wrapper.find('.a').prop('item') as ISessionItem)
-        .insertAfter(<i className="b" />)
-        .next();
+      (wrapper.find('.a').prop('item') as ISessionItem).insertAfter(<i className="b" />).next();
     });
     wrapper.update();
     expect(wrapper.find('.b').length).toEqual(1);

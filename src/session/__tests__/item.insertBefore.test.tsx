@@ -90,4 +90,3 @@ describe('session.insertBefore(<element>)', () => {
     expect(item.session.length).toEqual(3);
   });
 });
-

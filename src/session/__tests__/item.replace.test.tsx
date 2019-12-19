@@ -14,22 +14,16 @@ describe('session.replace()', () => {
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(1);
-    expect(
-      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
-    ).toEqual(1);
+    expect((wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
 
     act(() => {
-      (wrapper.find('.b').prop('item') as ISessionItem).replace(
-        <i className="c" />,
-      );
+      (wrapper.find('.b').prop('item') as ISessionItem).replace(<i className="c" />);
     });
     wrapper.update();
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(0);
     expect(wrapper.find('.c').length).toEqual(1);
-    expect(
-      (wrapper.find('.c').prop('item') as ISessionItem).session.currentIndex,
-    ).toEqual(1);
+    expect((wrapper.find('.c').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
   });
 });

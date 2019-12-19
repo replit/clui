@@ -4,8 +4,8 @@
  * methods and properties related to navigating and transforming the list.
  */
 
-import React, { useReducer, useMemo, useCallback, useEffect } from "react";
-import reducer, { Action, State } from "./reducer";
+import React, { useReducer, useMemo, useCallback, useEffect } from 'react';
+import reducer, { Action, State } from './reducer';
 
 /*
  * An interfce for child element `Props` to extend.
@@ -145,41 +145,36 @@ interface Props<C> extends ISessionItemProps<C> {
 function Session<C = any>(props: Props<C>) {
   const children = useMemo(
     () => React.Children.toArray(props.children).filter(React.isValidElement),
-    [props.children]
+    [props.children],
   );
 
   const [state, dispatch] = useReducer<React.Reducer<State, Action>>(reducer, {
     currentIndex:
-      props.initialIndex !== undefined
-        ? Math.min(props.initialIndex, children.length - 1)
-        : 0,
-    nodes: children.map((_, index) => index)
+      props.initialIndex !== undefined ? Math.min(props.initialIndex, children.length - 1) : 0,
+    nodes: children.map((_, index) => index),
   });
 
   const nodes = useMemo(
     () =>
-      state.nodes.reduce(
-        (acc: Array<React.ReactElement>, node: React.ReactElement | number) => {
-          if (typeof node !== "number") {
-            acc.push(node);
-          } else if (typeof node === "number" && children[node]) {
-            acc.push(children[node]);
-          }
+      state.nodes.reduce((acc: Array<React.ReactElement>, node: React.ReactElement | number) => {
+        if (typeof node !== 'number') {
+          acc.push(node);
+        } else if (typeof node === 'number' && children[node]) {
+          acc.push(children[node]);
+        }
 
-          return acc;
-        },
-        []
-      ),
-    [state.nodes, children]
+        return acc;
+      }, []),
+    [state.nodes, children],
   );
 
   const currentNodes = useMemo(() => nodes.slice(0, state.currentIndex + 1), [
     nodes,
-    state.currentIndex
+    state.currentIndex,
   ]);
 
   const reset = useCallback(() => {
-    dispatch({ type: "RESET", nodes: children });
+    dispatch({ type: 'RESET', nodes: children });
   }, [dispatch]);
 
   const session = useMemo<ISession>(
@@ -187,9 +182,9 @@ function Session<C = any>(props: Props<C>) {
       reset,
       currentIndex: state.currentIndex,
       length: nodes.length,
-      context: props.context
+      context: props.context,
     }),
-    [nodes.length, reset, state.currentIndex, props.context]
+    [nodes.length, reset, state.currentIndex, props.context],
   );
 
   const item = useCallback<(i: number) => ISessionItem>(
@@ -200,22 +195,22 @@ function Session<C = any>(props: Props<C>) {
       const ret = {
         next: () => {
           dispatch({
-            type: "SET_INDEX",
-            index: index + indexOffset + 1
+            type: 'SET_INDEX',
+            index: index + indexOffset + 1,
           });
 
           return ret;
         },
         previous: () => {
           dispatch({
-            type: "SET_INDEX",
-            index: index + indexOffset - 1
+            type: 'SET_INDEX',
+            index: index + indexOffset - 1,
           });
 
           return ret;
         },
         insertAfter: (...nodes: Array<React.ReactElement>) => {
-          dispatch({ type: "INSERT_AFTER", nodes, index });
+          dispatch({ type: 'INSERT_AFTER', nodes, index });
           lengthOffset += nodes.length;
 
           return ret;
@@ -223,18 +218,18 @@ function Session<C = any>(props: Props<C>) {
         insertBefore: (...nodes: Array<React.ReactElement>) => {
           indexOffset += nodes.length;
           lengthOffset += nodes.length;
-          dispatch({ type: "INSERT_BEFORE", nodes, index });
+          dispatch({ type: 'INSERT_BEFORE', nodes, index });
 
           return ret;
         },
         replace: (node: React.ReactElement) => {
-          dispatch({ type: "REPLACE", index, node });
+          dispatch({ type: 'REPLACE', index, node });
 
           return ret;
         },
         remove: () => {
           lengthOffset -= 1;
-          dispatch({ type: "REMOVE", index });
+          dispatch({ type: 'REMOVE', index });
 
           return ret;
         },
@@ -244,22 +239,14 @@ function Session<C = any>(props: Props<C>) {
         get session() {
           return {
             ...session,
-            length: session.length + lengthOffset
+            length: session.length + lengthOffset,
           };
-        }
+        },
       };
 
       return ret;
     },
-    [
-      dispatch,
-      props.onDone,
-      state.currentIndex,
-      nodes,
-      currentNodes,
-      props.item,
-      session
-    ]
+    [dispatch, props.onDone, state.currentIndex, nodes, currentNodes, props.item, session],
   );
 
   useEffect(() => {
@@ -279,7 +266,7 @@ function Session<C = any>(props: Props<C>) {
   return (
     <>
       {React.Children.map(currentNodes, (element, index) =>
-        React.cloneElement(element, { item: item(index) })
+        React.cloneElement(element, { item: item(index) }),
       )}
     </>
   );

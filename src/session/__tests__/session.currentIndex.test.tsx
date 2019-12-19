@@ -59,15 +59,11 @@ describe('item.session.currentIndex', () => {
         });
       });
 
-      expect(
-        (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-      ).toEqual(0);
+      expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
 
       wrapper.update();
 
-      expect(
-        (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-      ).toEqual(0);
+      expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
     });
   });
 
@@ -126,15 +122,11 @@ describe('item.session.currentIndex', () => {
         });
       });
 
-      expect(
-        (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-      ).toEqual(0);
+      expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
 
       wrapper.update();
 
-      expect(
-        (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-      ).toEqual(0);
+      expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
     });
   });
 });

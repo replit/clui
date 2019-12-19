@@ -13,9 +13,7 @@ describe('item.remove()', () => {
     );
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(1);
-    expect(
-      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-    ).toEqual(1);
+    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
 
     act(() => {
       (wrapper.find('.b').prop('item') as ISessionItem).remove();
@@ -24,9 +22,6 @@ describe('item.remove()', () => {
 
     expect(wrapper.find('.a').length).toEqual(1);
     expect(wrapper.find('.b').length).toEqual(0);
-    expect(
-      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
-    ).toEqual(0);
+    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
   });
 });
-

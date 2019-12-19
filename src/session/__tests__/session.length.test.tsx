@@ -24,9 +24,7 @@ describe('session.length', () => {
       </Session>,
     );
 
-    expect(
-      (wrapper.find('.a').prop('item') as ISessionItem).session.length,
-    ).toEqual(3);
+    expect((wrapper.find('.a').prop('item') as ISessionItem).session.length).toEqual(3);
   });
 
   describe('item.insertAfter()', () => {
@@ -58,11 +56,7 @@ describe('session.length', () => {
 
       expect(item.session.length).toEqual(1);
       act(() => {
-        item.insertAfter(
-          <i className="b" />,
-          <i className="c" />,
-          <i className="d" />,
-        );
+        item.insertAfter(<i className="b" />, <i className="c" />, <i className="d" />);
       });
 
       testLenghtBeforeAndAfterUpdate(wrapper, item, 4);
@@ -98,11 +92,7 @@ describe('session.length', () => {
 
       expect(item.session.length).toEqual(1);
       act(() => {
-        item.insertAfter(
-          <i className="b" />,
-          <i className="c" />,
-          <i className="d" />,
-        );
+        item.insertAfter(<i className="b" />, <i className="c" />, <i className="d" />);
       });
 
       testLenghtBeforeAndAfterUpdate(wrapper, item, 4);

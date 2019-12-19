@@ -1,5 +1,5 @@
-import * as React from "react";
-import { ISessionItemProps } from "./Session";
+import * as React from 'react';
+import { ISessionItemProps } from './Session';
 
 /*
  * `Step` is a utility component that automatically shows the next child
