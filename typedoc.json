@@ -1,0 +1,8 @@
+{
+  "moduleResolution": "node",
+  "name":"CLUI",
+  "includeDeclarations": true,
+  "excludeExternals": true,
+  "exclude": ["src/*/__tests__/**/*", "src/setupEnzyme.ts"],
+  "out": "docs"
+}

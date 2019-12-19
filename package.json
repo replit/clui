@@ -10,7 +10,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c && rm -rf dist/__tests__ dist/setupEnzyme.d.ts",
-    "docs:build": "typedoc --moduleResolution node --name CLUI --includeDeclarations --excludeExternals --out docs src",
+    "docs:build": "typedoc src",
     "docs:serve": "npm run docs:build && npx serve docs",
     "test": "npm run test:format && npm run test:unit",
     "test:unit": "jest",
