@@ -1,2 +1,2 @@
 language = "nodejs"
-run = "npm run docz:dev"
+run = "npm run docs:build && npx serve docs"
