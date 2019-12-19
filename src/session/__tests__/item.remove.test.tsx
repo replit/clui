@@ -4,7 +4,7 @@ import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
 
 describe('item.remove()', () => {
-  it('removes element and updates session.currentIndex', () => {
+  it('removes element', () => {
     const wrapper = mount(
       <Session initialIndex={1}>
         <i className="a" />

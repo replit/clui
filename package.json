@@ -10,10 +10,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c && rm -rf dist/__tests__ dist/setupEnzyme.d.ts",
-    "docz:dev": "docz dev --host 0.0.0.0 --typescript",
-    "docz:build": "docz build",
-    "docz:serve": "docz build && docz serve",
-    "test": "jest"
+    "docs:build": "typedoc --moduleResolution node --name CLUI --includeDeclarations --excludeExternals --out docs src",
+    "docs:serve": "npm run docs:build && npx serve docs",
+    "test": "npm run test:format && npm run test:unit",
+    "test:unit": "jest",
+    "test:format": "prettier --check \"src/**/*.{js,json,ts,tsx}\""
   },
   "author": "",
   "license": "ISC",
@@ -22,7 +23,6 @@
     "@types/enzyme-adapter-react-16": "^1.0.5",
     "@types/jest": "^24.0.23",
     "@types/react-dom": "^16.9.4",
-    "docz": "^2.2.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "enzyme-to-json": "^3.4.3",
@@ -34,15 +34,12 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-typescript2": "^0.25.3",
     "ts-jest": "^24.2.0",
+    "typedoc": "^0.15.5",
     "typescript": "^3.7.3"
   },
   "peerDependencies": {
     "react": ">=16",
     "react-dom": ">=16"
-  },
-  "prettier": {
-    "trailingComma": "all",
-    "singleQuote": true
   },
   "dependencies": {
     "arcsecond": "^2.0.3",

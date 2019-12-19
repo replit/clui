@@ -1,10 +1,31 @@
-import * as React from 'react';
-import { SessionItem, Session } from './Session';
+import * as React from "react";
+import { ISessionItem, ISessionItemProps } from "./Session";
 
-interface Props extends SessionItem {
-  children: (session?: Session) => React.ReactElement<any>;
+interface Props extends ISessionItemProps {
+  children: (item: ISessionItem) => React.ReactElement<any>;
 }
 
-const Do = ({ session, children }: Props) => children(session);
+/*
+ * `Do` is a utility component the gives you access to `item` inline
+ *
+ * ```
+ * <Session>
+ *   <Do>
+ *     {item => <button onClick={item.next}>next</button>}
+ *   </Do>
+ *   <Do>
+ *     {item => <button onClick={item.next}>next</button>}
+ *   </Do>
+ * </Session>
+ * ```
+ *
+ */
+const Do = ({ item, children }: Props) => {
+  if (!item) {
+    throw Error("`Do` must be rendered as a direct child of a `Session`");
+  }
+
+  return children(item);
+};
 
 export default Do;
