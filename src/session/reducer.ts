@@ -1,18 +1,18 @@
-/*
+/**
  * Manages the state for a `Session`
  */
 import React from 'react';
 
-/*
+/**
  * The state for a `Session`
  */
 export interface State {
-  /*
+  /**
    * All child elements up to and including this index are rendered.
    */
   currentIndex: number;
 
-  /*
+  /**
    * Conatains all nodes (either dynamically inserted elements or a mapping
    * the index of a passed in child.
    */

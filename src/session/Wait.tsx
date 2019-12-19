@@ -2,17 +2,17 @@ import * as React from 'react';
 import { ISessionItemProps } from './Session';
 
 interface Props extends ISessionItemProps {
-  /*
+  /**
    * Content to render
    */
   children?: React.ReactNode;
-  /*
+  /**
    * Amount of time in milliseconds to wait before showing next child
    */
   time?: number;
 }
 
-/*
+/**
  * `Wait` is a utility component that shows the next chiid after `time`
  *
  * ```

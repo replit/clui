@@ -5,7 +5,7 @@ interface Props extends ISessionItemProps {
   children: (item: ISessionItem) => React.ReactElement<any>;
 }
 
-/*
+/**
  * `Do` is a utility component the gives you access to `item` inline
  *
  * ```
