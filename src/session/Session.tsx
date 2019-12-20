@@ -257,11 +257,17 @@ function Session<C = any>(props: IProps<C>) {
     if (props.onDone) {
       props.onDone();
     }
+  }, [props.onDone, nodes.length, state.currentIndex]);
 
-    if (props.item) {
+  useEffect(() => {
+    if (!props.item) {
+      return;
+    }
+
+    if (props.item.index === session.currentIndex) {
       props.item.next();
     }
-  }, [props.onDone, props.item, nodes.length, state.currentIndex]);
+  }, [props.item]);
 
   return (
     <>

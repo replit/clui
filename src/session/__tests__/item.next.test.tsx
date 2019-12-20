@@ -75,9 +75,9 @@ describe('item.next()', () => {
   it('calls next if nested within another <Session>', () => {
     const wrapper = mount(
       <Session>
-        <i className="a" />
+        <em className="a" />
         <Session>
-          <i className="b" />
+          <b className="b" />
         </Session>
       </Session>,
     );
