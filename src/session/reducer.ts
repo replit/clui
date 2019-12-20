@@ -3,10 +3,13 @@
  */
 import React from 'react';
 
+type Nodes = Array<React.ReactElement | number>;
+type Elements = Array<React.ReactElement>;
+
 /**
  * The state for a `Session`
  */
-export interface State {
+export interface IState {
   /**
    * All child elements up to and including this index are rendered.
    */
@@ -16,7 +19,7 @@ export interface State {
    * Conatains all nodes (either dynamically inserted elements or a mapping
    * the index of a passed in child.
    */
-  nodes: Array<React.ReactElement | number>;
+  nodes: Nodes;
 }
 
 export type Action =
@@ -27,17 +30,17 @@ export type Action =
   | {
       type: 'INSERT';
       index: number;
-      nodes: Array<React.ReactElement>;
+      nodes: Elements;
     }
   | {
       type: 'INSERT_AFTER';
       index: number;
-      nodes: Array<React.ReactElement>;
+      nodes: Elements;
     }
   | {
       type: 'INSERT_BEFORE';
       index: number;
-      nodes: Array<React.ReactElement>;
+      nodes: Elements;
     }
   | {
       type: 'REMOVE';
@@ -50,26 +53,33 @@ export type Action =
     }
   | {
       type: 'RESET';
-      nodes: Array<React.ReactElement>;
+      nodes: Elements;
     };
 
-const reducer = (state: State, action: Action) => {
+const replace = (state: IState, index: number, node: React.ReactElement) => {
+  const nodes = [...state.nodes];
+  nodes[index] = node;
+
+  return { ...state, nodes };
+};
+
+const remove = (state: IState, index: number) => {
+  const filterdNodes = state.nodes.filter((_, i) => i !== index);
+
+  return {
+    ...state,
+    currentIndex:
+      state.currentIndex > filterdNodes.length - 1 ? filterdNodes.length - 1 : state.currentIndex,
+    nodes: filterdNodes,
+  };
+};
+
+const reducer = (state: IState, action: Action) => {
   switch (action.type) {
     case 'REPLACE':
-      const nodes = [...state.nodes];
-      nodes[action.index] = action.node;
-
-      return { ...state, nodes };
+      return replace(state, action.index, action.node);
     case 'REMOVE':
-      const filterdNodes = state.nodes.filter((_, i) => i !== action.index);
-      return {
-        ...state,
-        currentIndex:
-          state.currentIndex > filterdNodes.length - 1
-            ? filterdNodes.length - 1
-            : state.currentIndex,
-        nodes: filterdNodes,
-      };
+      return remove(state, action.index);
     case 'SET_INDEX':
       return {
         ...state,

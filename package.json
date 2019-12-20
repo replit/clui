@@ -1,6 +1,6 @@
 {
-  "name": "clui",
-  "version": "1.0.0",
+  "name": "@replit/clui",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
@@ -9,24 +9,38 @@
   ],
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rollup -c && rm -rf dist/__tests__ dist/setupEnzyme.d.ts",
+    "build": "rm -rf dist && tsc",
     "docs:build": "typedoc src",
     "docs:serve": "npm run docs:build && npx serve docs",
-    "test": "npm run test:format && npm run test:unit",
-    "test:unit": "jest",
-    "test:format": "prettier --check \"src/**/*.{js,json,ts,tsx}\""
+    "test": "npm run test:format && npm run test:lint && npm run test:unit",
+    "test:format": "prettier --check \"src/**/*.{js,json,ts,tsx}\"",
+    "test:lint": "eslint src/ --ext .js,.ts,.tsx",
+    "test:unit": "jest"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "moudy@repl.it",
+  "license": "MIT",
   "devDependencies": {
     "@types/enzyme": "^3.10.4",
     "@types/enzyme-adapter-react-16": "^1.0.5",
     "@types/jest": "^24.0.23",
     "@types/react-dom": "^16.9.4",
+    "@typescript-eslint/eslint-plugin": "^2.12.0",
+    "@typescript-eslint/parser": "^2.12.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "enzyme-to-json": "^3.4.3",
+    "eslint": "^6.7.2",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-import-resolver-typescript": "^2.0.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-jest": "^23.1.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.17.0",
+    "husky": "^3.1.0",
     "jest": "^24.9.0",
+    "lint-staged": "^9.5.0",
     "prettier": "^1.19.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
@@ -44,5 +58,17 @@
   "dependencies": {
     "arcsecond": "^2.0.3",
     "downshift": "^3.4.8"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
   }
 }

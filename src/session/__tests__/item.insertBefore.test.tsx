@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
+import Session, { ISessionItem } from '../Session';
 
 describe('session.insertBefore(<element>)', () => {
   it('inserts <element> before item', () => {
@@ -15,8 +15,8 @@ describe('session.insertBefore(<element>)', () => {
 
     expect(wrapper.childAt(0).prop('className')).toEqual('a');
     expect(item.session.currentIndex).toEqual(0);
-    expect(item.session.length).toEqual(1);
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(item.session).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(0);
 
     act(() => {
       item.insertBefore(<i className="b" />);
@@ -28,7 +28,7 @@ describe('session.insertBefore(<element>)', () => {
 
     item = wrapper.find('.a').prop('item') as ISessionItem;
     expect(item.session.currentIndex).toEqual(1);
-    expect(item.session.length).toEqual(2);
+    expect(item.session).toHaveLength(2);
   });
 
   it('inserts multiple <elements> before item', () => {
@@ -42,8 +42,8 @@ describe('session.insertBefore(<element>)', () => {
 
     expect(wrapper.childAt(0).prop('className')).toEqual('a');
     expect(item.session.currentIndex).toEqual(0);
-    expect(item.session.length).toEqual(1);
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(item.session).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(0);
 
     act(() => {
       item.insertBefore(<i className="b" />, <i className="c" />);
@@ -57,7 +57,7 @@ describe('session.insertBefore(<element>)', () => {
     item = wrapper.find('.a').prop('item') as ISessionItem;
     expect(item.index).toEqual(2);
     expect(item.session.currentIndex).toEqual(2);
-    expect(item.session.length).toEqual(3);
+    expect(item.session).toHaveLength(3);
   });
 
   it('inserts multiple <elements> before item and moves back 1 when previous is called', () => {
@@ -71,8 +71,8 @@ describe('session.insertBefore(<element>)', () => {
 
     expect(wrapper.childAt(0).prop('className')).toEqual('a');
     expect(item.session.currentIndex).toEqual(0);
-    expect(item.session.length).toEqual(1);
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(item.session).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(0);
 
     act(() => {
       item.insertBefore(<i className="b" />, <i className="c" />);
@@ -82,11 +82,11 @@ describe('session.insertBefore(<element>)', () => {
 
     expect(wrapper.childAt(0).prop('className')).toEqual('b');
     expect(wrapper.childAt(1).prop('className')).toEqual('c');
-    expect(wrapper.find('.a').length).toEqual(0);
+    expect(wrapper.find('.a')).toHaveLength(0);
 
     item = wrapper.find('.b').prop('item') as ISessionItem;
     expect(item.index).toEqual(0);
     expect(item.session.currentIndex).toEqual(1);
-    expect(item.session.length).toEqual(3);
+    expect(item.session).toHaveLength(3);
   });
 });

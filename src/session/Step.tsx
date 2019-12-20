@@ -1,6 +1,18 @@
 import * as React from 'react';
 import { ISessionItemProps } from './Session';
 
+interface IProps extends ISessionItemProps {
+  /**
+   * Amount of time in milliseconds to wait before showing next child
+   */
+  wait?: number;
+
+  /**
+   * Content to render
+   */
+  children?: React.ReactNode;
+}
+
 /**
  * `Step` is a utility component that automatically shows the next child
  * by calling `item.next` when the component mounts
@@ -10,8 +22,8 @@ import { ISessionItemProps } from './Session';
  *   <Step>
  *    shown
  *   </Step>
- *   <Step>
- *    shown
+ *   <Step wait={1000}>
+ *    shown for 1 second
  *   </Step>
  *   <div>
  *    shown
@@ -23,11 +35,21 @@ import { ISessionItemProps } from './Session';
  * ```
  *
  */
-const Step: React.FC<ISessionItemProps> = ({ item, children }) => {
+const Step: React.FC<IProps> = ({ item, wait, children }: IProps) => {
   React.useEffect(() => {
-    if (item) {
-      item.next();
+    if (!item) {
+      return;
     }
+
+    if (!wait) {
+      item.next();
+
+      return;
+    }
+
+    const timer = setTimeout(item.next, wait);
+
+    return () => clearTimeout(timer); /* eslint-disable-line consistent-return */
   }, []);
 
   return <>{children}</>;

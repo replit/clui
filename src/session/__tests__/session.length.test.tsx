@@ -1,17 +1,17 @@
 import * as React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
+import Session, { ISessionItem } from '../Session';
 
 const testLenghtBeforeAndAfterUpdate = (
   wrapper: ReactWrapper,
   item: ISessionItem,
   expected: number,
 ) => {
-  expect(item.session.length).toEqual(expected);
+  expect(item.session).toHaveLength(expected);
   // Value should be the same after rendering
   wrapper.update();
-  expect(item.session.length).toEqual(expected);
+  expect(item.session).toHaveLength(expected);
 };
 
 describe('session.length', () => {
@@ -24,7 +24,7 @@ describe('session.length', () => {
       </Session>,
     );
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.length).toEqual(3);
+    expect((wrapper.find('.a').prop('item') as ISessionItem).session).toHaveLength(3);
   });
 
   describe('item.insertAfter()', () => {
@@ -35,9 +35,9 @@ describe('session.length', () => {
         </Session>,
       );
 
-      let item = wrapper.find('.a').prop('item') as ISessionItem;
+      const item = wrapper.find('.a').prop('item') as ISessionItem;
 
-      expect(item.session.length).toEqual(1);
+      expect(item.session).toHaveLength(1);
       act(() => {
         item.insertAfter(<i className="b" />);
       });
@@ -52,9 +52,9 @@ describe('session.length', () => {
         </Session>,
       );
 
-      let item = wrapper.find('.a').prop('item') as ISessionItem;
+      const item = wrapper.find('.a').prop('item') as ISessionItem;
 
-      expect(item.session.length).toEqual(1);
+      expect(item.session).toHaveLength(1);
       act(() => {
         item.insertAfter(<i className="b" />, <i className="c" />, <i className="d" />);
       });
@@ -71,9 +71,9 @@ describe('session.length', () => {
         </Session>,
       );
 
-      let item = wrapper.find('.a').prop('item') as ISessionItem;
+      const item = wrapper.find('.a').prop('item') as ISessionItem;
 
-      expect(item.session.length).toEqual(1);
+      expect(item.session).toHaveLength(1);
       act(() => {
         item.insertBefore(<i className="b" />);
       });
@@ -88,9 +88,9 @@ describe('session.length', () => {
         </Session>,
       );
 
-      let item = wrapper.find('.a').prop('item') as ISessionItem;
+      const item = wrapper.find('.a').prop('item') as ISessionItem;
 
-      expect(item.session.length).toEqual(1);
+      expect(item.session).toHaveLength(1);
       act(() => {
         item.insertAfter(<i className="b" />, <i className="c" />, <i className="d" />);
       });
@@ -108,9 +108,9 @@ describe('session.length', () => {
         </Session>,
       );
 
-      let item = wrapper.find('.b').prop('item') as ISessionItem;
+      const item = wrapper.find('.b').prop('item') as ISessionItem;
 
-      expect(item.session.length).toEqual(2);
+      expect(item.session).toHaveLength(2);
       act(() => {
         item.remove();
       });

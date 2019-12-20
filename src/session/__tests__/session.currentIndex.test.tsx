@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
+import Session, { ISessionItem } from '../Session';
 
 describe('item.session.currentIndex', () => {
   describe('item.next()', () => {

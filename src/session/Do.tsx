@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ISessionItem, ISessionItemProps } from './Session';
 
-interface Props extends ISessionItemProps {
+interface IProps extends ISessionItemProps {
   children: (item: ISessionItem) => React.ReactElement<any>;
 }
 
@@ -20,7 +20,7 @@ interface Props extends ISessionItemProps {
  * ```
  *
  */
-const Do = ({ item, children }: Props) => {
+const Do = ({ item, children }: IProps) => {
   if (!item) {
     throw Error('`Do` must be rendered as a direct child of a `Session`');
   }

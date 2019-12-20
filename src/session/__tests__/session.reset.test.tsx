@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import Session, { ISessionItem } from '../Session';
 import { act } from 'react-dom/test-utils';
+import Session, { ISessionItem } from '../Session';
 
 describe('session.reset()', () => {
   it('resets to first item after next is called', () => {
@@ -16,7 +16,7 @@ describe('session.reset()', () => {
       (wrapper.find('.a').prop('item') as ISessionItem).next();
     });
     wrapper.update();
-    expect(wrapper.find('.b').length).toEqual(1);
+    expect(wrapper.find('.b')).toHaveLength(1);
 
     act(() => {
       (wrapper.find('.a').prop('item') as ISessionItem).session.reset();
@@ -24,7 +24,7 @@ describe('session.reset()', () => {
     wrapper.update();
 
     const item = wrapper.find('.a').prop('item') as ISessionItem;
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(wrapper.find('.b')).toHaveLength(0);
     expect(item.session.currentIndex).toEqual(0);
   });
 
@@ -39,7 +39,7 @@ describe('session.reset()', () => {
       (wrapper.find('.a').prop('item') as ISessionItem).insertAfter(<i className="b" />).next();
     });
     wrapper.update();
-    expect(wrapper.find('.b').length).toEqual(1);
+    expect(wrapper.find('.b')).toHaveLength(1);
 
     act(() => {
       (wrapper.find('.a').prop('item') as ISessionItem).session.reset();
@@ -47,7 +47,7 @@ describe('session.reset()', () => {
     wrapper.update();
 
     const item = wrapper.find('.a').prop('item') as ISessionItem;
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(wrapper.find('.b')).toHaveLength(0);
     expect(item.session.currentIndex).toEqual(0);
   });
 });

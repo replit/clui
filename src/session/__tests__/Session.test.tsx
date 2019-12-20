@@ -7,7 +7,7 @@ describe('Session', () => {
     const a = <i className="a" />;
     const wrapper = shallow(<Session>{a}</Session>);
 
-    expect(wrapper.find('.a').length).toEqual(1);
+    expect(wrapper.find('.a')).toHaveLength(1);
   });
 
   it('renders first element', () => {
@@ -20,8 +20,8 @@ describe('Session', () => {
       </Session>,
     );
 
-    expect(wrapper.find('.a').length).toEqual(1);
-    expect(wrapper.find('.b').length).toEqual(0);
+    expect(wrapper.find('.a')).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(0);
   });
 
   it('renders elements up to initialIndex', () => {
@@ -36,9 +36,9 @@ describe('Session', () => {
       </Session>,
     );
 
-    expect(wrapper.find('.a').length).toEqual(1);
-    expect(wrapper.find('.b').length).toEqual(1);
-    expect(wrapper.find('.c').length).toEqual(0);
+    expect(wrapper.find('.a')).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(1);
+    expect(wrapper.find('.c')).toHaveLength(0);
   });
 
   it('prevents initial index from being greater than elements length', () => {

@@ -5,15 +5,15 @@
  */
 
 import React, { useReducer, useMemo, useCallback, useEffect } from 'react';
-import reducer, { Action, State } from './reducer';
+import reducer, { Action, IState } from './reducer';
 
 /**
- * An interfce for child element `Props` to extend.
+ * An interfce for child element `IProps` to extend.
  *
  * ```
- * interface Props extends ISessionItemProps {};
+ * interface IProps extends ISessionItemProps {};
  *
- * const Item: React.FC<Props> = (props) => (
+ * const Item: React.FC<IProps> = (props) => (
  *   <button onClick={props.item ? props.item.next : undefined}/>next</button>
  * );
  * ```
@@ -98,10 +98,10 @@ export interface ISessionItem<C = any> {
 }
 
 /**
- * Props for `Session` component. Extends `ISessionItemProps` so sessions can
+ * IProps for `Session` component. Extends `ISessionItemProps` so sessions can
  * be nested.
  */
-interface Props<C> extends ISessionItemProps<C> {
+interface IProps<C> extends ISessionItemProps<C> {
   /**
    * Called when `next` is called on last item
    */
@@ -142,31 +142,31 @@ interface Props<C> extends ISessionItemProps<C> {
  * </Session>
  * ```
  */
-function Session<C = any>(props: Props<C>) {
+function Session<C = any>(props: IProps<C>) {
   const children = useMemo(
     () => React.Children.toArray(props.children).filter(React.isValidElement),
     [props.children],
   );
 
-  const [state, dispatch] = useReducer<React.Reducer<State, Action>>(reducer, {
+  const [state, dispatch] = useReducer<React.Reducer<IState, Action>>(reducer, {
     currentIndex:
       props.initialIndex !== undefined ? Math.min(props.initialIndex, children.length - 1) : 0,
     nodes: children.map((_, index) => index),
   });
 
-  const nodes = useMemo(
-    () =>
-      state.nodes.reduce((acc: Array<React.ReactElement>, node: React.ReactElement | number) => {
-        if (typeof node !== 'number') {
-          acc.push(node);
-        } else if (typeof node === 'number' && children[node]) {
-          acc.push(children[node]);
-        }
+  const nodes = useMemo(() => {
+    const reduce = (acc: Array<React.ReactElement>, node: React.ReactElement | number) => {
+      if (typeof node !== 'number') {
+        acc.push(node);
+      } else if (typeof node === 'number' && children[node]) {
+        acc.push(children[node]);
+      }
 
-        return acc;
-      }, []),
-    [state.nodes, children],
-  );
+      return acc;
+    };
+
+    return state.nodes.reduce(reduce, []);
+  }, [state.nodes, children]);
 
   const currentNodes = useMemo(() => nodes.slice(0, state.currentIndex + 1), [
     nodes,
@@ -209,16 +209,16 @@ function Session<C = any>(props: Props<C>) {
 
           return ret;
         },
-        insertAfter: (...nodes: Array<React.ReactElement>) => {
-          dispatch({ type: 'INSERT_AFTER', nodes, index });
-          lengthOffset += nodes.length;
+        insertAfter: (...newNodes: Array<React.ReactElement>) => {
+          dispatch({ type: 'INSERT_AFTER', nodes: newNodes, index });
+          lengthOffset += newNodes.length;
 
           return ret;
         },
-        insertBefore: (...nodes: Array<React.ReactElement>) => {
-          indexOffset += nodes.length;
-          lengthOffset += nodes.length;
-          dispatch({ type: 'INSERT_BEFORE', nodes, index });
+        insertBefore: (...newNodes: Array<React.ReactElement>) => {
+          indexOffset += newNodes.length;
+          lengthOffset += newNodes.length;
+          dispatch({ type: 'INSERT_BEFORE', nodes: newNodes, index });
 
           return ret;
         },
