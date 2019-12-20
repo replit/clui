@@ -1,15 +1,15 @@
 {
   "name": "@replit/clui",
   "version": "0.0.1",
-  "description": "",
+  "description": "A CLI with UI",
   "main": "dist/index.js",
-  "module": "dist/index.es.js",
   "files": [
     "dist"
   ],
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "prepublishOnly": "npm run build",
     "docs:build": "typedoc src",
     "docs:serve": "npm run docs:build && npx serve docs",
     "test": "npm run test:format && npm run test:lint && npm run test:unit",
@@ -44,9 +44,6 @@
     "prettier": "^1.19.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "rollup": "^1.27.13",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-typescript2": "^0.25.3",
     "ts-jest": "^24.2.0",
     "typedoc": "^0.15.5",
     "typescript": "^3.7.3"
@@ -54,10 +51,6 @@
   "peerDependencies": {
     "react": ">=16",
     "react-dom": ">=16"
-  },
-  "dependencies": {
-    "arcsecond": "^2.0.3",
-    "downshift": "^3.4.8"
   },
   "husky": {
     "hooks": {
