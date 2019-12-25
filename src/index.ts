@@ -1,1 +1,1 @@
-export { default as Session, ISession, ISessionItem, ISessionItemProps } from './session';
+export { Session, ISession, ISessionItem, ISessionItemProps } from './session';
