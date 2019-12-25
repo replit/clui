@@ -8,7 +8,7 @@
     "moduleResolution": "node",
     "target": "es5",
     "strict": true,
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "sourceMap": true,
