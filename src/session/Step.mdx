@@ -1,0 +1,27 @@
+---
+name: <Step />
+route: /session/step
+menu: Session
+---
+
+import { Playground, Props } from 'docz'
+import { Session, Step } from './'
+
+
+# Step
+`Step` is a utility component that automatically shows the next child by calling `item.next` when the component mounts
+
+## Usage
+
+<Playground>
+  <Session>
+    <Step><div>step 1</div></Step>
+    <Step wait={2000}><div>step 2 (paused for 1 second)</div></Step>
+    <Step wait={2000}><div>step 3 (paused for 1 second)</div></Step>
+    <Step><div>step 4</div></Step>
+  </Session>
+</Playground>
+
+
+## Props
+<Props of={Step} />

@@ -1,0 +1,32 @@
+---
+name: <Do />
+route: /session/do
+menu: Session
+---
+
+import { Playground, Props } from 'docz'
+import { Session, Do } from './'
+
+
+# Do
+`Do` is a utility component the gives you access to `item` inline
+
+## Usage
+
+<Playground>
+  <Session>
+    <Do>
+      {item => <button onClick={item.next}>next 1</button>}
+    </Do>
+    <Do>
+      {item => <button onClick={item.next}>next 2</button>}
+    </Do>
+    <Do>
+      {item => <button onClick={item.next}>next 3</button>}
+    </Do>
+  </Session>
+</Playground>
+
+
+## Props
+<Props of={Do} />

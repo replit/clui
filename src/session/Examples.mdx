@@ -1,0 +1,59 @@
+---
+name: Examples
+route: /session/examples/
+menu: Session
+---
+
+import { Playground, Props } from 'docz'
+import { Session } from './'
+import { Boxes, Typing } from '../examples/Sesssion'
+
+
+# Examples
+
+Examples of how `<Session />` can be used.
+
+## Typing animation
+
+```jsx
+export const Typing = ({ text, speed }: { text: string; speed: number }) => (
+  <Session>
+    {text.split('').map((char) => (
+      <Step wait={speed}>{char}</Step>
+    ))}
+  </Session>
+);
+```
+
+Try changing `text` and `speed`.
+
+<Playground>
+  <Typing speed={1000} text="hello world" />
+</Playground>
+
+## A simple list of elements
+
+```jsx
+const Box = ({ color, item }: ISessionItemProps & { color: string }) => (
+  <button
+    style={{ backgroundColor: color, padding: 20 }}
+    type="button"
+    onClick={item ? item.next : undefined}
+  >
+    click me
+  </button>
+);
+
+export const Boxes = ({ colors }: { colors: Array<string> }) => (
+  <Session>
+    {colors.map((color) => (
+      <Box color={color} />
+    ))}
+  </Session>
+);
+```
+
+<Playground>
+  <Boxes colors={['red', 'green', 'blue']} />
+</Playground>
+

@@ -45,7 +45,7 @@ export interface ISession<C = any> {
 }
 
 /**
- * An object containing methods and properties related to an child item
+ * An object containing methods and properties related to a child item
  * of a `Session` instance. These methods and properties are relative to
  * the item. For example, calling next multiple times on and item will
  * show the next child if it's not shown and otherwise have no effect.
