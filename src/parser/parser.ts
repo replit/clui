@@ -1,25 +1,47 @@
 // @ts-nocheck
 import * as A from 'arcsecond';
 
-const command = A.regex(/^[a-zA-Z0-9][^\s\\]*/)
-  .mapFromData(({ data, result }) =>
-    // console.log(1, { result, data });
+type NodeType = 'ROOT' | 'COMMAND' | 'ARGS' | 'ARG' | 'ARG_KEY' | 'ARG_VALUE' | 'WHITESPACE';
 
-    ({
-      start: data.index,
-      end: data.index + result.length,
-      type: 'COMMAND',
-      value: result,
-    }),
-  )
-  .chainFromData(({ result, data }) =>
-    // console.log(2, { result, data });
+const keyword = A.regex(/^[a-zA-Z0-9][^\s\\]*/);
+const flagPrefix = A.regex(/^-?(-)/);
 
-    A.setData({
-      ...data,
-      index: data.index + result.value.length,
-    }),
-  );
+const tag = (type: NodeType) => ({ data, result }) => ({
+  type,
+  start: data.index,
+  end: data.index + result.length,
+  value: result,
+});
+
+const setIndex = ({ result, data }) =>
+  A.setData({
+    ...data,
+    index: result && result.value ? data.index + result.value.length : data.index,
+  });
+
+const argKey = A.sequenceOf([flagPrefix, keyword])
+  .map((result) => result.join(''))
+  .mapFromData(tag('ARG_KEY'))
+  .chainFromData(setIndex);
+
+export const between = (char: string) =>
+  A.between(A.char(char))(A.char(char))(A.everythingUntil(A.char(char)));
+
+const quoted = A.choice([between('"'), between("'")]);
+
+const argValue = A.choice([quoted, A.everythingUntil(A.choice([A.str(' -'), A.endOfInput]))])
+  .mapFromData(tag('ARG_VALUE'))
+  .chainFromData(setIndex);
+
+export const arg = A.withData(
+  A.sequenceOf([
+    argKey,
+    A.possibly(A.whitespace.mapFromData(tag('WHITESPACE')).chainFromData(setIndex)),
+    A.possibly(argValue),
+  ]),
+);
+
+const command = keyword.mapFromData(tag('COMMAND')).chainFromData(setIndex);
 
 const commandTerminator = A.choice([A.endOfInput, A.whitespace])
   .mapFromData(({ data, result }) => {
@@ -41,14 +63,7 @@ const commandTerminator = A.choice([A.endOfInput, A.whitespace])
       value: result,
     };
   })
-  .chainFromData(({ result, data }) =>
-    // console.log(4, { result, data });
-
-    A.setData({
-      ...data,
-      index: data.index + result.value.length,
-    }),
-  );
+  .chainFromData(setIndex);
 
 function flatten<D>(list: Array<Array<D>>): Array<D> {
   return list.reduce((acc, item) => [...acc, ...item], []);

@@ -59,6 +59,7 @@ module.exports = {
       },
       plugins: ['jest'],
       rules: {
+        '@typescript-eslint/ban-ts-ignore': 'off',
         'import/no-extraneous-dependencies': [
           'error',
           { devDependencies: true, peerDependencies: true },
