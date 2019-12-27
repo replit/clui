@@ -18,6 +18,7 @@
     "test": "npm-run-all --parallel test:*",
     "test:format": "prettier --check \"src/**/*.{js,json,ts,tsx}\"",
     "test:lint": "eslint src/ --ext .js,.ts,.tsx",
+    "test:tsc": "tsc",
     "test:unit": "jest"
   },
   "author": "moudy@repl.it",
@@ -68,5 +69,8 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "dependencies": {
+    "arcsecond": "^2.0.3"
   }
 }

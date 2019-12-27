@@ -16,6 +16,11 @@
     "declarationDir": "./dist",
     "noImplicitAny": true,
     "removeComments": true,
+    "typeRoots": ["./node_modules/@types", "./typings"],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*", "typings/*"]
+    },
     "downlevelIteration": true
   },
   "include": ["src/**/*"],
