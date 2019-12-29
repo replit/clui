@@ -1,23 +1,23 @@
 // @ts-nocheck
+// Wating for better typescript support https://github.com/francisrstokes/arcsecond/pull/35
 import * as A from 'arcsecond';
-
-type NodeType = 'ROOT' | 'COMMAND' | 'ARGS' | 'ARG' | 'ARG_KEY' | 'ARG_VALUE' | 'WHITESPACE';
+import { INode, IData } from './types';
 
 const keyword = A.regex(/^[a-zA-Z0-9][^\s\\]*/);
 const flagPrefix = A.regex(/^-?(-)/);
 
-const toNode = (type: NodeType) => (result) => ({
+const toNode = (type: NodeType) => (result: Pick<INode, 'type' | 'value'>) => ({
   value: result,
   type,
 });
 
-const toPos = ({ data, result }) => ({
+const toLocation = ({ data, result }: { data: IData; result: Pick<INode, 'type' | 'value'> }) => ({
   ...result,
   start: data.index,
   end: data.index + (result.value ? result.value.length : 0),
 });
 
-const setIndex = ({ result, data }) =>
+const setIndex = ({ result, data }: { data: IData; result: Pick<INode, 'type' | 'value'> }) =>
   A.setData({
     ...data,
     index: result && result.value ? data.index + result.value.length : data.index,
@@ -26,7 +26,7 @@ const setIndex = ({ result, data }) =>
 const argKey = A.sequenceOf([flagPrefix, keyword])
   .map((result) => result.join(''))
   .map(toNode('ARG_KEY'))
-  .mapFromData(toPos)
+  .mapFromData(toLocation)
   .chainFromData(setIndex);
 
 const between = (char: string) =>
@@ -36,51 +36,35 @@ const between = (char: string) =>
 
 const quoted = A.choice([between('"'), between("'")]).map(toNode('ARG_VALUE_QUOTED'));
 
-const literal = A.everythingUntil(A.choice([A.str(' -'), A.endOfInput])).map(toNode('ARG_VALUE'));
+const literal = A.everythingUntil(A.choice([A.str('-'), A.str(' -'), A.endOfInput])).map(
+  toNode('ARG_VALUE'),
+);
 
 const argValue = A.choice([quoted, literal])
-  .mapFromData(toPos)
+  .mapFromData(toLocation)
   .chainFromData(setIndex);
 
 const whitespace = A.whitespace
   .map(toNode('WHITESPACE'))
-  .mapFromData(toPos)
+  .mapFromData(toLocation)
   .chainFromData(setIndex);
 
 const arg = A.sequenceOf([argKey, A.possibly(whitespace), A.possibly(argValue)]).map(nullify);
 
-const args = A.many(A.sequenceOf([arg, A.choice([whitespace, A.endOfInput])]))
+const args = A.many(A.sequenceOf([arg, A.possibly(A.choice([whitespace, A.endOfInput]))]))
   .map(flatten)
   .map(nullify)
-  .map(flatten)
-  .map((result) => {
-    if (!result || !result.length) {
-      return null;
-    }
-
-    return {
-      type: 'ARGS',
-      start: result[0].start,
-      end: result[result.length - 1].end,
-      value: result,
-    };
-  })
-  .chainFromData(setIndex);
+  .map(flatten);
 
 const command = keyword
   .map(toNode('COMMAND'))
-  .mapFromData(toPos)
+  .mapFromData(toLocation)
   .chainFromData(setIndex);
 
 const commandTerminator = A.choice([A.endOfInput, A.whitespace])
   .mapFromData(({ data, result }) => {
     if (!result) {
-      return {
-        start: data.index,
-        end: data.index,
-        type: 'END',
-        value: '',
-      };
+      return null;
     }
 
     return {
@@ -97,7 +81,7 @@ function flatten<D>(list: Array<Array<D>>): Array<D> {
 }
 
 function nullify<D>(list: Array<Array<D>>): Array<D> {
-  return list.reduce((acc, item) => {
+  return list.reduce((acc: Array<D>, item: Array<D>) => {
     if (!item) {
       return acc;
     }

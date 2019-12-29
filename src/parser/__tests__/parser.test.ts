@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { parse } from '../parser';
 
 describe('parser', () => {
@@ -9,10 +8,7 @@ describe('parser', () => {
         start: 0,
         end: command.length,
         type: 'ROOT',
-        value: [
-          { start: 0, end: command.length, type: 'COMMAND', value: command },
-          { start: command.length, end: command.length, value: '', type: 'END' },
-        ],
+        value: [{ start: 0, end: command.length, type: 'COMMAND', value: command }],
       },
     ];
 
@@ -48,7 +44,6 @@ describe('parser', () => {
 
               return { type, start, end: start + str.length, value: str };
             }),
-            { start: end, end, value: '', type: 'END' },
           ],
         },
       ];
@@ -67,52 +62,58 @@ describe('parser', () => {
 
   describe('args', () => {
     [
+      ['-a', [{ start: 5, end: 7, value: '-a', type: 'ARG_KEY' }]],
+      ['--a', [{ start: 5, end: 8, value: '--a', type: 'ARG_KEY' }]],
+      ['---a', []],
       [
-        '-f',
+        '-a 1',
         [
-          {
-            type: 'ARGS',
-            value: [{ start: 5, end: 7, value: '-f', type: 'ARG_KEY' }],
-            start: 5,
-            end: 7,
-          },
+          { start: 5, end: 7, value: '-a', type: 'ARG_KEY' },
+          { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+          { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
         ],
       ],
       [
-        '-f 1',
+        '-a 1 -b',
         [
-          {
-            type: 'ARGS',
-            start: 5,
-            end: 9,
-            value: [
-              { start: 5, end: 7, value: '-f', type: 'ARG_KEY' },
-              { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
-              { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
-            ],
-          },
+          { start: 5, end: 7, value: '-a', type: 'ARG_KEY' },
+          { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+          { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
+          { start: 9, end: 10, value: ' ', type: 'WHITESPACE' },
+          { start: 10, end: 12, value: '-b', type: 'ARG_KEY' },
         ],
       ],
       [
-        '-f 1 --b',
+        '-a "xyz"',
         [
-          {
-            type: 'ARGS',
-            start: 5,
-            end: 13,
-            value: [
-              { start: 5, end: 7, value: '-f', type: 'ARG_KEY' },
-              { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
-              { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
-              { start: 9, end: 10, value: ' ', type: 'WHITESPACE' },
-              { start: 10, end: 13, value: '--b', type: 'ARG_KEY' },
-            ],
-          },
+          { start: 5, end: 7, value: '-a', type: 'ARG_KEY' },
+          { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+          { start: 8, end: 13, value: '"xyz"', type: 'ARG_VALUE_QUOTED' },
+        ],
+      ],
+      [
+        "-a 'xyz'",
+        [
+          { start: 5, end: 7, value: '-a', type: 'ARG_KEY' },
+          { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+          { start: 8, end: 13, value: "'xyz'", type: 'ARG_VALUE_QUOTED' },
+        ],
+      ],
+      [
+        "-f -a 'xyz'",
+        [
+          { start: 5, end: 7, value: '-f', type: 'ARG_KEY' },
+          { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+          { start: 8, end: 10, value: '-a', type: 'ARG_KEY' },
+          { start: 10, end: 11, value: ' ', type: 'WHITESPACE' },
+          { start: 11, end: 16, value: "'xyz'", type: 'ARG_VALUE_QUOTED' },
         ],
       ],
     ].forEach(([args, expected]) => {
       it(`parses '${args}'`, () => {
-        expect(parse(`user ${args}`).result.value.slice(2)).toEqual(expected);
+        const parsed = parse(`user ${args}`);
+        // console.log(JSON.stringify(parsed, null, 2));
+        expect(parsed.result.value.slice(2)).toEqual(expected);
       });
     });
   });
