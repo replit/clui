@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { parse, arg } from '../parser';
+import { parse } from '../parser';
 
 describe('parser', () => {
   describe('command', () => {
@@ -66,48 +66,53 @@ describe('parser', () => {
   });
 
   describe('args', () => {
-    it("parses'", () => {
-      // @ts-ignore
-      console.log(arg({ index: 0 }).run('-f "bar wat" --baz "huh"').result);
-      console.log(arg({ index: 0 }).run("-f 'bar wat'").result);
-      console.log(arg({ index: 0 }).run('-f bar wat').result);
-      // @ts-ignore
-      // console.log(arg({ index: 0 }).run('--role').result);
-      // @ts-ignore
-      // console.log(arg({ index: 0 }).run('--fsss ').result);
-      // @ts-ignore
-      // console.log(arg({ index: 0 }).run('- --fsss ').result);
-      // @ts-ignore
-    });
-
-    // const testCase = (input: string, expected: Array<string>): [string, any] => {
-    // const command = 'user';
-    // const inputStr = `${command} ${input}`;
-    // const end = inputStr.length;
-    // console.log(expected);
-
-    // return [
-    // inputStr,
-    // {
-    // start: 0,
-    // end,
-    // type: 'ROOT',
-    // value: [
-    // { start: 0, end: command.length, value: command, type: 'COMMAND' },
-    // { start: command.length, end: command.length + 1, value: ' ', type: 'WHITESPACE' },
-    // { start: end, end, value: '', type: 'END' },
-    // ],
-    // },
-    // ];
-    // };
-
     [
-      // testCase('-f', [['-f', true]]),
-      // testCase('-r admin', ['-r', ' ', 'admin']),
-    ].forEach(([command, expected]) => {
-      it.skip(`parses '${command}'`, () => {
-        console.log(parse(command).result);
-        expect(parse(command).result).toEqual(expected);
+      [
+        '-f',
+        [
+          {
+            type: 'ARGS',
+            value: [{ start: 5, end: 7, value: '-f', type: 'ARG_KEY' }],
+            start: 5,
+            end: 7,
+          },
+        ],
+      ],
+      [
+        '-f 1',
+        [
+          {
+            type: 'ARGS',
+            start: 5,
+            end: 9,
+            value: [
+              { start: 5, end: 7, value: '-f', type: 'ARG_KEY' },
+              { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+              { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
+            ],
+          },
+        ],
+      ],
+      [
+        '-f 1 --b',
+        [
+          {
+            type: 'ARGS',
+            start: 5,
+            end: 13,
+            value: [
+              { start: 5, end: 7, value: '-f', type: 'ARG_KEY' },
+              { start: 7, end: 8, value: ' ', type: 'WHITESPACE' },
+              { start: 8, end: 9, value: '1', type: 'ARG_VALUE' },
+              { start: 9, end: 10, value: ' ', type: 'WHITESPACE' },
+              { start: 10, end: 13, value: '--b', type: 'ARG_KEY' },
+            ],
+          },
+        ],
+      ],
+    ].forEach(([args, expected]) => {
+      it(`parses '${args}'`, () => {
+        expect(parse(`user ${args}`).result.value.slice(2)).toEqual(expected);
       });
     });
   });
