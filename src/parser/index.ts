@@ -1,4 +1,7 @@
-import { IResult, INode, ILocation, Args } from './types';
+import { IResult, INode, Args } from './types';
+import * as parser from './parser';
+
+export const parse = (str: string): IResult => parser.parse(str);
 
 export const getCommands = ({ result }: IResult): Array<string> =>
   result.value.reduce((acc: Array<string>, item: INode) => {
@@ -46,7 +49,7 @@ export const getArgs = ({ result }: IResult): Args => {
   }, {});
 };
 
-export const getNode = (nodes: Array<ILocation>, index: number): ILocation | undefined => {
+export const getNode = (nodes: Array<INode>, index: number): INode | undefined => {
   for (const node of nodes) {
     if (index >= node.start && index < node.end) {
       return node;

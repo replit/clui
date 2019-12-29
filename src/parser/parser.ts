@@ -94,7 +94,9 @@ function nullify<D>(list: Array<Array<D>>): Array<D> {
   }, []);
 }
 
-const commands = A.many(A.sequenceOf([command, commandTerminator]).map(flatten)).map(flatten);
+const commands = A.many(A.sequenceOf([command, commandTerminator]))
+  .map(flatten)
+  .map(nullify);
 
 const parser = A.withData(
   A.sequenceOf([commands, A.possibly(args)]).mapFromData(({ data, result }) => ({
