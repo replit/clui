@@ -1,6 +1,6 @@
 import { parse } from '../parser';
 import { getCommands, getArgs, getNode } from '../index';
-import { Args, ILocation } from '../types';
+import { Args, ILocation, INode } from '../types';
 
 describe('index', () => {
   describe('getCommands', () => {
@@ -41,9 +41,9 @@ describe('index', () => {
   });
 
   describe('getNode', () => {
-    const first = { start: 0, end: 3 };
-    const second = { start: 3, end: 8 };
-    const third = { start: 8, end: 12 };
+    const first: INode = { start: 0, end: 3, type: 'COMMAND', value: '123' };
+    const second: INode = { start: 3, end: 8, type: 'COMMAND', value: '4567' };
+    const third: INode = { start: 8, end: 12, type: 'COMMAND', value: '8910' };
 
     const nodes = [first, second, third];
 
