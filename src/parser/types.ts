@@ -16,11 +16,13 @@ export interface INode extends ILocation {
 
 export interface IResult {
   isError: boolean;
+  index: number;
   result: {
     type: 'ROOT';
     value: Array<INode>;
     start: number;
     end: number;
+    source: string;
   };
 }
 

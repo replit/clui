@@ -1,6 +1,8 @@
 import React from 'react';
 import { parse, getNode } from '../src/parser';
-import { IResult } from '../src/parser/types';
+import { IResult, INode } from '../src/parser/types';
+import { getSuggestions } from '../src/prompt/suggestions';
+import { ICmd, ISuggestion } from '../src/prompt/types';
 
 // const useAfterUpdate = () => {
 // const after = React.useRef<() => void | null>(null);
@@ -19,73 +21,147 @@ import { IResult } from '../src/parser/types';
 // return runAtfer;
 // };
 
+const addRoleCmd: ICmd = {
+  name: 'add-role',
+  description: 'Add role to user',
+  args: {
+    user: { name: 'user', description: 'username, id, or email' },
+    role: { name: 'role', description: 'the role', options: ['admin', 'moderator'] },
+  },
+  run: (props) => (
+    <pre>
+      <code>{JSON.stringify(props, null, 2)}</code>
+    </pre>
+  ),
+};
+
+const removeRoleCmd: ICmd = {
+  name: 'remove-role',
+  description: 'Remove role from user',
+  args: {
+    user: { name: 'user', description: 'username, id, or email' },
+    role: { name: 'role', description: 'the role', options: ['admin', 'moderator'] },
+  },
+  run: (props) => (
+    <pre>
+      <code>{JSON.stringify(props, null, 2)}</code>
+    </pre>
+  ),
+};
+
+const userCmd: ICmd = {
+  name: 'user',
+  description: 'User commands',
+  args: { help: { name: 'help', description: 'Show help' } },
+  run: (props) => (
+    <pre>
+      <code>{JSON.stringify(props, null, 2)}</code>
+    </pre>
+  ),
+  commands: { addRoleCmd, removeRoleCmd },
+};
+
+interface IState {
+  value: string;
+  cursor: number;
+  suggestions?: Array<ISuggestion>;
+  ast?: IResult;
+  cmds: Record<string, ICmd>;
+  currentNode?: INode;
+}
+
+type Action = {
+  type: 'UPDATE';
+  updates: Partial<{ value: string; cursor: number }>;
+};
+
+const handleUpdates = (state: IState, updates: Action['updates']) => {
+  const ast = updates.value !== undefined ? parse(updates.value) : state.ast;
+  const cursor = updates.cursor !== undefined ? updates.cursor : state.cursor;
+  const suggestions = getSuggestions({ ast, cmds: state.cmds, index: cursor });
+  const currentNode = getNode(ast.result.value, cursor);
+
+  return {
+    ...state,
+    ...updates,
+    ast,
+    suggestions,
+    cursor,
+    currentNode,
+  };
+};
+
+const reducer = (state: IState, action: Action) => {
+  switch (action.type) {
+    case 'UPDATE':
+      return handleUpdates(state, action.updates);
+    default:
+      return state;
+  }
+};
+
 const Example = () => {
-  const input = React.useRef<HTMLInputElement>(null);
-  const [value, setValue] = React.useState('');
-  const [cursor, setCursor] = React.useState(0);
-  // const [currentNode, setCurrentNode] = React.useState<INode | null>(null);
-  // const afterUpdate = useAfterUpdate();
+  const cmds: Record<string, ICmd> = { user: userCmd };
 
-  const parsed = React.useRef<IResult | null>(null);
+  const [state, dispatch] = React.useReducer(reducer, {
+    cmds,
+    value: '',
+    cursor: 0,
+    suggestions: getSuggestions({ cmds }),
+    ast: parse(''),
+  });
+
+  const onKeyUp = React.useCallback(
+    (e) => {
+      const cursor = e.target.selectionStart;
+
+      if (state.cursor === cursor) {
+        return;
+      }
+
+      dispatch({
+        type: 'UPDATE',
+        updates: { cursor },
+      });
+    },
+    [dispatch, state.cursor],
+  );
+  React.useEffect(() => {
+    console.log({ cursor: state.cursor });
+  }, [state.cursor]);
 
   React.useEffect(() => {
-    console.log('setting parsed.current');
-    parsed.current = parse(value);
-  }, [value, parsed]);
-
-  const currentNode = React.useMemo(() => {
-    console.log('setting currentNodes');
-    if (!parsed.current) {
-      return null;
-    }
-
-    return getNode(parsed.current.result.value, cursor);
-  }, [cursor, parsed]);
-
-  const onKeyUp = React.useCallback(() => {
-    if (input.current) {
-      console.log('onKeyUp');
-      setCursor(input.current.selectionStart);
-    }
-  }, [input]);
-
-  // React.useEffect(() => {
-  // const current = getNode(parsed.result.value, cursor) || null;
-  // console.log({ cursor, current });
-  // afterUpdate(() => {
-  // console.log(2, { cursor, current });
-  // setCurrentNode(current);
-  // });
-  // }, [cursor, parsed]);
+    console.log({ value: state.value });
+  }, [state.value]);
 
   React.useEffect(() => {
-    console.log({ cursor });
-  }, [cursor]);
+    console.log({ suggestions: state.suggestions });
+  }, [state.suggestions]);
 
-  React.useEffect(() => {
-    console.log({ currentNode });
-  }, [currentNode]);
+  console.log('render');
 
   return (
     <div style={{ padding: 40 }}>
       <input
-        value={value}
+        value={state.value}
         onKeyUp={onKeyUp}
-        onChange={(e) => setValue(e.target.value)}
-        ref={input}
+        onChange={(e) => {
+          dispatch({
+            type: 'UPDATE',
+            updates: {
+              value: e.target.value,
+              cursor: e.target.selectionStart,
+            },
+          });
+        }}
       />
       <pre style={{ fontSize: 10 }}>
-        <code>
-          {JSON.stringify(
-            {
-              cursor,
-              currentNode,
-            },
-            null,
-            2,
-          )}
-        </code>
-        <code>{JSON.stringify(parsed, null, 2)}</code>
+        <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>
+      </pre>
+      <br />
+      <br />
+      <pre style={{ fontSize: 10 }}>
+        <code>{JSON.stringify(state, null, 2)}</code>
       </pre>
     </div>
   );

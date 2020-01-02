@@ -24,5 +24,5 @@
     "downlevelIteration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/__tests__", "src/setupEnzyme.ts"]
+  "exclude": ["src/**/__tests__", "examples/**/*", "src/setupEnzyme.ts"]
 }

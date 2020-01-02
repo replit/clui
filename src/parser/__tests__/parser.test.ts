@@ -9,6 +9,7 @@ describe('parser', () => {
         end: command.length,
         type: 'ROOT',
         value: [{ start: 0, end: command.length, type: 'COMMAND', value: command }],
+        source: command,
       },
     ];
 
@@ -45,6 +46,7 @@ describe('parser', () => {
               return { type, start, end: start + str.length, value: str };
             }),
           ],
+          source: inputStr,
         },
       ];
     };
@@ -64,7 +66,7 @@ describe('parser', () => {
     [
       ['-a', [{ start: 5, end: 7, value: '-a', type: 'ARG_KEY' }]],
       ['--a', [{ start: 5, end: 8, value: '--a', type: 'ARG_KEY' }]],
-      ['---a', []],
+      ['---a', [{ start: 5, end: 9, value: '---a', type: 'ARG_KEY' }]],
       [
         '-a 1',
         [

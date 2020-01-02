@@ -31,18 +31,22 @@ export const getArgs = ({ result }: IResult): Args => {
       return acc;
     }
 
-    if (index > 0 && typeof node.value === 'string' && argValueNodeTypes.includes(node.type)) {
-      const prev = argNodes[index - 1];
+    const prev = argNodes[index - 1];
 
-      if (typeof prev.value === 'string' && prev.type === 'ARG_KEY') {
-        let { value } = node;
+    if (
+      prev &&
+      prev.type === 'ARG_KEY' &&
+      typeof prev.value === 'string' &&
+      argValueNodeTypes.includes(node.type) &&
+      typeof node.value === 'string'
+    ) {
+      let { value } = node;
 
-        if (node.type === 'ARG_VALUE_QUOTED') {
-          value = value.slice(1, value.length - 1);
-        }
-
-        acc[flagToKey(prev.value)] = value;
+      if (node.type === 'ARG_VALUE_QUOTED') {
+        value = value.slice(1, value.length - 1);
       }
+
+      acc[flagToKey(prev.value)] = value;
     }
 
     return acc;

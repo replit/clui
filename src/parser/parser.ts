@@ -23,7 +23,13 @@ const setIndex = ({ result, data }: { data: IData; result: Pick<INode, 'type' | 
     index: result && result.value ? data.index + result.value.length : data.index,
   });
 
-const argKey = A.sequenceOf([flagPrefix, keyword])
+const whitespace = A.whitespace
+  .map(toNode('WHITESPACE'))
+  .mapFromData(toLocation)
+  .chainFromData(setIndex);
+
+const argKey = A.sequenceOf([flagPrefix, A.everythingUntil(A.choice([A.endOfInput, whitespace]))])
+  .map(nullify)
   .map((result) => result.join(''))
   .map(toNode('ARG_KEY'))
   .mapFromData(toLocation)
@@ -41,11 +47,6 @@ const literal = A.everythingUntil(A.choice([A.str('-'), A.str(' -'), A.endOfInpu
 );
 
 const argValue = A.choice([quoted, literal])
-  .mapFromData(toLocation)
-  .chainFromData(setIndex);
-
-const whitespace = A.whitespace
-  .map(toNode('WHITESPACE'))
   .mapFromData(toLocation)
   .chainFromData(setIndex);
 
@@ -104,7 +105,8 @@ const parser = A.withData(
     value: flatten(result),
     start: 0,
     end: data.index,
+    source: data.source,
   })),
 );
 
-export const parse = (str: string) => parser({ index: 0 }).run(str);
+export const parse = (str: string) => parser({ index: 0, source: str }).run(str);
