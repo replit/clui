@@ -131,6 +131,27 @@ describe('getSuggestions', () => {
       ];
       expect(getSuggestions({ cmds, ast: parse(input), index: input.length })).toEqual(expected);
     });
+
+    it('returns filtered sub-commands when parent command is matched and index is on sub-command', () => {
+      const input = 'user rem';
+      const expected = [
+        {
+          value: 'removeRole',
+          description: 'removes role',
+          start: 5,
+          end: 15,
+        },
+        {
+          value: '--report',
+          description: 'report user',
+          start: 5,
+          end: 13,
+        },
+      ];
+      expect(getSuggestions({ cmds, ast: parse(input), index: input.length - 1 })).toEqual(
+        expected,
+      );
+    });
   });
 
   describe('args', () => {

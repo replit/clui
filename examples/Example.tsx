@@ -1,8 +1,8 @@
 import React from 'react';
-import { parse, getNode } from '../src/parser';
-import { IResult, INode } from '../src/parser/types';
-import { getSuggestions } from '../src/prompt/suggestions';
-import { ICmd, ISuggestion } from '../src/prompt/types';
+import Downshift from 'downshift';
+import { ICmd } from '../src/prompt/types';
+import { ISuggestion } from '../src/input';
+import useInput from '../src/prompt/useInput';
 
 // const useAfterUpdate = () => {
 // const after = React.useRef<() => void | null>(null);
@@ -61,109 +61,78 @@ const userCmd: ICmd = {
   commands: { addRoleCmd, removeRoleCmd },
 };
 
-interface IState {
-  value: string;
-  cursor: number;
-  suggestions?: Array<ISuggestion>;
-  ast?: IResult;
-  cmds: Record<string, ICmd>;
-  currentNode?: INode;
-}
-
-type Action = {
-  type: 'UPDATE';
-  updates: Partial<{ value: string; cursor: number }>;
-};
-
-const handleUpdates = (state: IState, updates: Action['updates']) => {
-  const ast = updates.value !== undefined ? parse(updates.value) : state.ast;
-  const cursor = updates.cursor !== undefined ? updates.cursor : state.cursor;
-  const suggestions = getSuggestions({ ast, cmds: state.cmds, index: cursor });
-  const currentNode = getNode(ast.result.value, cursor);
-
-  return {
-    ...state,
-    ...updates,
-    ast,
-    suggestions,
-    cursor,
-    currentNode,
-  };
-};
-
-const reducer = (state: IState, action: Action) => {
-  switch (action.type) {
-    case 'UPDATE':
-      return handleUpdates(state, action.updates);
-    default:
-      return state;
-  }
-};
-
 const Example = () => {
   const cmds: Record<string, ICmd> = { user: userCmd };
-
-  const [state, dispatch] = React.useReducer(reducer, {
-    cmds,
-    value: '',
-    cursor: 0,
-    suggestions: getSuggestions({ cmds }),
-    ast: parse(''),
-  });
+  const [state, update] = useInput(cmds);
 
   const onKeyUp = React.useCallback(
     (e) => {
-      const cursor = e.target.selectionStart;
-
-      if (state.cursor === cursor) {
-        return;
+      const index = e.target.selectionStart;
+      if (state.index !== index) {
+        update({ index });
       }
-
-      dispatch({
-        type: 'UPDATE',
-        updates: { cursor },
-      });
     },
-    [dispatch, state.cursor],
+    [state.index],
   );
-  React.useEffect(() => {
-    console.log({ cursor: state.cursor });
-  }, [state.cursor]);
-
-  React.useEffect(() => {
-    console.log({ value: state.value });
-  }, [state.value]);
-
-  React.useEffect(() => {
-    console.log({ suggestions: state.suggestions });
-  }, [state.suggestions]);
-
-  console.log('render');
 
   return (
-    <div style={{ padding: 40 }}>
-      <input
-        value={state.value}
-        onKeyUp={onKeyUp}
-        onChange={(e) => {
-          dispatch({
-            type: 'UPDATE',
-            updates: {
-              value: e.target.value,
-              cursor: e.target.selectionStart,
-            },
-          });
-        }}
-      />
-      <pre style={{ fontSize: 10 }}>
-        <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>
-      </pre>
-      <br />
-      <br />
-      <pre style={{ fontSize: 10 }}>
-        <code>{JSON.stringify(state, null, 2)}</code>
-      </pre>
-    </div>
+    <Downshift
+      inputValue={state.value}
+      onChange={(selection: ISuggestion) => {
+        update({ value: selection.inputValue, index: selection.cursorTarget });
+        // TODO: update cursor position to cursorTarget
+      }}
+      itemToString={() => state.value}
+    >
+      {(ds) => (
+        <div>
+          <div>
+            <input
+              {...ds.getInputProps({
+                onFocus: () => {
+                  ds.openMenu();
+                },
+                onKeyUp,
+                onChange: ({ target }) => {
+                  update({ value: target.value, index: target.selectionStart });
+                },
+              })}
+            />
+          </div>
+          <ul {...ds.getMenuProps()}>
+            {state.suggestions.length
+              ? state.suggestions.map((item, index) => (
+                  <li
+                    {...ds.getItemProps({
+                      key: item.value,
+                      index,
+                      item,
+                      style: {
+                        backgroundColor: ds.highlightedIndex === index ? 'lightgray' : 'white',
+                        fontWeight: ds.selectedItem === item ? 'bold' : 'normal',
+                      },
+                    })}
+                  >
+                    {item.value}
+                  </li>
+                ))
+              : null}
+          </ul>
+          {true && (
+            <>
+              <pre style={{ fontSize: 10 }}>
+                <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>
+              </pre>
+              <br />
+              <br />
+              <pre style={{ fontSize: 10 }}>
+                <code>{JSON.stringify(state, null, 2)}</code>
+              </pre>
+            </>
+          )}
+        </div>
+      )}
+    </Downshift>
   );
 };
 

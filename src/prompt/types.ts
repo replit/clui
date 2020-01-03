@@ -1,4 +1,5 @@
 export interface ISuggestion {
+  inputValue?: string;
   value: string;
   description?: string;
   start: number;

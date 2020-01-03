@@ -72,6 +72,7 @@
     ]
   },
   "dependencies": {
-    "arcsecond": "^2.0.3"
+    "arcsecond": "^2.0.3",
+    "downshift": "^4.0.1"
   }
 }

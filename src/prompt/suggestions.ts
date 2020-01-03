@@ -38,6 +38,7 @@ const cmdsToSuggestions = (
   opts: {
     filter?: string;
     start: number;
+    ast?: IResult;
   },
 ) =>
   Object.keys(cmds).reduce((acc: Array<ISuggestion>, key) => {
@@ -47,6 +48,11 @@ const cmdsToSuggestions = (
         description: cmds[key].description,
         start: opts.start,
         end: opts.start + key.length,
+        inputValue: opts.ast
+          ? opts.ast.result.source.slice(0, opts.start) +
+            key +
+            opts.ast.result.source.slice(key.length)
+          : '',
       });
     }
 
@@ -59,6 +65,7 @@ const argsToSuggestions = (
     filter?: string;
     start: number;
     exclude?: Array<string>;
+    ast?: IResult;
   },
 ) =>
   Object.keys(args).reduce((acc: Array<ISuggestion>, key) => {
@@ -98,13 +105,14 @@ export const getSuggestions = ({
     const opts = {
       start: prevNode?.type === 'WHITESPACE' ? prevNode.end : 0,
       filter: next,
+      ast,
     };
 
     return cmdsToSuggestions(cmds, opts);
   }
 
   if (cmd && (cmd.commands || cmd.args) && !next && prevNode?.type === 'WHITESPACE') {
-    const opts = { start: prevNode.end };
+    const opts = { start: prevNode.end, ast };
 
     const inputArgs = Object.keys(getArgs(ast));
     const exclude = cmd.args
@@ -121,6 +129,7 @@ export const getSuggestions = ({
     const opts = {
       start: prevNode.type === 'WHITESPACE' ? prevNode.end : prevNode.start,
       filter: next,
+      ast,
     };
 
     const inputArgs = Object.keys(getArgs(ast));
@@ -138,9 +147,28 @@ export const getSuggestions = ({
     const inputArgs = Object.keys(getArgs(ast));
 
     return argsToSuggestions(cmd.args, {
+      ast,
       start: prevNode.start,
       exclude: Object.keys(cmd.args).filter((key) => inputArgs.includes(key)),
     });
+  }
+
+  if (cmd && prevNode?.type === 'COMMAND') {
+    const opts = {
+      start: prevNode.start,
+      filter: ast.result.source.slice(prevNode.start, index),
+      ast,
+    };
+
+    const inputArgs = Object.keys(getArgs(ast));
+    const exclude = cmd.args
+      ? Object.keys(cmd.args).filter((key) => inputArgs.includes(key))
+      : undefined;
+
+    return [
+      ...(cmd.commands ? cmdsToSuggestions(cmd.commands, opts) : []),
+      ...(cmd.args ? argsToSuggestions(cmd.args, { ...opts, exclude }) : []),
+    ];
   }
 
   // const currentNode = getNode(ast.result.value, index);
