@@ -1,7 +1,7 @@
 import { ICmd } from '../prompt/types';
 import { IResult } from '../parser/types';
 import { parse, getNode, getArgs } from '../parser';
-import { getCmdContext } from '../prompt/suggestions';
+import getCmdContext from './getCmdContext';
 
 export interface ICmdInput {
   value: string;
@@ -24,7 +24,6 @@ export const cmdInput = (cmds: Record<string, ICmd>) => {
 
   const input = {
     get suggestions() {
-      console.log({ value, index });
       if (!ast) {
         return Object.keys(cmds).reduce((acc: Array<ISuggestion>, key) => {
           if ((value && key.includes(value)) || !value) {

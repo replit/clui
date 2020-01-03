@@ -1,38 +1,40 @@
 import { cmdInput } from '../index';
+import { parse } from '../../parser';
+import getCmdContext from '../getCmdContext';
+
+const cmds = {
+  user: {
+    name: 'user',
+    description: 'user description',
+    args: {
+      report: { description: 'report user' },
+    },
+    commands: {
+      addRole: {
+        description: 'adds role',
+        run: () => null,
+        args: {
+          role: { name: 'role', description: 'the role' },
+          user: { name: 'user', description: 'the user id' },
+        },
+      },
+      removeRole: {
+        description: 'removes role',
+        run: () => null,
+        args: {
+          role: { name: 'role', description: 'the role' },
+          user: { name: 'user', description: 'the user id' },
+        },
+      },
+    },
+  },
+  version: {
+    name: 'version',
+    description: 'version description',
+  },
+};
 
 describe('input', () => {
-  const cmds = {
-    user: {
-      name: 'user',
-      description: 'user description',
-      args: {
-        report: { description: 'report user' },
-      },
-      commands: {
-        addRole: {
-          description: 'adds role',
-          run: () => null,
-          args: {
-            role: { name: 'role', description: 'the role' },
-            user: { name: 'user', description: 'the user id' },
-          },
-        },
-        removeRole: {
-          description: 'removes role',
-          run: () => null,
-          args: {
-            role: { name: 'role', description: 'the role' },
-            user: { name: 'user', description: 'the user id' },
-          },
-        },
-      },
-    },
-    version: {
-      name: 'version',
-      description: 'version description',
-    },
-  };
-
   describe('suggestions', () => {
     it('suggests top level commands with no value', () => {
       const input = cmdInput(cmds);
@@ -264,5 +266,105 @@ describe('input', () => {
       expect(input.index).toEqual(updatedIndex);
       expect(input.value).toEqual(updatedValue);
     });
+  });
+});
+
+describe('getCmdContext', () => {
+  it('returns undefined when there is no matching command', () => {
+    const input = 'foo';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      undefined,
+      'foo',
+    ]);
+  });
+
+  it('returns undefined when there is a partially matching command', () => {
+    const input = 'use';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      undefined,
+      'use',
+    ]);
+  });
+
+  it('returns undefined when index is on a partially matching command', () => {
+    const input = 'user';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length - 1 })).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('returns command when matched', () => {
+    const input = 'user';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      cmds.user,
+      undefined,
+    ]);
+  });
+
+  it('returns command when matched with space', () => {
+    const input = 'user ';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      cmds.user,
+      undefined,
+    ]);
+  });
+
+  it('returns command when matched with space and partial sub command', () => {
+    const input = 'user ad';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      cmds.user,
+      'ad',
+    ]);
+  });
+
+  it('returns command when matched with space and partial sub command and flag', () => {
+    const input = 'user ad --foo';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      cmds.user,
+      'ad',
+    ]);
+  });
+
+  const userCommands = cmds.user.commands || {};
+
+  it('returns sub-command when matched with sub-command', () => {
+    const input = 'user addRole';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      userCommands.addRole,
+      undefined,
+    ]);
+  });
+
+  it('returns sub-command when matched with sub-command and space', () => {
+    const input = 'user addRole ';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      userCommands.addRole,
+      undefined,
+    ]);
+  });
+
+  it('returns sub-command when matched with sub-command and spaces', () => {
+    const input = 'user addRole  ';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      userCommands.addRole,
+      undefined,
+    ]);
+  });
+
+  it('returns sub-command when matched with sub-command, spaces and flag', () => {
+    const input = 'user addRole  --foo';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
+      userCommands.addRole,
+      undefined,
+    ]);
+  });
+
+  it('returns command when matched with sub-command but index is at command', () => {
+    const input = 'user addRole';
+    expect(getCmdContext({ cmds, ast: parse(input), index: input.length - 2 })).toEqual([
+      cmds.user,
+      undefined,
+    ]);
   });
 });
