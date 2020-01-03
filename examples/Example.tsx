@@ -61,6 +61,40 @@ const userCmd: ICmd = {
   commands: { addRoleCmd, removeRoleCmd },
 };
 
+const styles = {
+  container: {
+    padding: 10,
+    minHeight: 200,
+    backgroundColor: '#dddddd',
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  input: {
+    fontSize: 16,
+    fontFamily: 'mono',
+    border: '0 none',
+    padding: '10px 0',
+    display: 'block',
+    width: '100%',
+  },
+  menuAnchor: {
+    position: 'absolute',
+    left: 0,
+    top: '100%',
+  },
+  menu: {
+    display: 'flex',
+  },
+  menuOffset: {
+    whiteSpace: 'pre',
+    fontFamily: 'mono',
+    // visibility: 'hidden',
+    fontSize: 16,
+    flex: '0 0 auto',
+  },
+};
+
 const Example = () => {
   const cmds: Record<string, ICmd> = { user: userCmd };
   const [state, update] = useInput(cmds);
@@ -79,16 +113,19 @@ const Example = () => {
     <Downshift
       inputValue={state.value}
       onChange={(selection: ISuggestion) => {
-        update({ value: selection.inputValue, index: selection.cursorTarget });
+        if (selection) {
+          update({ value: selection.inputValue, index: selection.cursorTarget });
+        }
         // TODO: update cursor position to cursorTarget
       }}
       itemToString={() => state.value}
     >
       {(ds) => (
-        <div>
-          <div>
+        <div style={styles.container}>
+          <div style={styles.inputContainer}>
             <input
               {...ds.getInputProps({
+                style: styles.input,
                 onFocus: () => {
                   ds.openMenu();
                 },
@@ -98,27 +135,34 @@ const Example = () => {
                 },
               })}
             />
+            <div style={styles.menuAnchor}>
+              <div style={styles.menu}>
+                <div style={styles.menuOffset}>{state.value.slice(0, state.index)}</div>
+
+                <ul {...ds.getMenuProps({ style: { listStyle: 'none', margin: 0, padding: 0 } })}>
+                  {state.suggestions.length
+                    ? state.suggestions.map((item, index) => (
+                        <li
+                          {...ds.getItemProps({
+                            key: item.value,
+                            index,
+                            item,
+                            style: {
+                              backgroundColor:
+                                ds.highlightedIndex === index ? 'lightgray' : 'white',
+                              fontWeight: ds.selectedItem === item ? 'bold' : 'normal',
+                            },
+                          })}
+                        >
+                          {item.value}
+                        </li>
+                      ))
+                    : null}
+                </ul>
+              </div>
+            </div>
           </div>
-          <ul {...ds.getMenuProps()}>
-            {state.suggestions.length
-              ? state.suggestions.map((item, index) => (
-                  <li
-                    {...ds.getItemProps({
-                      key: item.value,
-                      index,
-                      item,
-                      style: {
-                        backgroundColor: ds.highlightedIndex === index ? 'lightgray' : 'white',
-                        fontWeight: ds.selectedItem === item ? 'bold' : 'normal',
-                      },
-                    })}
-                  >
-                    {item.value}
-                  </li>
-                ))
-              : null}
-          </ul>
-          {true && (
+          {!true && (
             <>
               <pre style={{ fontSize: 10 }}>
                 <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>

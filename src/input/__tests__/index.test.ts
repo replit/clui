@@ -99,43 +99,23 @@ describe('input', () => {
       ]);
     });
 
-    it('suggests filtered sub-commands', () => {
-      const input = cmdInput(cmds).update({ value: 'user add', index: 8 });
+    ([
+      ['user add', 8, 'user addRole'],
+      ['user add --role', 8, 'user addRole --role'],
+      ['user add --role', 6, 'user addRole --role'],
+    ] as Array<[string, number, string]>).forEach(([value, index, inputValue]) => {
+      it(`suggests filtered sub-commands for '${value}'`, () => {
+        const input = cmdInput(cmds).update({ value, index });
 
-      expect(input.suggestions).toEqual([
-        {
-          value: 'addRole',
-          inputValue: 'user addRole',
-          description: 'adds role',
-          cursorTarget: 12,
-        },
-      ]);
-    });
-
-    it('suggests filtered sub-commands while keeping remaining input', () => {
-      const input = cmdInput(cmds).update({ value: 'user add --role', index: 8 });
-
-      expect(input.suggestions).toEqual([
-        {
-          value: 'addRole',
-          inputValue: 'user addRole --role',
-          description: 'adds role',
-          cursorTarget: 12,
-        },
-      ]);
-    });
-
-    it('suggests filtered sub-commands while keeping remaining input when on index is on sub command', () => {
-      const input = cmdInput(cmds).update({ value: 'user add --role', index: 6 });
-
-      expect(input.suggestions).toEqual([
-        {
-          value: 'addRole',
-          inputValue: 'user addRole --role',
-          description: 'adds role',
-          cursorTarget: 12,
-        },
-      ]);
+        expect(input.suggestions).toEqual([
+          {
+            value: 'addRole',
+            inputValue,
+            description: 'adds role',
+            cursorTarget: 12,
+          },
+        ]);
+      });
     });
 
     it('suggests all sub-commands while keeping remaining input', () => {
