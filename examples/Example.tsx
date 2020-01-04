@@ -1,8 +1,8 @@
 import React from 'react';
 import Downshift from 'downshift';
-import { ICmd } from '../src/prompt/types';
-import { ISuggestion } from '../src/input';
-import useInput from '../src/prompt/useInput';
+import { ICommand, ISuggestion } from '../src/input/types';
+
+import { useInputState } from '../src/index';
 
 // const useAfterUpdate = () => {
 // const after = React.useRef<() => void | null>(null);
@@ -21,7 +21,7 @@ import useInput from '../src/prompt/useInput';
 // return runAtfer;
 // };
 
-const addRoleCmd: ICmd = {
+const addRoleCmd: ICommand = {
   name: 'add-role',
   description: 'Add role to user',
   args: {
@@ -35,7 +35,7 @@ const addRoleCmd: ICmd = {
   ),
 };
 
-const removeRoleCmd: ICmd = {
+const removeRoleCmd: ICommand = {
   name: 'remove-role',
   description: 'Remove role from user',
   args: {
@@ -49,7 +49,7 @@ const removeRoleCmd: ICmd = {
   ),
 };
 
-const userCmd: ICmd = {
+const userCmd: ICommand = {
   name: 'user',
   description: 'User commands',
   args: { help: { name: 'help', description: 'Show help' } },
@@ -61,43 +61,9 @@ const userCmd: ICmd = {
   commands: { addRoleCmd, removeRoleCmd },
 };
 
-const styles = {
-  container: {
-    padding: 10,
-    minHeight: 200,
-    backgroundColor: '#dddddd',
-  },
-  inputContainer: {
-    position: 'relative',
-  },
-  input: {
-    fontSize: 16,
-    fontFamily: 'mono',
-    border: '0 none',
-    padding: '10px 0',
-    display: 'block',
-    width: '100%',
-  },
-  menuAnchor: {
-    position: 'absolute',
-    left: 0,
-    top: '100%',
-  },
-  menu: {
-    display: 'flex',
-  },
-  menuOffset: {
-    whiteSpace: 'pre',
-    fontFamily: 'mono',
-    // visibility: 'hidden',
-    fontSize: 16,
-    flex: '0 0 auto',
-  },
-};
-
-const Example = () => {
-  const cmds: Record<string, ICmd> = { user: userCmd };
-  const [state, update] = useInput(cmds);
+const Prompt = () => {
+  const cmds: Record<string, ICommand> = { user: userCmd, post: userCmd };
+  const [state, update] = useInputState(cmds);
 
   const onKeyUp = React.useCallback(
     (e) => {
@@ -112,6 +78,8 @@ const Example = () => {
   return (
     <Downshift
       inputValue={state.value}
+      initialHighlightedIndex={0}
+      defaultHighlightedIndex={0}
       onChange={(selection: ISuggestion) => {
         if (selection) {
           update({ value: selection.inputValue, index: selection.cursorTarget });
@@ -121,11 +89,11 @@ const Example = () => {
       itemToString={() => state.value}
     >
       {(ds) => (
-        <div style={styles.container}>
-          <div style={styles.inputContainer}>
+        <div className="container">
+          <div className="input-container">
             <input
               {...ds.getInputProps({
-                style: styles.input,
+                placeholder: 'type a command',
                 onFocus: () => {
                   ds.openMenu();
                 },
@@ -135,23 +103,18 @@ const Example = () => {
                 },
               })}
             />
-            <div style={styles.menuAnchor}>
-              <div style={styles.menu}>
-                <div style={styles.menuOffset}>{state.value.slice(0, state.index)}</div>
-
+            <div className="menu-anchor">
+              <div className="menu">
+                <div className="menu-offset">{state.value.slice(0, state.index)}</div>
                 <ul {...ds.getMenuProps({ style: { listStyle: 'none', margin: 0, padding: 0 } })}>
                   {state.suggestions.length
                     ? state.suggestions.map((item, index) => (
                         <li
+                          className={ds.highlightedIndex === index ? 'highlighted' : undefined}
                           {...ds.getItemProps({
                             key: item.value,
                             index,
                             item,
-                            style: {
-                              backgroundColor:
-                                ds.highlightedIndex === index ? 'lightgray' : 'white',
-                              fontWeight: ds.selectedItem === item ? 'bold' : 'normal',
-                            },
                           })}
                         >
                           {item.value}
@@ -167,17 +130,70 @@ const Example = () => {
               <pre style={{ fontSize: 10 }}>
                 <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>
               </pre>
-              <br />
-              <br />
-              <pre style={{ fontSize: 10 }}>
+              <pre>
+                <br />
+                <br />
                 <code>{JSON.stringify(state, null, 2)}</code>
               </pre>
             </>
           )}
+          <style jsx>
+            {`
+              input {
+                background-color: transparent;
+                border: 0 none;
+                padding: 5px 0;
+                display: block;
+                width: 100%;
+              }
+
+              input:focus {
+                outline: 0 none;
+              }
+
+              input,
+              input::placeholder {
+                color: inherit;
+              }
+
+              input,
+              .menu-offset {
+                font-size: 18px;
+                font-family: 'IBM Plex Sans Condensed', sans-serif;
+                font-family: 'IBM Plex Mono', monospace;
+              }
+
+              ul {
+                padding: 0;
+                list-style: none;
+                background-color: rgba(255, 255, 255, 0.2);
+              }
+
+              .highlighted {
+                background-color: rgba(255, 255, 255, 0.4);
+              }
+            `}
+          </style>
         </div>
       )}
     </Downshift>
   );
 };
+
+const Example = () => (
+  <div>
+    <Prompt />
+    <style jsx>
+      {`
+        div {
+          padding: 10px;
+          color: white;
+          background-color: black;
+          font-family: 'IBM Plex Sans', sans-serif;
+        }
+      `}
+    </style>
+  </div>
+);
 
 export default Example;

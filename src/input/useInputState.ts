@@ -1,12 +1,12 @@
 import { useReducer, useMemo, useCallback } from 'react';
-import { ICmd } from './types';
-import { cmdInput, ISuggestion, ICmdInput } from '../input';
+import { ISuggestion, ICommand } from './types';
+import { inputState, IInputState } from './state';
 
 interface IState {
   value: string;
   index: number;
   suggestions: Array<ISuggestion>;
-  input: ICmdInput;
+  input: IInputState;
 }
 
 type Action = {
@@ -34,10 +34,10 @@ interface IUpdates {
   value?: string;
 }
 
-const useInput = (
-  cmds: Record<string, ICmd>,
+const useInputState = (
+  cmds: Record<string, ICommand>,
 ): [Omit<IState, 'input'>, (updates: Action['updates']) => void] => {
-  const input = useMemo(() => cmdInput(cmds), [cmds]);
+  const input = useMemo(() => inputState(cmds), [cmds]);
 
   const [state, dispatch] = useReducer(reducer, {
     value: '',
@@ -60,4 +60,4 @@ const useInput = (
   ];
 };
 
-export default useInput;
+export default useInputState;

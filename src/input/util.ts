@@ -1,7 +1,4 @@
-import { IResult, INode, Args } from './types';
-import * as parser from './parser';
-
-export const parse = (str: string): IResult => parser.parse(str);
+import { IResult, INode, Args, ICommand } from './types';
 
 export const getCommands = ({ result }: IResult): Array<string> =>
   result.value.reduce((acc: Array<string>, item: INode) => {
@@ -61,4 +58,35 @@ export const getNode = (nodes: Array<INode>, index: number): INode | undefined =
   }
 
   return undefined;
+};
+
+export const getCmdContext = ({
+  cmds,
+  ast,
+  index,
+}: {
+  cmds: Record<string, ICommand>;
+  ast: IResult;
+  index: number;
+}): [ICommand | undefined, string | undefined] => {
+  const commands = ast.result.value
+    .filter((n) => n.type === 'COMMAND' && n.end <= index && typeof n.value === 'string')
+    .map((n) => String(n.value));
+
+  let match: ICommand | undefined;
+  let next = commands[0];
+  let ctx = cmds;
+
+  while (commands.length) {
+    const command = commands.shift();
+    if (command && ctx[command]) {
+      match = ctx[command];
+      [next] = commands;
+      if (match.commands) {
+        ctx = match.commands;
+      }
+    }
+  }
+
+  return [match, next];
 };
