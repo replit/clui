@@ -2,7 +2,7 @@ import React from 'react';
 import Downshift from 'downshift';
 import { ICommand, ISuggestion } from '../src/input/types';
 
-import { useInputState } from '../src/index';
+import { useInputState } from '../src';
 
 // const useAfterUpdate = () => {
 // const after = React.useRef<() => void | null>(null);
@@ -82,7 +82,7 @@ const Prompt = () => {
       defaultHighlightedIndex={0}
       onChange={(selection: ISuggestion) => {
         if (selection) {
-          update({ value: selection.inputValue, index: selection.cursorTarget });
+          update({ value: `${selection.inputValue} `, index: selection.cursorTarget + 1 });
         }
         // TODO: update cursor position to cursorTarget
       }}
@@ -93,6 +93,8 @@ const Prompt = () => {
           <div className="input-container">
             <input
               {...ds.getInputProps({
+                autoFocus: true,
+                spellCheck: false,
                 placeholder: 'type a command',
                 onFocus: () => {
                   ds.openMenu();
@@ -161,6 +163,15 @@ const Prompt = () => {
                 font-size: 18px;
                 font-family: 'IBM Plex Sans Condensed', sans-serif;
                 font-family: 'IBM Plex Mono', monospace;
+              }
+
+              .menu {
+                display: flex;
+              }
+
+              .menu-offset {
+                flex: 0 0 auto;
+                white-space: pre;
               }
 
               ul {

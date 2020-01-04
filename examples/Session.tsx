@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Session, Step, ISessionItemProps } from '..';
+import { Session, Step, ISessionItemProps } from '../src';
 
 export const Nexter = (props: PropsWithChildren<ISessionItemProps>) => (
   <button type="button" onClick={props.item ? props.item.next : undefined}>

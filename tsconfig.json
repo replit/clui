@@ -3,7 +3,7 @@
     "outDir": "./dist",
     "rootDir": "./src/",
     "esModuleInterop": true,
-    "jsx": "preserve",
+    "jsx": "react",
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5",
