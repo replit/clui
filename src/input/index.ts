@@ -1,2 +1,10 @@
 export { inputState, IInputState } from './state';
-export { ICommand, IArg, ISuggestion, IRunOptions } from './types';
+export {
+  ICommand,
+  ICommandArgs,
+  IArg,
+  ArgType,
+  ArgTypeDef,
+  ISuggestion,
+  IRunOptions,
+} from './types';

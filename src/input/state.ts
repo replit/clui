@@ -1,4 +1,4 @@
-import { ICommand, IArg, IResult, Args } from './types';
+import { ICommand, IArg, IResult } from './types';
 
 import { parse } from './parser';
 import { getCmdContext, getNode, getArgs, getCommands } from './util';
@@ -88,15 +88,20 @@ const argsToSuggestions = ({
     return acc;
   }, []);
 
-const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Args }) =>
+const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Record<string, string | true> }) =>
   Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
+    const value = args[key];
+
     if (cmd.args && cmd.args[key] && cmd.args[key].type) {
       const argType = cmd.args[key].type;
-      if (!(argType !== Boolean && typeof args[key] === 'boolean')) {
-        acc[key] = cmd.args[key].type(args[key]);
+
+      if (argType === Boolean && value === true) {
+        acc[key] = value;
+      } else if (value !== true && argType && argType !== Boolean) {
+        acc[key] = argType(value);
       }
     } else {
-      acc[key] = args[key];
+      acc[key] = value;
     }
 
     return acc;

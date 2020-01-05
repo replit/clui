@@ -1,4 +1,4 @@
-import { IResult, INode, Args, ICommand } from './types';
+import { IResult, INode, ICommand } from './types';
 
 export const getCommands = ({ result }: IResult): Array<string> =>
   result.value.reduce((acc: Array<string>, item: INode) => {
@@ -18,10 +18,10 @@ const isArgNode = (node: INode) => argNodeTypes.includes(node.type);
 
 const flagToKey = (str: string) => str.replace(/^-?(-)/, '');
 
-export const getArgs = ({ result }: IResult): Args => {
+export const getArgs = ({ result }: IResult) => {
   const argNodes = result.value.filter(isArgNode);
 
-  return argNodes.reduce((acc: Args, node: INode, index: number) => {
+  return argNodes.reduce((acc: Record<string, string | true>, node: INode, index: number) => {
     if (typeof node.value === 'string' && node.type === 'ARG_KEY') {
       acc[flagToKey(node.value)] = true;
 

@@ -6,26 +6,33 @@ export interface ISuggestion {
   cursorTarget: number;
 }
 
+export type ArgTypeDef = BooleanConstructor | StringConstructor | NumberConstructor;
+export type ArgType = boolean | string | number;
+
 export interface IArg {
   name?: string;
   description?: string;
   options?: Array<string>;
-  type?: any;
+  type?: ArgTypeDef;
   required?: true;
+}
+
+export interface ICommandArgs {
+  [key: string]: IArg;
 }
 
 export interface IRunOptions<O = any> {
   commands: Array<string>;
-  args?: Record<string, boolean | string | number>;
+  args?: Record<string, ArgType>;
   options?: O;
 }
 
 export interface ICommand<O = any, R = any> {
   name?: string;
   description?: string;
-  args?: Record<string, IArg>;
+  args?: ICommandArgs;
   commands?: Record<string, ICommand>;
-  run?: (options?: O) => R;
+  run?: (ro: IRunOptions<O>) => R;
 }
 
 // AST Types
@@ -56,5 +63,3 @@ export interface IResult {
     source: string;
   };
 }
-
-export type Args = Record<string, string | boolean>;
