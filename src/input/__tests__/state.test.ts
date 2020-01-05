@@ -43,13 +43,38 @@ describe('run', () => {
 
   it('calls matching function with args', () => {
     const run = jest.fn();
-    const input = inputState({ user: { run } });
+    const input = inputState({ user: { commands: { addRole: { run } } } });
 
     input.update({ value: 'user addRole --force --id 1 --role mod' }).run();
     expect(run).toHaveBeenCalledTimes(1);
     expect(run).toHaveBeenCalledWith({
       commands: ['user', 'addRole'],
       args: { force: true, role: 'mod', id: '1' },
+    });
+  });
+
+  it('calls matching function with parsed args', () => {
+    const run = jest.fn();
+    const input = inputState({
+      user: {
+        commands: {
+          addRole: {
+            args: {
+              id: { type: Number },
+              role: { type: String },
+              force: { type: Boolean },
+            },
+            run,
+          },
+        },
+      },
+    });
+
+    input.update({ value: 'user addRole --force --id 1 --role mod' }).run();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledWith({
+      commands: ['user', 'addRole'],
+      args: { force: true, role: 'mod', id: 1 },
     });
   });
 
@@ -78,16 +103,23 @@ describe('runnable', () => {
 });
 
 describe('exhausted', () => {
-  const run = jest.fn();
   const input = inputState({
     user: {
-      run,
       commands: {
         addRole: {
-          run,
+          args: {
+            id: {
+              type: String,
+            },
+            force: {
+              type: Boolean,
+            },
+          },
+        },
+        remove: {
           args: {
             force: {
-              description: 'force',
+              type: Boolean,
             },
           },
         },
@@ -96,10 +128,17 @@ describe('exhausted', () => {
   });
 
   it('returns true when no other options can be submitted', () => {
-    expect(input.update({ value: 'user addRole --force' }).exhausted).toBe(true);
+    expect(input.update({ value: 'user remove --force' }).exhausted).toBe(true);
   });
 
-  ['u', 'user', 'user addRole', 'user addRolw --for'].forEach((value) => {
+  [
+    'u',
+    'user',
+    'user addRole',
+    'user addRole --force --id',
+    'user addRole --id 1 --',
+    'user remove --for',
+  ].forEach((value) => {
     it(`returns false when no other options can be submitted: ${value}`, () => {
       expect(input.update({ value }).exhausted).toBe(false);
     });

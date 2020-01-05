@@ -1,11 +1,13 @@
 import { useReducer, useMemo, useCallback } from 'react';
-import { ISuggestion, ICommand } from './types';
+import { ICommand } from './types';
 import { inputState, IInputState } from './state';
 
-interface IState {
-  value: string;
-  index: number;
-  suggestions: Array<ISuggestion>;
+interface IState extends Omit<IInputState, 'update'> {
+  // value: string;
+  // index: number;
+  // runnable: boolean;
+  // exhausted: boolean;
+  // suggestions: Array<ISuggestion>;
   input: IInputState;
 }
 
@@ -22,7 +24,10 @@ const reducer = (state: IState, action: Action) => {
       return {
         ...state,
         ...action.updates,
+        runnable: state.input.runnable,
+        exhausted: state.input.exhausted,
         suggestions: state.input.suggestions,
+        run: state.input.run,
       };
     default:
       return state;
@@ -36,7 +41,7 @@ interface IUpdates {
 
 const useInputState = (
   cmds: Record<string, ICommand>,
-): [Omit<IState, 'input'>, (updates: Action['updates']) => void] => {
+): [Omit<IState, 'input' | 'update'>, (updates: Action['updates']) => void] => {
   const input = useMemo(() => inputState(cmds), [cmds]);
 
   const [state, dispatch] = useReducer(reducer, {
@@ -44,6 +49,8 @@ const useInputState = (
     index: 0,
     input,
     suggestions: input.suggestions,
+    runnable: input.runnable,
+    exhausted: input.exhausted,
   });
 
   const update = useCallback((updates: IUpdates) => dispatch({ type: 'UPDATE', updates }), [
@@ -55,6 +62,9 @@ const useInputState = (
       value: state.value,
       index: state.index,
       suggestions: state.suggestions,
+      runnable: state.runnable,
+      exhausted: state.exhausted,
+      run: state.run,
     },
     update,
   ];

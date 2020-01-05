@@ -10,18 +10,22 @@ export interface IArg {
   name?: string;
   description?: string;
   options?: Array<string>;
+  type?: any;
+  required?: true;
 }
 
-export interface ICommand<P = any> {
+export interface IRunOptions<O = any> {
+  commands: Array<string>;
+  args?: Record<string, boolean | string | number>;
+  options?: O;
+}
+
+export interface ICommand<O = any, R = any> {
   name?: string;
   description?: string;
   args?: Record<string, IArg>;
   commands?: Record<string, ICommand>;
-  run?: (opts: {
-    commands: Array<string>;
-    args?: Record<string, boolean | string>;
-    options?: P;
-  }) => any;
+  run?: (options?: O) => R;
 }
 
 // AST Types

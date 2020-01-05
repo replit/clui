@@ -2,6 +2,31 @@ import { inputState } from '../index';
 import cmds from './cmds';
 
 describe('suggestions', () => {
+  // it('s', () => {
+  // const input = inputState({
+  // user: {
+  // commands: {
+  // view: {
+  // commands: {
+  // info: {},
+  // },
+  // },
+  // verify: {
+  // commands: {
+  // all: {},
+  // },
+  // },
+  // },
+  // },
+  // });
+
+  // const prefix = 'user v';
+  // const suffix = 'iew info';
+
+  // input.update({ value: prefix + suffix, index: prefix.length });
+
+  // });
+
   it('suggests top level commands with no value', () => {
     const input = inputState(cmds);
 
@@ -9,13 +34,11 @@ describe('suggestions', () => {
       {
         value: 'user',
         inputValue: 'user',
-        description: 'user description',
         cursorTarget: 4,
       },
       {
         value: 'version',
         inputValue: 'version',
-        description: 'version description',
         cursorTarget: 7,
       },
     ]);
@@ -28,7 +51,6 @@ describe('suggestions', () => {
       {
         value: 'user',
         inputValue: 'user',
-        description: 'user description',
         cursorTarget: 4,
       },
     ]);
@@ -47,19 +69,16 @@ describe('suggestions', () => {
       {
         value: 'addRole',
         inputValue: 'user addRole',
-        description: 'adds role',
         cursorTarget: 12,
       },
       {
         value: 'removeRole',
         inputValue: 'user removeRole',
-        description: 'removes role',
         cursorTarget: 15,
       },
       {
         value: '--report',
         inputValue: 'user --report',
-        description: 'report user',
         cursorTarget: 13,
       },
     ]);
@@ -77,7 +96,6 @@ describe('suggestions', () => {
         {
           value: 'addRole',
           inputValue,
-          description: 'adds role',
           cursorTarget: 12,
         },
       ]);
@@ -91,19 +109,16 @@ describe('suggestions', () => {
       {
         value: 'addRole',
         inputValue: 'user addRole --role',
-        description: 'adds role',
         cursorTarget: 12,
       },
       {
         value: 'removeRole',
         inputValue: 'user removeRole --role',
-        description: 'removes role',
         cursorTarget: 15,
       },
       {
         value: '--report',
         inputValue: 'user --report --role',
-        description: 'report user',
         cursorTarget: 13,
       },
     ]);
@@ -116,19 +131,16 @@ describe('suggestions', () => {
       {
         value: 'addRole',
         inputValue: 'user addRole',
-        description: 'adds role',
         cursorTarget: 12,
       },
       {
         value: 'removeRole',
         inputValue: 'user removeRole',
-        description: 'removes role',
         cursorTarget: 15,
       },
       {
         value: '--report',
         inputValue: 'user --report',
-        description: 'report user',
         cursorTarget: 13,
       },
     ]);
@@ -149,13 +161,11 @@ describe('suggestions', () => {
         {
           value: '--role',
           inputValue: 'user addRole --role',
-          description: 'the role',
           cursorTarget: 19,
         },
         {
           value: '--user',
           inputValue: 'user addRole --user',
-          description: 'the user id',
           cursorTarget: 19,
         },
       ]);
@@ -175,7 +185,6 @@ describe('suggestions', () => {
         {
           value: '--role',
           inputValue: 'user addRole --user --role',
-          description: 'the role',
           cursorTarget: 26,
         },
       ]);

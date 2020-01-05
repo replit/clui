@@ -1,69 +1,13 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Downshift from 'downshift';
-import { ICommand, ISuggestion } from '../src/input/types';
 
-import { useInputState } from '../src';
+import { useInputState, ISuggestion, Session, ISessionItemProps } from '../src';
+import commands from './commands';
 
-// const useAfterUpdate = () => {
-// const after = React.useRef<() => void | null>(null);
-
-// React.useLayoutEffect(() => {
-// if (after.current) {
-// after.current();
-// after.current = null;
-// }
-// });
-
-// const runAtfer = (fn: () => void) => {
-// after.current = fn;
-// };
-
-// return runAtfer;
-// };
-
-const addRoleCmd: ICommand = {
-  name: 'add-role',
-  description: 'Add role to user',
-  args: {
-    user: { name: 'user', description: 'username, id, or email' },
-    role: { name: 'role', description: 'the role', options: ['admin', 'moderator'] },
-  },
-  run: (props) => (
-    <pre>
-      <code>{JSON.stringify(props, null, 2)}</code>
-    </pre>
-  ),
-};
-
-const removeRoleCmd: ICommand = {
-  name: 'remove-role',
-  description: 'Remove role from user',
-  args: {
-    user: { name: 'user', description: 'username, id, or email' },
-    role: { name: 'role', description: 'the role', options: ['admin', 'moderator'] },
-  },
-  run: (props) => (
-    <pre>
-      <code>{JSON.stringify(props, null, 2)}</code>
-    </pre>
-  ),
-};
-
-const userCmd: ICommand = {
-  name: 'user',
-  description: 'User commands',
-  args: { help: { name: 'help', description: 'Show help' } },
-  run: (props) => (
-    <pre>
-      <code>{JSON.stringify(props, null, 2)}</code>
-    </pre>
-  ),
-  commands: { addRoleCmd, removeRoleCmd },
-};
-
-const Prompt = () => {
-  const cmds: Record<string, ICommand> = { user: userCmd, post: userCmd };
-  const [state, update] = useInputState(cmds);
+const Prompt = (props: ISessionItemProps) => {
+  const input = useRef<HTMLInputElement>(null);
+  const [state, update] = useInputState(commands);
+  const [selection, setSelection] = React.useState<ISuggestion>(null);
 
   const onKeyUp = React.useCallback(
     (e) => {
@@ -75,16 +19,48 @@ const Prompt = () => {
     [state.index],
   );
 
+  const active = React.useMemo(() => {
+    if (!props.item) {
+      return false;
+    }
+
+    return props.item.index === props.item.session.currentIndex;
+  }, [props.item]);
+
+  const run = React.useCallback(() => {
+    if (!active || !props.item || !state.run) {
+      return;
+    }
+
+    props.item.insertAfter(state.run(), <Prompt {...props} />).next();
+  }, [state.run, props.item, active]);
+
+  React.useEffect(() => {
+    if (active && selection && state.exhausted) {
+      run();
+    }
+  }, [selection, run, state.exhausted]);
+
+  React.useEffect(() => {
+    if (selection && input.current) {
+      const index = selection.cursorTarget + 1;
+      input.current.setSelectionRange(index, index);
+    }
+  }, [selection, input]);
+
   return (
     <Downshift
+      isOpen
       inputValue={state.value}
       initialHighlightedIndex={0}
       defaultHighlightedIndex={0}
-      onChange={(selection: ISuggestion) => {
-        if (selection) {
-          update({ value: `${selection.inputValue} `, index: selection.cursorTarget + 1 });
+      onChange={(suggestion: ISuggestion) => {
+        if (!suggestion) {
+          return;
         }
-        // TODO: update cursor position to cursorTarget
+
+        update({ value: `${suggestion.inputValue} `, index: suggestion.cursorTarget + 1 });
+        setSelection(suggestion);
       }}
       itemToString={() => state.value}
     >
@@ -93,15 +69,19 @@ const Prompt = () => {
           <div className="input-container">
             <input
               {...ds.getInputProps({
+                ref: input,
                 autoFocus: true,
                 spellCheck: false,
                 placeholder: 'type a command',
-                onFocus: () => {
-                  ds.openMenu();
-                },
                 onKeyUp,
                 onChange: ({ target }) => {
                   update({ value: target.value, index: target.selectionStart });
+                },
+                onKeyDown: (event) => {
+                  setSelection(null);
+                  if (event.key === 'Enter' && !state.suggestions.length && state.runnable) {
+                    run();
+                  }
                 },
               })}
             />
@@ -127,17 +107,10 @@ const Prompt = () => {
               </div>
             </div>
           </div>
-          {!true && (
-            <>
-              <pre style={{ fontSize: 10 }}>
-                <code>{JSON.stringify({ suggestions: state.suggestions }, null, 2)}</code>
-              </pre>
-              <pre>
-                <br />
-                <br />
-                <code>{JSON.stringify(state, null, 2)}</code>
-              </pre>
-            </>
+          {true && (
+            <pre style={{ fontSize: 10 }}>
+              <code>{JSON.stringify({ state }, null, 2)}</code>
+            </pre>
           )}
           <style jsx>
             {`
@@ -172,12 +145,17 @@ const Prompt = () => {
               .menu-offset {
                 flex: 0 0 auto;
                 white-space: pre;
+                visibility: hidden;
               }
 
               ul {
                 padding: 0;
                 list-style: none;
                 background-color: rgba(255, 255, 255, 0.2);
+              }
+
+              li {
+                white-space: nowrap;
               }
 
               .highlighted {
@@ -193,7 +171,9 @@ const Prompt = () => {
 
 const Example = () => (
   <div>
-    <Prompt />
+    <Session>
+      <Prompt />
+    </Session>
     <style jsx>
       {`
         div {
