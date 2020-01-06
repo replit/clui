@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A CLI with UI",
   "main": "dist/index.js",
   "files": [
