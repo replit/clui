@@ -1,6 +1,6 @@
 import { parse } from '../parser';
 import { getCmdContext, getCommands, getArgs, getNode } from '../util';
-import { Args, ILocation, INode, ICommand } from '../types';
+import { ILocation, INode, ICommand } from '../types';
 import cmds from './cmds';
 
 describe('index', () => {
@@ -21,7 +21,7 @@ describe('index', () => {
   });
 
   describe('getArgs', () => {
-    const tests: Array<[string, Args]> = [
+    const tests: Array<[string, Record<string, string | true>]> = [
       ['add', {}],
       ['user add', {}],
       ['user add -r', { r: true }],
