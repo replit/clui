@@ -1,12 +1,17 @@
 import React, { useRef } from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import Downshift from 'downshift';
 
 import { useInputState, ISuggestion, Session, ISessionItemProps } from '../src';
 import commands from './commands';
 
-const Prompt = (props: ISessionItemProps) => {
+interface IProps extends ISessionItemProps {
+  value?: string;
+}
+
+const Prompt = (props: IProps) => {
   const input = useRef<HTMLInputElement>(null);
-  const [state, update] = useInputState(commands);
+  const [state, update] = useInputState({ commands, value: props.value });
   const [selection, setSelection] = React.useState<ISuggestion>(null);
 
   const onKeyUp = React.useCallback(
@@ -19,27 +24,19 @@ const Prompt = (props: ISessionItemProps) => {
     [state.index],
   );
 
-  const active = React.useMemo(() => {
-    if (!props.item) {
-      return false;
-    }
-
-    return props.item.index === props.item.session.currentIndex;
-  }, [props.item]);
-
   const run = React.useCallback(() => {
-    if (!active || !props.item || !state.run) {
+    if (!props.item || !state.run) {
       return;
     }
 
-    props.item.insertAfter(state.run(), <Prompt {...props} />).next();
-  }, [state.run, props.item, active]);
+    props.item.insertAfter(state.run(), <Prompt value="" {...props} />).next();
+  }, [state.run, props.item]);
 
   React.useEffect(() => {
-    if (active && selection && state.exhausted) {
+    if (selection && state.exhausted) {
       run();
     }
-  }, [selection, run, state.exhausted]);
+  }, [selection]);
 
   React.useEffect(() => {
     if (selection && input.current) {

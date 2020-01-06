@@ -57,4 +57,29 @@ describe('session.insertAfter(<element>)', () => {
     expect(item.session).toHaveLength(2);
     expect(wrapper.find('.b')).toHaveLength(1);
   });
+
+  it('inserts <element> after non-active item and advances currentIndex', () => {
+    const wrapper = mount(
+      <Session initialIndex={1}>
+        <i className="a" />
+        <i className="c" />
+      </Session>,
+    );
+
+    let item = wrapper.find('.a').prop('item') as ISessionItem;
+    expect(item.session.currentIndex).toEqual(1);
+    expect(item.session).toHaveLength(2);
+
+    act(() => {
+      item.insertAfter(<i className="b" />);
+    });
+    wrapper.update();
+    item = wrapper.find('.a').prop('item') as ISessionItem;
+
+    expect(item.session).toHaveLength(3);
+    expect(item.session.currentIndex).toEqual(2);
+    expect(wrapper.find('.a')).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(1);
+    expect(wrapper.find('.c')).toHaveLength(1);
+  });
 });

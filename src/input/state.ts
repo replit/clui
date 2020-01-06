@@ -1,4 +1,4 @@
-import { ICommand, IArg, IResult } from './types';
+import { ICommand, IResult } from './types';
 
 import { parse } from './parser';
 import { getCmdContext, getNode, getArgs, getCommands } from './util';
@@ -10,7 +10,7 @@ export interface IInputState<O = any> {
   update(updates: { index?: number; value?: string }): IInputState;
   runnable: boolean;
   exhausted: boolean;
-  run?: (opts?: { commands: Array<string>; args?: Record<string, IArg>; options?: O }) => any;
+  run: (options?: O) => any;
 }
 
 export interface ISuggestion {

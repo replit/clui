@@ -195,12 +195,20 @@ function Session<C = any>(props: IProps<C>) {
       const ret = {
         next: () => {
           dispatch({
-            type: 'SET_INDEX',
-            index: index + indexOffset + 1,
+            type: 'NEXT',
+            source: index + indexOffset,
           });
 
           return ret;
         },
+        // next: () => {
+        // dispatch({
+        // type: 'SET_INDEX',
+        // index: index + indexOffset + 1,
+        // });
+
+        // return ret;
+        // },
         previous: () => {
           dispatch({
             type: 'SET_INDEX',

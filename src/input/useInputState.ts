@@ -1,14 +1,10 @@
 import { useReducer, useMemo, useCallback } from 'react';
-import { ICommand } from './types';
+import { ICommands } from './types';
 import { inputState, IInputState } from './state';
 
-interface IState extends Omit<IInputState, 'update'> {
-  // value: string;
-  // index: number;
-  // runnable: boolean;
-  // exhausted: boolean;
-  // suggestions: Array<ISuggestion>;
+interface IState extends Omit<IInputState, 'update' | 'run'> {
   input: IInputState;
+  run?: IInputState['run'];
 }
 
 type Action = {
@@ -39,15 +35,22 @@ interface IUpdates {
   value?: string;
 }
 
+interface IOptions {
+  commands: ICommands;
+  value?: string;
+  index?: number;
+}
+
 const useInputState = (
-  cmds: Record<string, ICommand>,
+  options: IOptions,
 ): [Omit<IState, 'input' | 'update'>, (updates: Action['updates']) => void] => {
-  const input = useMemo(() => inputState(cmds), [cmds]);
+  const input = useMemo(() => inputState(options.commands), [options.commands]);
+  const value = options.value || '';
 
   const [state, dispatch] = useReducer(reducer, {
-    value: '',
-    index: 0,
+    value,
     input,
+    index: options.index !== undefined ? options.index : value.length,
     suggestions: input.suggestions,
     runnable: input.runnable,
     exhausted: input.exhausted,

@@ -119,4 +119,30 @@ describe('item.next()', () => {
     wrapper.update();
     expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
   });
+
+  it('does not change currentIndex if next is called on non-active item', () => {
+    const wrapper = mount(
+      <Session initialIndex={1}>
+        <i className="a" />
+        <i className="c" />
+      </Session>,
+    );
+
+    let item = wrapper.find('.a').prop('item') as ISessionItem;
+    expect(wrapper.find('.c')).toHaveLength(1);
+    expect(item.session).toHaveLength(2);
+    expect(item.session.currentIndex).toEqual(1);
+
+    act(() => {
+      item.insertAfter(<i className="b" />).next();
+    });
+    wrapper.update();
+    item = wrapper.find('.a').prop('item') as ISessionItem;
+
+    expect(item.session).toHaveLength(3);
+    expect(item.session.currentIndex).toEqual(2);
+    expect(wrapper.find('.a')).toHaveLength(1);
+    expect(wrapper.find('.b')).toHaveLength(1);
+    expect(wrapper.find('.c')).toHaveLength(1);
+  });
 });

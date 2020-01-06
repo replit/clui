@@ -17,6 +17,10 @@ export interface IArg {
   required?: true;
 }
 
+export interface ICommands {
+  [key: string]: ICommand;
+}
+
 export interface ICommandArgs {
   [key: string]: IArg;
 }

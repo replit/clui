@@ -28,6 +28,10 @@ export type Action =
       index: number;
     }
   | {
+      type: 'NEXT';
+      source: number;
+    }
+  | {
       type: 'INSERT';
       index: number;
       nodes: Elements;
@@ -80,6 +84,14 @@ const reducer = (state: IState, action: Action) => {
       return replace(state, action.index, action.node);
     case 'REMOVE':
       return remove(state, action.index);
+    case 'NEXT':
+      return {
+        ...state,
+        currentIndex:
+          action.source === state.currentIndex
+            ? Math.max(Math.min(action.source + 1, state.nodes.length - 1), 0)
+            : state.currentIndex,
+      };
     case 'SET_INDEX':
       return {
         ...state,
@@ -108,6 +120,10 @@ const reducer = (state: IState, action: Action) => {
     case 'INSERT_AFTER':
       return {
         ...state,
+        currentIndex:
+          action.index < state.currentIndex
+            ? state.currentIndex + action.nodes.length
+            : state.currentIndex,
         nodes: [
           ...state.nodes.slice(0, action.index + 1),
           ...action.nodes,
