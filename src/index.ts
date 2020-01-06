@@ -1,5 +1,6 @@
-export { Session, Step, Do, ISession, ISessionItem, ISessionItemProps } from './session';
-export {
+import { Session, Step, Do, ISession, ISessionItem, ISessionItemProps } from './session';
+import useInputState from './input/useInputState';
+import {
   ICommand,
   ICommandArgs,
   IArg,
@@ -8,4 +9,22 @@ export {
   ISuggestion,
   IRunOptions,
 } from './input';
-export { default as useInputState } from './input/useInputState';
+
+export interface ICluiItemProps extends ISessionItemProps, IRunOptions {}
+
+export {
+  Session,
+  Step,
+  Do,
+  ISession,
+  ISessionItem,
+  ISessionItemProps,
+  ICommand,
+  ICommandArgs,
+  IArg,
+  ArgType,
+  ArgTypeDef,
+  ISuggestion,
+  IRunOptions,
+  useInputState,
+};

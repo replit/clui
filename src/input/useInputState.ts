@@ -7,24 +7,31 @@ interface IState extends Omit<IInputState, 'update' | 'run'> {
   run?: IInputState['run'];
 }
 
+type Updates = Partial<{ value: string; index: number }>;
+
 type Action = {
   type: 'UPDATE';
-  updates: Partial<{ value: string; index: number }>;
+  updates: Updates;
+};
+
+const handleUpdate = (state: IState, updates: Updates) => {
+  state.input.update(updates);
+
+  return {
+    ...state,
+    ...updates,
+    runnable: state.input.runnable,
+    exhausted: state.input.exhausted,
+    suggestions: state.input.suggestions,
+    run: state.input.run,
+    nodeStart: state.input.nodeStart,
+  };
 };
 
 const reducer = (state: IState, action: Action) => {
   switch (action.type) {
     case 'UPDATE':
-      state.input.update(action.updates);
-
-      return {
-        ...state,
-        ...action.updates,
-        runnable: state.input.runnable,
-        exhausted: state.input.exhausted,
-        suggestions: state.input.suggestions,
-        run: state.input.run,
-      };
+      return handleUpdate(state, action.updates);
     default:
       return state;
   }
@@ -68,6 +75,7 @@ const useInputState = (
       runnable: state.runnable,
       exhausted: state.exhausted,
       run: state.run,
+      nodeStart: state.nodeStart,
     },
     update,
   ];

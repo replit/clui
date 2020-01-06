@@ -2,31 +2,6 @@ import { inputState } from '../index';
 import cmds from './cmds';
 
 describe('suggestions', () => {
-  // it('s', () => {
-  // const input = inputState({
-  // user: {
-  // commands: {
-  // view: {
-  // commands: {
-  // info: {},
-  // },
-  // },
-  // verify: {
-  // commands: {
-  // all: {},
-  // },
-  // },
-  // },
-  // },
-  // });
-
-  // const prefix = 'user v';
-  // const suffix = 'iew info';
-
-  // input.update({ value: prefix + suffix, index: prefix.length });
-
-  // });
-
   it('suggests top level commands with no value', () => {
     const input = inputState(cmds);
 
@@ -46,6 +21,18 @@ describe('suggestions', () => {
 
   it('suggests commands filtered by value', () => {
     const input = inputState(cmds).update({ value: 'us', index: 2 });
+
+    expect(input.suggestions).toEqual([
+      {
+        value: 'user',
+        inputValue: 'user',
+        cursorTarget: 4,
+      },
+    ]);
+  });
+
+  it('suggests commands filtered by value when index is 0', () => {
+    const input = inputState(cmds).update({ value: 'us', index: 0 });
 
     expect(input.suggestions).toEqual([
       {

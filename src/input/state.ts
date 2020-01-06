@@ -10,6 +10,7 @@ export interface IInputState<O = any> {
   update(updates: { index?: number; value?: string }): IInputState;
   runnable: boolean;
   exhausted: boolean;
+  nodeStart?: number;
   run: (options?: O) => any;
 }
 
@@ -184,6 +185,26 @@ export const inputState = (cmds: Cmds) => {
       return !remaining.length;
     },
 
+    get nodeStart() {
+      if (!ast) {
+        return undefined;
+      }
+
+      const currentNode = getNode(ast.result.value, index);
+
+      if (currentNode && currentNode.type !== 'WHITESPACE') {
+        return currentNode.start;
+      }
+
+      const prevNode = getNode(ast.result.value, index - 1);
+
+      if (prevNode) {
+        return prevNode.type === 'WHITESPACE' ? index : prevNode.start;
+      }
+
+      return undefined;
+    },
+
     get suggestions() {
       if (!ast || !value) {
         return cmdsToSuggestions({ cmds, filter: value });
@@ -193,6 +214,14 @@ export const inputState = (cmds: Cmds) => {
       const prevNode = getNode(ast.result.value, index - 1);
 
       if (!prevNode) {
+        const currentNode = getNode(ast.result.value, index);
+
+        if (currentNode) {
+          const filter = typeof currentNode.value === 'string' ? currentNode.value : undefined;
+
+          return cmdsToSuggestions({ cmds, filter });
+        }
+
         return [];
       }
 

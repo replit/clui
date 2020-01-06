@@ -1,6 +1,5 @@
 export default {
   typescript: true,
-  // ignore: [],
   themeConfig: {
     fonts: {
       heading: '"IBM Plex Sans", sans-serif',
