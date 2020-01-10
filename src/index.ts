@@ -2,6 +2,7 @@ import { Session, Step, Do, ISession, ISessionItem, ISessionItemProps } from './
 import useInputState from './input/useInputState';
 import {
   ICommand,
+  ICommands,
   ICommandArgs,
   IArg,
   ArgType,
@@ -19,6 +20,7 @@ export {
   ISession,
   ISessionItem,
   ISessionItemProps,
+  ICommands,
   ICommand,
   ICommandArgs,
   IArg,

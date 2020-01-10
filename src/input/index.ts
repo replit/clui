@@ -1,5 +1,6 @@
 export { inputState, IInputState } from './state';
 export {
+  ICommands,
   ICommand,
   ICommandArgs,
   IArg,
