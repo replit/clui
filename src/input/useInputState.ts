@@ -1,84 +1,86 @@
-import { useReducer, useMemo, useCallback } from 'react';
-import { ICommands } from './types';
-import { inputState, IInputState } from './state';
-
-interface IState extends Omit<IInputState, 'update' | 'run'> {
-  input: IInputState;
-  run?: IInputState['run'];
-}
+import { useReducer, useCallback, useRef, useEffect } from 'react';
+import { ICommand, ISuggestion } from './types';
+import { inputState, IInputState } from './asyncState';
 
 type Updates = Partial<{ value: string; index: number }>;
 
 type Action = {
   type: 'UPDATE';
-  updates: Updates;
+  updates: Partial<IRState>;
 };
 
-const handleUpdate = (state: IState, updates: Updates) => {
-  state.input.update(updates);
+interface IOptions {
+  command: ICommand;
+  value?: string;
+  index?: number;
+}
 
-  return {
-    ...state,
-    ...updates,
-    runnable: state.input.runnable,
-    exhausted: state.input.exhausted,
-    suggestions: state.input.suggestions,
-    run: state.input.run,
-    nodeStart: state.input.nodeStart,
-  };
-};
+interface IState extends Omit<IInputState, 'update'> {
+  options: Array<ISuggestion>;
+  loading: boolean;
+}
 
-const reducer = (state: IState, action: Action) => {
+type Updater = (updates: Updates) => void;
+
+interface IRState extends IState {
+  loading: boolean;
+  options: Array<ISuggestion>;
+}
+
+const reducer = (state: IRState, action: Action) => {
   switch (action.type) {
     case 'UPDATE':
-      return handleUpdate(state, action.updates);
+      return {
+        ...state,
+        ...action.updates,
+      };
     default:
       return state;
   }
 };
 
-interface IUpdates {
-  index?: number;
-  value?: string;
-}
+const toState = (input: IInputState): Omit<IState, 'options' | 'loading'> => ({
+  value: input.value,
+  index: input.index,
+  runnable: input.runnable,
+  exhausted: input.exhausted,
+  nodeStart: input.nodeStart,
+  run: input.run,
+});
 
-interface IOptions {
-  commands: ICommands;
-  value?: string;
-  index?: number;
-}
-
-const useInputState = (
-  options: IOptions,
-): [Omit<IState, 'input' | 'update'>, (updates: Action['updates']) => void] => {
-  const input = useMemo(() => inputState(options.commands), [options.commands]);
-  const value = options.value || '';
-
+const useInputState = (options: IOptions): [IState, Updater] => {
+  const input = useRef<IInputState | null>(null);
   const [state, dispatch] = useReducer(reducer, {
-    value,
-    input,
-    index: options.index !== undefined ? options.index : value.length,
-    suggestions: input.suggestions,
-    runnable: input.runnable,
-    exhausted: input.exhausted,
+    value: options.value || '',
+    index: options.index || 0,
+    loading: false,
+    options: [],
+    runnable: false,
+    exhausted: false,
   });
 
-  const update = useCallback((updates: IUpdates) => dispatch({ type: 'UPDATE', updates }), [
-    dispatch,
-  ]);
+  useEffect(() => {
+    input.current = inputState({
+      command: options.command,
+      value: options.value,
+      index: options.index,
+      onOptions: (updates) => {
+        dispatch({ type: 'UPDATE', updates });
+      },
+    });
+  }, [dispatch, options.index, options.value, options.command]);
 
-  return [
-    {
-      value: state.value,
-      index: state.index,
-      suggestions: state.suggestions,
-      runnable: state.runnable,
-      exhausted: state.exhausted,
-      run: state.run,
-      nodeStart: state.nodeStart,
-    },
-    update,
-  ];
+  const update = useCallback((updates: Updates) => {
+    if (input.current) {
+      input.current.update(updates);
+      dispatch({
+        type: 'UPDATE',
+        updates: toState(input.current),
+      });
+    }
+  }, []);
+
+  return [state, update];
 };
 
 export default useInputState;

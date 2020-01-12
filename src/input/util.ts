@@ -1,10 +1,11 @@
-import { IResult, INode, ICommand } from './types';
+import { IResult, INode, ICommand, IArg } from './types';
 
-export const getCommands = ({ result }: IResult): Array<string> =>
+export const getCommands = ({ result }: IResult, index?: number): Array<string> =>
   result.value.reduce((acc: Array<string>, item: INode) => {
     const isCommand = item.type === 'COMMAND';
+    const atIndex = index !== undefined ? item.end < index : true;
 
-    if (isCommand && typeof item.value === 'string') {
+    if (isCommand && typeof item.value === 'string' && atIndex) {
       return [...acc, item.value];
     }
 
@@ -60,6 +61,50 @@ export const getNode = (nodes: Array<INode>, index: number): INode | undefined =
   return undefined;
 };
 
+export interface ICommandContext {
+  cmd?: ICommand;
+  key?: string;
+  next?: string;
+}
+
+export const getArgContext = ({
+  command,
+  ast,
+  index,
+}: {
+  command: ICommand;
+  ast: IResult;
+  index: number;
+}): IArg | undefined => {
+  if (!command.args) {
+    return undefined;
+  }
+
+  let prevNode = getNode(ast.result.value, index - 1);
+  if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
+    return command.args[prevNode.value.replace(/^-?(-)/, '')];
+  }
+
+  if (prevNode?.type === 'WHITESPACE') {
+    prevNode = getNode(ast.result.value, prevNode.start - 1);
+    if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
+      return command.args[prevNode.value.replace(/^-?(-)/, '')];
+    }
+  }
+
+  if (prevNode?.type === 'ARG_VALUE') {
+    prevNode = getNode(ast.result.value, prevNode.start - 1);
+    if (prevNode?.type === 'WHITESPACE') {
+      prevNode = getNode(ast.result.value, prevNode.start - 1);
+      if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
+        return command.args[prevNode.value.replace(/^-?(-)/, '')];
+      }
+    }
+  }
+
+  return undefined;
+};
+
 export const getCmdContext = ({
   cmds,
   ast,
@@ -68,25 +113,25 @@ export const getCmdContext = ({
   cmds: Record<string, ICommand>;
   ast: IResult;
   index: number;
-}): [ICommand | undefined, string | undefined] => {
-  const commands = ast.result.value
-    .filter((n) => n.type === 'COMMAND' && n.end <= index && typeof n.value === 'string')
-    .map((n) => String(n.value));
+}): ICommandContext => {
+  const commands = getCommands(ast, index);
 
   let match: ICommand | undefined;
-  let next = commands[0];
+  let key: string | undefined;
+  let next: string | undefined = commands[0];
   let ctx = cmds;
 
   while (commands.length) {
     const command = commands.shift();
     if (command && ctx[command]) {
+      key = command;
       match = ctx[command];
-      [next] = commands;
+      next = match.commands ? commands[0] : undefined;
       if (match.commands) {
         ctx = match.commands;
       }
     }
   }
 
-  return [match, next];
+  return { key, cmd: match, next };
 };

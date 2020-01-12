@@ -41,6 +41,20 @@ const commands: Record<string, ICommand> = {
   },
   weather: {
     run: (props) => <Run {...props} />,
+    options: async () =>
+      new Promise((resolve) => {
+        setTimeout(
+          () =>
+            resolve([
+              { value: 'NYC' },
+              { value: 'DEN' },
+              { value: 'SFO' },
+              { value: 'WASH' },
+              { value: 'ORL' },
+            ]),
+          300,
+        );
+      }),
     args: {
       zipcode: {
         type: String,
@@ -50,4 +64,4 @@ const commands: Record<string, ICommand> = {
   },
 };
 
-export default commands;
+export default { commands };

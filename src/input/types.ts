@@ -12,7 +12,8 @@ export type ArgType = boolean | string | number;
 export interface IArg {
   name?: string;
   description?: string;
-  options?: Array<string>;
+  options?: (opts: { value: string }) => Promise<Array<{ value: string }>>;
+  // options?: Array<string>;
   type?: ArgTypeDef;
   required?: true;
 }
@@ -35,6 +36,7 @@ export interface ICommand<O = any, R = any> {
   name?: string;
   description?: string;
   args?: ICommandArgs;
+  options?: (opts: { value: string }) => Promise<Array<{ value: string }>>;
   commands?: Record<string, ICommand>;
   run?: (ro: IRunOptions<O>) => R;
 }

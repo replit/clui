@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import Downshift from 'downshift';
 
 import { useInputState, ISuggestion, Session, ISessionItemProps } from '../src';
-import commands from './commands';
+import command from './command';
 
 interface IProps extends ISessionItemProps {
   value?: string;
@@ -11,7 +11,11 @@ interface IProps extends ISessionItemProps {
 
 const Prompt = (props: IProps) => {
   const input = useRef<HTMLInputElement>(null);
-  const [state, update] = useInputState({ commands, value: props.value });
+  const [state, update] = useInputState({
+    command,
+    value: props.value || '',
+    index: (props.value || '').length,
+  });
   const [selection, setSelection] = React.useState<ISuggestion>(null);
 
   const onKeyUp = React.useCallback(
@@ -76,7 +80,7 @@ const Prompt = (props: IProps) => {
                 },
                 onKeyDown: (event) => {
                   setSelection(null);
-                  if (event.key === 'Enter' && !state.suggestions.length && state.runnable) {
+                  if (event.key === 'Enter' && !state.options.length && state.runnable) {
                     run();
                   }
                 },
@@ -86,8 +90,8 @@ const Prompt = (props: IProps) => {
               <div className="menu">
                 <div className="menu-offset">{state.value.slice(0, state.index)}</div>
                 <ul {...ds.getMenuProps({ style: { listStyle: 'none', margin: 0, padding: 0 } })}>
-                  {state.suggestions.length
-                    ? state.suggestions.map((item, index) => (
+                  {state.options.length
+                    ? state.options.map((item, index) => (
                         <li
                           className={ds.highlightedIndex === index ? 'highlighted' : undefined}
                           {...ds.getItemProps({
@@ -100,6 +104,7 @@ const Prompt = (props: IProps) => {
                         </li>
                       ))
                     : null}
+                  {state.loading ? <li>loading...</li> : null}
                 </ul>
               </div>
             </div>
