@@ -1,43 +1,53 @@
 import { parse } from '../parser';
-import { getCmdContext, getCommands, getArgs, getNode } from '../util';
-import { ILocation, INode, ICommand } from '../types';
-import cmds from './cmds';
+import { commandPath, getArgs, getNode } from '../util';
+import { ILocation, INode } from '../types';
 
-describe('index', () => {
-  describe('getCommands', () => {
-    const tests: Array<[string, Array<string>]> = [
-      ['add', ['add']],
-      ['user add', ['user', 'add']],
-      ['user add role', ['user', 'add', 'role']],
-      ['user add --role', ['user', 'add']],
-      ['user add --role admin', ['user', 'add']],
-    ];
-
-    tests.forEach(([command, expected]) => {
-      it(`gets commands from '${command}'`, () => {
-        expect(getCommands(parse(command))).toEqual(expected);
-      });
+describe('commandPath', () => {
+  ([
+    ['user', undefined, [{ start: 0, end: 4, type: 'COMMAND', value: 'user' }]],
+    ['user', 1, [{ start: 0, end: 1, type: 'COMMAND', value: 'u' }]],
+    ['user', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
+    ['user update', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
+    [
+      'user update',
+      'user up'.length,
+      [
+        { start: 0, end: 4, type: 'COMMAND', value: 'user' },
+        { start: 5, end: 7, type: 'COMMAND', value: 'up' },
+      ],
+    ],
+    [
+      'user update',
+      'user update'.length,
+      [
+        { start: 0, end: 4, type: 'COMMAND', value: 'user' },
+        { start: 5, end: 11, type: 'COMMAND', value: 'update' },
+      ],
+    ],
+  ] as Array<[string, number | undefined, Array<INode>]>).forEach(([input, index, expected]) => {
+    it(`returns path for "${input}"`, () => {
+      expect(commandPath(parse(input), index)).toEqual(expected);
     });
   });
+});
 
-  describe('getArgs', () => {
-    const tests: Array<[string, Record<string, string | true>]> = [
-      ['add', {}],
-      ['user add', {}],
-      ['user add -r', { r: true }],
-      ['user add --r', { r: true }],
-      ['user add -r admin', { r: 'admin' }],
-      ['user add -r "admin"', { r: 'admin' }],
-      ['user add -f -r "admin"', { f: true, r: 'admin' }],
-      ["user add -f -r 'admin'", { f: true, r: 'admin' }],
-      ["user add -f -r 'admin' -p", { f: true, r: 'admin', p: true }],
-      ["user add --f --r 'admin'", { f: true, r: 'admin' }],
-    ];
+describe('getArgs', () => {
+  const tests: Array<[string, Record<string, string | true>]> = [
+    ['add', {}],
+    ['user add', {}],
+    ['user add -r', { r: true }],
+    ['user add --r', { r: true }],
+    ['user add -r admin', { r: 'admin' }],
+    ['user add -r "admin"', { r: 'admin' }],
+    ['user add -f -r "admin"', { f: true, r: 'admin' }],
+    ["user add -f -r 'admin'", { f: true, r: 'admin' }],
+    ["user add -f -r 'admin' -p", { f: true, r: 'admin', p: true }],
+    ["user add --f --r 'admin'", { f: true, r: 'admin' }],
+  ];
 
-    tests.forEach(([command, expected]) => {
-      it(`gets args from '${command}'`, () => {
-        expect(getArgs(parse(command))).toEqual(expected);
-      });
+  tests.forEach(([command, expected]) => {
+    it(`gets args from '${command}'`, () => {
+      expect(getArgs(parse(command))).toEqual(expected);
     });
   });
 
@@ -48,7 +58,7 @@ describe('index', () => {
 
     const nodes = [first, second, third];
 
-    const tests: Array<[number, ILocation | undefined]> = [
+    const table: Array<[number, ILocation | undefined]> = [
       [0, first],
       [2, first],
       [3, second],
@@ -58,110 +68,10 @@ describe('index', () => {
       [12, undefined],
     ];
 
-    tests.forEach(([index, expected]) => {
+    table.forEach(([index, expected]) => {
       it(`gets node at index: ${index}`, () => {
         expect(getNode(nodes, index)).toEqual(expected);
       });
     });
-  });
-});
-
-describe('getCmdContext', () => {
-  it('returns undefined when there is no matching command', () => {
-    const input = 'foo';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      undefined,
-      'foo',
-    ]);
-  });
-
-  it('returns undefined when there is a partially matching command', () => {
-    const input = 'use';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      undefined,
-      'use',
-    ]);
-  });
-
-  it('returns undefined when index is on a partially matching command', () => {
-    const input = 'user';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length - 1 })).toEqual([
-      undefined,
-      undefined,
-    ]);
-  });
-
-  it('returns command when matched', () => {
-    const input = 'user';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      cmds.user,
-      undefined,
-    ]);
-  });
-
-  it('returns command when matched with space', () => {
-    const input = 'user ';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      cmds.user,
-      undefined,
-    ]);
-  });
-
-  it('returns command when matched with space and partial sub command', () => {
-    const input = 'user ad';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      cmds.user,
-      'ad',
-    ]);
-  });
-
-  it('returns command when matched with space and partial sub command and flag', () => {
-    const input = 'user ad --foo';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      cmds.user,
-      'ad',
-    ]);
-  });
-
-  const userCommands = cmds.user.commands as Record<string, ICommand>;
-
-  it('returns sub-command when matched with sub-command', () => {
-    const input = 'user addRole';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      userCommands.addRole,
-      undefined,
-    ]);
-  });
-
-  it('returns sub-command when matched with sub-command and space', () => {
-    const input = 'user addRole ';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      userCommands.addRole,
-      undefined,
-    ]);
-  });
-
-  it('returns sub-command when matched with sub-command and spaces', () => {
-    const input = 'user addRole  ';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      userCommands.addRole,
-      undefined,
-    ]);
-  });
-
-  it('returns sub-command when matched with sub-command, spaces and flag', () => {
-    const input = 'user addRole  --foo';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length })).toEqual([
-      userCommands.addRole,
-      undefined,
-    ]);
-  });
-
-  it('returns command when matched with sub-command but index is at command', () => {
-    const input = 'user addRole';
-    expect(getCmdContext({ cmds, ast: parse(input), index: input.length - 2 })).toEqual([
-      cmds.user,
-      undefined,
-    ]);
   });
 });

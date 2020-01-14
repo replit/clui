@@ -12,7 +12,7 @@ export type ArgType = boolean | string | number;
 export interface IArg {
   name?: string;
   description?: string;
-  options?: (opts: { value: string }) => Promise<Array<{ value: string }>>;
+  options?: (opts?: { value?: string }) => Promise<Array<{ value: string }>>;
   // options?: Array<string>;
   type?: ArgTypeDef;
   required?: true;
@@ -32,12 +32,13 @@ export interface IRunOptions<O = any> {
   options?: O;
 }
 
+type CommandsFn = (opts: { value?: string }) => Promise<ICommands>;
+
 export interface ICommand<O = any, R = any> {
   name?: string;
   description?: string;
   args?: ICommandArgs;
-  options?: (opts: { value: string }) => Promise<Array<{ value: string }>>;
-  commands?: Record<string, ICommand>;
+  commands?: ICommands | CommandsFn;
   run?: (ro: IRunOptions<O>) => R;
 }
 
@@ -56,6 +57,11 @@ export interface ILocation {
 export interface INode extends ILocation {
   type: NodeType;
   value: Array<INode> | string;
+}
+
+export interface IValueNode extends Omit<INode, 'value' | 'type'> {
+  type: 'COMMAND' | 'ARG_KEY' | 'ARG_VALUE' | 'ARG_VALUE_QUOTED' | 'WHITESPACE';
+  value: string;
 }
 
 export interface IResult {

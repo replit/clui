@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useRef, useEffect } from 'react';
-import { ICommand, ISuggestion } from './types';
-import { inputState, IInputState } from './asyncState';
+import { ICommand } from './types';
+import { inputState, IInputStateUpdates } from './asyncState';
 
 type Updates = Partial<{ value: string; index: number }>;
 
@@ -15,16 +15,12 @@ interface IOptions {
   index?: number;
 }
 
-interface IState extends Omit<IInputState, 'update'> {
-  options: Array<ISuggestion>;
-  loading: boolean;
-}
-
 type Updater = (updates: Updates) => void;
 
-interface IRState extends IState {
+interface IRState extends IInputStateUpdates {
+  value: string;
+  index: number;
   loading: boolean;
-  options: Array<ISuggestion>;
 }
 
 const reducer = (state: IRState, action: Action) => {
@@ -39,23 +35,14 @@ const reducer = (state: IRState, action: Action) => {
   }
 };
 
-const toState = (input: IInputState): Omit<IState, 'options' | 'loading'> => ({
-  value: input.value,
-  index: input.index,
-  runnable: input.runnable,
-  exhausted: input.exhausted,
-  nodeStart: input.nodeStart,
-  run: input.run,
-});
+const useInputState = (options: IOptions): [IRState, Updater] => {
+  const input = useRef<Updater | null>(null);
 
-const useInputState = (options: IOptions): [IState, Updater] => {
-  const input = useRef<IInputState | null>(null);
   const [state, dispatch] = useReducer(reducer, {
     value: options.value || '',
     index: options.index || 0,
-    loading: false,
     options: [],
-    runnable: false,
+    loading: false,
     exhausted: false,
   });
 
@@ -64,19 +51,16 @@ const useInputState = (options: IOptions): [IState, Updater] => {
       command: options.command,
       value: options.value,
       index: options.index,
-      onOptions: (updates) => {
-        dispatch({ type: 'UPDATE', updates });
+      onUpdate: (updates) => {
+        dispatch({ type: 'UPDATE', updates: { loading: false, ...updates } });
       },
     });
   }, [dispatch, options.index, options.value, options.command]);
 
   const update = useCallback((updates: Updates) => {
     if (input.current) {
-      input.current.update(updates);
-      dispatch({
-        type: 'UPDATE',
-        updates: toState(input.current),
-      });
+      input.current(updates);
+      dispatch({ type: 'UPDATE', updates: { loading: true, ...updates } });
     }
   }, []);
 

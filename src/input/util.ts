@@ -1,16 +1,26 @@
-import { IResult, INode, ICommand, IArg } from './types';
+import { IResult, INode, IValueNode, ICommand, IArg } from './types';
 
-export const getCommands = ({ result }: IResult, index?: number): Array<string> =>
-  result.value.reduce((acc: Array<string>, item: INode) => {
-    const isCommand = item.type === 'COMMAND';
-    const atIndex = index !== undefined ? item.end < index : true;
+export const commandPath = (ast: IResult, index?: number): Array<IValueNode> => {
+  const nodes: Array<IValueNode> = [];
 
-    if (isCommand && typeof item.value === 'string' && atIndex) {
-      return [...acc, item.value];
+  for (const node of ast.result.value) {
+    if (node.type === 'COMMAND' && typeof node.value === 'string') {
+      if (index === undefined) {
+        nodes.push(node as IValueNode);
+      } else if (node.start <= index) {
+        const end = index < node.end ? index : node.end;
+
+        nodes.push({
+          ...(node as IValueNode),
+          end,
+          value: node.value.slice(0, end - node.start),
+        });
+      }
     }
+  }
 
-    return acc;
-  }, []);
+  return nodes;
+};
 
 const argValueNodeTypes = ['ARG_VALUE', 'ARG_VALUE_QUOTED'];
 const argNodeTypes = ['ARG_KEY', ...argValueNodeTypes];
@@ -62,9 +72,8 @@ export const getNode = (nodes: Array<INode>, index: number): INode | undefined =
 };
 
 export interface ICommandContext {
-  cmd?: ICommand;
+  command: ICommand;
   key?: string;
-  next?: string;
 }
 
 export const getArgContext = ({
@@ -103,35 +112,4 @@ export const getArgContext = ({
   }
 
   return undefined;
-};
-
-export const getCmdContext = ({
-  cmds,
-  ast,
-  index,
-}: {
-  cmds: Record<string, ICommand>;
-  ast: IResult;
-  index: number;
-}): ICommandContext => {
-  const commands = getCommands(ast, index);
-
-  let match: ICommand | undefined;
-  let key: string | undefined;
-  let next: string | undefined = commands[0];
-  let ctx = cmds;
-
-  while (commands.length) {
-    const command = commands.shift();
-    if (command && ctx[command]) {
-      key = command;
-      match = ctx[command];
-      next = match.commands ? commands[0] : undefined;
-      if (match.commands) {
-        ctx = match.commands;
-      }
-    }
-  }
-
-  return { key, cmd: match, next };
 };

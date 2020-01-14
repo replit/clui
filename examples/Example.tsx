@@ -37,10 +37,10 @@ const Prompt = (props: IProps) => {
   }, [state.run, props.item]);
 
   React.useEffect(() => {
-    if (selection && state.exhausted) {
+    if (state.run && state.exhausted) {
       run();
     }
-  }, [selection]);
+  }, [state.run]);
 
   React.useEffect(() => {
     if (selection && input.current) {
@@ -61,7 +61,6 @@ const Prompt = (props: IProps) => {
         }
 
         update({ value: `${suggestion.inputValue} `, index: suggestion.cursorTarget + 1 });
-        setSelection(suggestion);
       }}
       itemToString={() => state.value}
     >
@@ -80,8 +79,10 @@ const Prompt = (props: IProps) => {
                 },
                 onKeyDown: (event) => {
                   setSelection(null);
-                  if (event.key === 'Enter' && !state.options.length && state.runnable) {
-                    run();
+                  if (event.key === 'Enter' && !state.options.length && state.run) {
+                    console.log('handle enter');
+                    // debugger;
+                    // run();
                   }
                 },
               })}

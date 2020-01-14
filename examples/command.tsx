@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ISessionItemProps, ICommand, IRunOptions } from '../src';
+import { ISessionItemProps, ICommand, IRunOptions, ICommands } from '../src';
 
 interface IProps extends ISessionItemProps, IRunOptions {}
 
@@ -17,7 +17,22 @@ const Run = (props: IProps) => {
   );
 };
 
+const makeCommands = (depth: number) => async (__: any) => {
+  const ret: ICommands = {};
+
+  [...Array(depth)].forEach((_, index) => {
+    ret[`depth:${depth}:${index}`] = {
+      commands: makeCommands(depth + 1),
+    };
+  });
+
+  return ret;
+};
+
 const commands: Record<string, ICommand> = {
+  depth: {
+    commands: makeCommands(1),
+  },
   todo: {
     run: (props) => <Run {...props} />,
     commands: {
@@ -40,21 +55,42 @@ const commands: Record<string, ICommand> = {
     },
   },
   weather: {
+    name: 'weather',
     run: (props) => <Run {...props} />,
-    options: async () =>
-      new Promise((resolve) => {
+    commands: async ({ value }: { value: string }) => {
+      if (value && value.startsWith('fo')) {
+        return {
+          foo: {
+            name: 'foo',
+            args: {
+              wat: {},
+            },
+            commands: async ({ value: value2 }) => ({
+              baz: {
+                name: 'baz',
+              },
+              [value2 || 'ss']: {},
+              aaa: {},
+            }),
+          },
+          bar: {
+            name: 'bar',
+          },
+        };
+      }
+
+      return new Promise((resolve) => {
         setTimeout(
           () =>
-            resolve([
-              { value: 'NYC' },
-              { value: 'DEN' },
-              { value: 'SFO' },
-              { value: 'WASH' },
-              { value: 'ORL' },
-            ]),
+            resolve({
+              nyc: {},
+              orl: {},
+              sf: {},
+            }),
           300,
         );
-      }),
+      });
+    },
     args: {
       zipcode: {
         type: String,
