@@ -1,42 +1,71 @@
-import { ICommand, IResult } from './types';
+import { ICommands, ICommand, IOption /* , IArg */, IResult, IArg } from './types';
+import resolveCommands from './resolveCommands';
 
 import { parse } from './parser';
-import { getCmdContext, getNode, getArgs, getCommands } from './util';
+import { getNode, getArgs, commandPath, getArgContext } from './util';
 
-export interface IInputState<O = any> {
-  value: string;
-  index: number;
-  suggestions: Array<ISuggestion>;
-  update(updates: { index?: number; value?: string }): IInputState;
-  runnable: boolean;
-  exhausted: boolean;
+// const DEBUG = true;
+
+// eslint-disable-next-line
+// const debug = (...args: any) => DEBUG && console.log('DEBUG:', ...args);
+
+interface IConfig {
+  onUpdate: (updates: IInputStateUpdates) => void;
+  command: ICommand;
+  value?: string;
+  index?: number;
+}
+
+export interface IInputStateUpdates<D = any, R = any> {
   nodeStart?: number;
-  run: (options?: O) => any;
+  exhausted: boolean;
+  options: Array<IOption>;
+  run?: (opt?: D) => R;
 }
 
-export interface ISuggestion {
-  value: string;
-  inputValue: string;
-  cursorTarget: number;
-  description?: string;
+function valuesToOptions<D extends { value: string }>(options: {
+  values: Array<D>;
+  inputValue?: string;
+  filter?: string;
+  sliceStart?: number;
+  sliceEnd?: number;
+}) {
+  const { values, inputValue, sliceStart, sliceEnd } = options;
+  const filter = options.filter?.trim();
+  // console.log('valuesToOptions', { values, filter, inputValue, sliceStart });
+
+  return values.reduce((acc: Array<IOption>, data) => {
+    const inputValueStart =
+      inputValue && sliceStart !== undefined
+        ? inputValue.slice(0, sliceStart) + data.value
+        : data.value;
+
+    if ((filter && data.value.includes(filter)) || !filter) {
+      acc.push({
+        data,
+        value: data.value,
+        inputValue:
+          inputValueStart +
+          (data.value && sliceEnd !== undefined ? data.value.slice(sliceEnd) : ''),
+        cursorTarget: inputValueStart.length,
+      });
+    }
+
+    return acc;
+  }, []);
 }
 
-type Cmds = Record<string, ICommand>;
-
-const cmdsToSuggestions = ({
-  cmds,
-  filter,
-  value,
-  sliceStart,
-  sliceEnd,
-}: {
-  cmds: Cmds;
+function dataToSuggestions<D>(options: {
+  data: Record<string, D>;
   value?: string;
   filter?: string;
   sliceStart?: number;
   sliceEnd?: number;
-}) =>
-  Object.keys(cmds).reduce((acc: Array<ISuggestion>, key) => {
+}) {
+  const { data, value, sliceStart, sliceEnd } = options;
+  const filter = options.filter?.trim();
+
+  return Object.keys(data).reduce((acc: Array<IOption>, key) => {
     const inputValueStart =
       value && sliceStart !== undefined ? value.slice(0, sliceStart) + key : key;
     const inputValue =
@@ -45,7 +74,7 @@ const cmdsToSuggestions = ({
     if ((filter && key.includes(filter)) || !filter) {
       acc.push({
         value: key,
-        description: cmds[key].description,
+        data: data[key],
         inputValue,
         cursorTarget: inputValueStart.length,
       });
@@ -53,24 +82,24 @@ const cmdsToSuggestions = ({
 
     return acc;
   }, []);
+}
 
-const argsToSuggestions = ({
-  args,
-  filter,
-  exclude,
-  value,
-  sliceStart,
-  sliceEnd,
-}: {
+const argsToSuggestions = (options: {
   args: NonNullable<ICommand['args']>;
   value?: string;
   filter?: string;
   exclude?: Array<string>;
   sliceStart?: number;
   sliceEnd?: number;
-}) =>
-  Object.keys(args).reduce((acc: Array<ISuggestion>, key) => {
-    if ((!exclude || !exclude.includes(key)) && ((filter && key.includes(filter)) || !filter)) {
+}) => {
+  const { args, exclude, value, sliceStart, sliceEnd } = options;
+  const filter = options.filter?.trim().replace(/^-?(-)/, '');
+
+  return Object.keys(args).reduce((acc: Array<IOption>, key) => {
+    if (
+      (!exclude || !exclude.includes(`--${key}`)) &&
+      ((filter && key.includes(filter)) || !filter)
+    ) {
       const flag = `--${key}`;
 
       const inputValueStart =
@@ -80,10 +109,26 @@ const argsToSuggestions = ({
 
       acc.push({
         value: flag,
-        description: args[key].description,
+        data: args[key],
         inputValue,
         cursorTarget: inputValueStart.length,
       });
+    }
+
+    return acc;
+  }, []);
+};
+
+const argKeys = (ast: IResult, index?: number) =>
+  ast.result.value.reduce((acc: Array<string>, node) => {
+    if (
+      node.type === 'ARG_KEY' &&
+      typeof node.value === 'string' &&
+      (!index || index <= node.end)
+    ) {
+      const value =
+        index && index > node.start ? node.value.slice(0, index - node.start) : node.value;
+      acc.push(value);
     }
 
     return acc;
@@ -108,189 +153,232 @@ const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Record<string, string |
     return acc;
   }, {});
 
-export const inputState = (cmds: Cmds) => {
-  let value = '';
-  let index = 0;
-  let ast: null | IResult;
+export const inputState = (config: IConfig) => {
+  const commandsCache: Record<string, ICommands> = {};
 
-  const input = {
-    get value() {
-      return value;
-    },
+  let currentCommand = config.command;
+  let updatedAt = Date.now();
+  let value = config.value || '';
+  let index = config.index || 0;
+  let ast: IResult = parse(value);
 
-    get index() {
-      return index;
-    },
+  const processUpdates = async () => {
+    const currentNode = getNode(ast.result.value, index);
+    const prevNode = getNode(ast.result.value, (currentNode ? currentNode?.start : index) - 1);
 
-    get runnable() {
-      if (!ast) {
-        return false;
+    let sliceStart = 0;
+    let sliceEnd: undefined | number;
+    if (currentNode) {
+      sliceStart = currentNode.start;
+      sliceEnd = currentNode.end;
+    } else if (prevNode && ['COMMAND', 'ARG_KEY', 'ARG_VALUE'].includes(prevNode.type)) {
+      sliceStart = prevNode.start;
+    } else if (prevNode && prevNode.type === 'WHITESPACE') {
+      sliceStart = prevNode.end;
+    }
+
+    const valueSlice = value.slice(sliceStart, index);
+    const current = updatedAt;
+
+    const ctx = await resolveCommands({
+      root: config.command,
+      cache: commandsCache,
+      ast,
+      index,
+    });
+
+    currentCommand = ctx.command;
+
+    const argCtx = getArgContext({
+      command: currentCommand,
+      ast,
+      index,
+    });
+
+    const getArgOptions = async (opt: { arg: IArg; filter?: string }) => {
+      if (typeof opt.arg.options === 'object') {
+        return opt.arg.options;
       }
 
-      const [cmd] = getCmdContext({ cmds, ast, index: value.length });
+      if (typeof opt.arg.options === 'function') {
+        const res = await Promise.resolve(opt.arg.options(opt.filter));
+        // TODO cache
 
-      return !!cmd;
-    },
-
-    run<O = any, R = any>(options?: O): R {
-      if (!ast) {
-        throw new Error(`Invalid input: "${value}"`);
-      }
-
-      const [cmd, next] = getCmdContext({ cmds, ast, index: value.length });
-
-      if (!cmd || next) {
-        throw new Error(`Invalid input: "${value}"`);
-      }
-
-      if (!cmd.run) {
-        throw new Error(`No run function found for '${value}'`);
-      }
-
-      const parsedArgs = parseArgs({ cmd, args: getArgs(ast) });
-
-      return cmd.run({
-        args: Object.keys(parsedArgs).length ? parsedArgs : undefined,
-        commands: getCommands(ast),
-        options,
-      });
-    },
-
-    get exhausted() {
-      if (!ast) {
-        return false;
-      }
-
-      const [cmd] = getCmdContext({ cmds, ast, index: value.length });
-
-      if (!cmd) {
-        return false;
-      }
-
-      if (cmd.commands && Object.keys(cmd.commands).length) {
-        return false;
-      }
-
-      if (!cmd.args || !Object.keys(cmd.args).length) {
-        return true;
-      }
-
-      const parsedArgs = parseArgs({ cmd, args: getArgs(ast) });
-
-      const parsedArgKeys = Object.keys(parsedArgs);
-      const remaining = cmd.args
-        ? Object.keys(cmd.args).filter((key) => !parsedArgKeys.includes(key))
-        : [];
-
-      return !remaining.length;
-    },
-
-    get nodeStart() {
-      if (!ast) {
-        return undefined;
-      }
-
-      const currentNode = getNode(ast.result.value, index);
-
-      if (currentNode && currentNode.type !== 'WHITESPACE') {
-        return currentNode.start;
-      }
-
-      const prevNode = getNode(ast.result.value, index - 1);
-
-      if (prevNode) {
-        return prevNode.type === 'WHITESPACE' ? index : prevNode.start;
-      }
-
-      return undefined;
-    },
-
-    get suggestions() {
-      if (!ast || !value) {
-        return cmdsToSuggestions({ cmds, filter: value });
-      }
-
-      const [cmd, next] = getCmdContext({ cmds, ast, index });
-      const prevNode = getNode(ast.result.value, index - 1);
-
-      if (!prevNode) {
-        const currentNode = getNode(ast.result.value, index);
-
-        if (currentNode) {
-          const filter = typeof currentNode.value === 'string' ? currentNode.value : undefined;
-
-          return cmdsToSuggestions({ cmds, filter });
-        }
-
-        return [];
-      }
-
-      if ((!cmd && prevNode.type === 'COMMAND') || prevNode.type === 'ROOT' || !prevNode) {
-        return cmdsToSuggestions({ cmds, filter: value });
-      }
-
-      if (cmd && (cmd.commands || cmd.args) && prevNode.type === 'WHITESPACE') {
-        const currentNode = ast ? getNode(ast.result.value, prevNode.end) : undefined;
-        const inputArgs = Object.keys(getArgs(ast));
-        const exclude = cmd.args
-          ? Object.keys(cmd.args).filter((key) => inputArgs.includes(key))
-          : undefined;
-
-        const options = {
-          value,
-          filter: next,
-          sliceStart: prevNode.end,
-          sliceEnd: currentNode ? currentNode.end : undefined,
-        };
-
-        return [
-          ...(cmd.commands ? cmdsToSuggestions({ cmds: cmd.commands, ...options }) : []),
-          ...(cmd.args ? argsToSuggestions({ args: cmd.args, exclude, ...options }) : []),
-        ];
-      }
-
-      if (cmd && cmd.commands && prevNode.type === 'COMMAND') {
-        return cmdsToSuggestions({
-          cmds: cmd.commands,
-          filter: next || value.slice(prevNode.start, index),
-          value,
-          sliceStart: prevNode.start,
-          sliceEnd: prevNode.end,
-        });
-      }
-
-      if (cmd && cmd.args && prevNode.type === 'ARG_KEY') {
-        const inputArgs = Object.keys(getArgs(ast));
-        const exclude = cmd.args
-          ? Object.keys(cmd.args).filter((key) => inputArgs.includes(key))
-          : undefined;
-
-        return argsToSuggestions({
-          args: cmd.args,
-          filter: (next || value.slice(prevNode.start, index)).replace(/^-?(-)/, ''),
-          exclude,
-          value,
-          sliceStart: prevNode.start,
-          sliceEnd: prevNode.end,
-        });
+        return res;
       }
 
       return [];
-    },
+    };
 
-    update: (updates: { index?: number; value?: string }) => {
-      if (updates.index !== undefined) {
-        index = updates.index;
+    const showArgValueOptions = () => {
+      if (!currentCommand.args) {
+        return false;
       }
 
-      if (updates.value !== undefined) {
-        value = updates.value;
-        ast = parse(value);
+      if (currentNode?.type === 'ARG_VALUE') {
+        return true;
       }
 
-      return input;
-    },
+      if (currentNode?.type === 'ARG_KEY' || currentNode?.type === 'COMMAND') {
+        // console.log({ currentNode, prevNode });
+
+        return false;
+      }
+
+      // if (prevNode?.type === 'ARG_VALUE') {
+      // return false;
+      // }
+
+      return true;
+    };
+
+    const argOptions =
+      showArgValueOptions() && argCtx
+        ? await getArgOptions({
+            arg: argCtx,
+            filter: valueSlice,
+          })
+        : undefined;
+
+    if (current !== updatedAt) {
+      return;
+    }
+
+    const showArgKeyOptions = () => {
+      if (!currentCommand.args) {
+        return false;
+      }
+
+      if (currentNode?.type === 'ARG_KEY') {
+        return true;
+      }
+
+      if (prevNode?.type === 'ARG_VALUE') {
+        return false;
+      }
+
+      return true;
+    };
+
+    // console.log({
+    // argCtx,
+    // valueSlice,
+    // sliceStart,
+    // index,
+    // currentNode,
+    // prevNode,
+    // argOptions,
+    // currentCommand,
+    // });
+
+    // debug({ prevNode, currentNode, sliceStart, valueSlice }, ctx);
+    const options: Array<IOption> = [
+      ...(ctx.commands
+        ? dataToSuggestions({
+            value,
+            data: ctx.commands,
+            filter: typeof ctx.command.commands !== 'function' ? valueSlice : undefined,
+            sliceStart,
+            sliceEnd,
+          })
+        : []),
+      ...(showArgKeyOptions() && currentCommand.args
+        ? argsToSuggestions({
+            value,
+            args: currentCommand.args,
+            filter: valueSlice,
+            sliceStart,
+            sliceEnd,
+            exclude: argKeys(ast, index),
+          })
+        : []),
+      ...(argOptions
+        ? valuesToOptions({
+            inputValue: value,
+            values: argOptions,
+            filter: typeof argCtx?.options !== 'function' ? valueSlice : undefined,
+            sliceStart,
+            sliceEnd,
+          })
+        : []),
+    ];
+
+    const run = !currentCommand.run
+      ? undefined
+      : <O>(opt: O) => {
+          if (!currentCommand.run) {
+            throw new Error(`Invalid input: "${value}"`);
+          }
+
+          const parsedArgs = parseArgs({ cmd: currentCommand, args: getArgs(ast) });
+
+          return currentCommand.run({
+            args: Object.keys(parsedArgs).length ? parsedArgs : undefined,
+            commands: commandPath(ast).map((n) => n.value),
+            options: opt,
+          });
+        };
+
+    const exhausted = () => {
+      if (currentCommand.commands) {
+        return false;
+      }
+
+      if (!currentCommand.args || !Object.keys(currentCommand.args).length) {
+        return true;
+      }
+
+      const parsedArgs = parseArgs({ cmd: currentCommand, args: getArgs(ast) });
+      const parsedArgKeys = Object.keys(parsedArgs);
+      // debug({ parsedArgs, ast });
+
+      const remaining = currentCommand.args
+        ? Object.keys(currentCommand.args).filter((key) => !parsedArgKeys.includes(key))
+        : [];
+
+      return !remaining.length;
+    };
+
+    const nodeStart = () => {
+      let node = getNode(ast.result.value, index);
+
+      if (node && node.type !== 'WHITESPACE') {
+        return node.start;
+      }
+
+      node = getNode(ast.result.value, index - 1);
+
+      if (node) {
+        return node.type === 'WHITESPACE' ? index : node.start;
+      }
+
+      return 0;
+    };
+
+    config.onUpdate({
+      run,
+      options,
+      exhausted: exhausted(),
+      nodeStart: nodeStart(),
+    });
   };
 
-  return input;
+  const update = (updates: { index?: number; value?: string }) => {
+    if (updates.index !== undefined) {
+      index = updates.index;
+      updatedAt = Date.now();
+    }
+
+    if (updates.value !== undefined) {
+      value = updates.value;
+      ast = parse(value);
+      updatedAt = Date.now();
+    }
+
+    setImmediate(processUpdates);
+  };
+
+  setImmediate(processUpdates);
+
+  return update;
 };

@@ -1,19 +1,22 @@
 // Command types
-export interface ISuggestion {
-  inputValue?: string;
+export interface IOption<D = any> {
   value: string;
-  description?: string;
+  inputValue: string;
   cursorTarget: number;
+  data?: D;
 }
 
 export type ArgTypeDef = BooleanConstructor | StringConstructor | NumberConstructor;
 export type ArgType = boolean | string | number;
 
+type ArgsOption = { value: string };
+
+type ArgsOptionsFn = (str?: string) => Promise<Array<ArgsOption>>;
+
 export interface IArg {
   name?: string;
   description?: string;
-  options?: (opts?: { value?: string }) => Promise<Array<{ value: string }>>;
-  // options?: Array<string>;
+  options?: ArgsOptionsFn | Array<ArgsOption>;
   type?: ArgTypeDef;
   required?: true;
 }
@@ -32,7 +35,7 @@ export interface IRunOptions<O = any> {
   options?: O;
 }
 
-type CommandsFn = (opts: { value?: string }) => Promise<ICommands>;
+type CommandsFn = (str?: string) => Promise<ICommands>;
 
 export interface ICommand<O = any, R = any> {
   name?: string;

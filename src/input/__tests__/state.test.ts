@@ -1,146 +1,482 @@
-import { inputState } from '../index';
+import { inputState } from '../state';
 
-describe('update', () => {
-  const updatedValue = 'updatedValue';
-  const updatedIndex = 3;
+const afterNCalls = (calls: number, cb: (mock: jest.Mock) => void) => {
+  const fn: jest.Mock = jest.fn(() => cb(fn));
 
-  it('updates value', () => {
-    const input = inputState({});
-    expect(input.value).toEqual('');
+  for (const _ of [...Array(calls - 1)]) {
+    fn.mockImplementationOnce(() => null);
+  }
 
-    input.update({ value: updatedValue });
-    expect(input.value).toEqual(updatedValue);
-  });
+  return fn;
+};
 
-  it('updates index', () => {
-    const input = inputState({});
-    expect(input.index).toEqual(0);
+const crud = {
+  create: {},
+  read: {},
+  update: {},
+  destroy: {},
+};
 
-    input.update({ index: updatedIndex });
-    expect(input.index).toEqual(updatedIndex);
-  });
-
-  it('updates value and index', () => {
-    const input = inputState({});
-    expect(input.index).toEqual(0);
-    expect(input.value).toEqual('');
-
-    input.update({ index: updatedIndex, value: updatedValue });
-    expect(input.index).toEqual(updatedIndex);
-    expect(input.value).toEqual(updatedValue);
-  });
-});
-
-describe('run', () => {
-  it('calls matching function', () => {
-    const run = jest.fn();
-    const input = inputState({ user: { run } });
-
-    input.update({ value: 'user' }).run();
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith({ commands: ['user'] });
-  });
-
-  it('calls matching function with args', () => {
-    const run = jest.fn();
-    const input = inputState({ user: { commands: { addRole: { run } } } });
-
-    input.update({ value: 'user addRole --force --id 1 --role mod' }).run();
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith({
-      commands: ['user', 'addRole'],
-      args: { force: true, role: 'mod', id: '1' },
-    });
-  });
-
-  it('calls matching function with parsed args', () => {
-    const run = jest.fn();
-    const input = inputState({
-      user: {
+describe('options', () => {
+  describe('commands', () => {
+    describe('object', () => {
+      const root = {
         commands: {
-          addRole: {
-            args: {
-              id: { type: Number },
-              role: { type: String },
-              force: { type: Boolean },
-            },
-            run,
-          },
+          profile: { commands: crud },
+          user: { commands: crud },
         },
-      },
+      };
+
+      it('returns commands from object', (done) => {
+        inputState({
+          command: root,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 0,
+                  options: [
+                    {
+                      value: 'profile',
+                      inputValue: 'profile',
+                      cursorTarget: 'profile'.length,
+                      data: root.commands?.profile,
+                    },
+                    {
+                      value: 'user',
+                      inputValue: 'user',
+                      cursorTarget: 'user'.length,
+                      data: root.commands?.user,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
+
+      it('returns filtered commands from object', (done) => {
+        inputState({
+          value: 'use',
+          index: 'use'.length,
+          command: root,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 0,
+                  options: [
+                    {
+                      value: 'user',
+                      inputValue: 'user',
+                      cursorTarget: 4,
+                      data: root.commands?.user,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
     });
 
-    input.update({ value: 'user addRole --force --id 1 --role mod' }).run();
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith({
-      commands: ['user', 'addRole'],
-      args: { force: true, role: 'mod', id: 1 },
+    describe('async function', () => {
+      it('returns commands', (done) => {
+        const commands = {
+          profile: { commands: crud },
+          user: { commands: crud },
+        };
+
+        const root = {
+          commands: () => Promise.resolve(commands),
+        };
+
+        inputState({
+          command: root,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 0,
+                  options: [
+                    {
+                      value: 'profile',
+                      inputValue: 'profile',
+                      cursorTarget: 7,
+                      data: commands.profile,
+                    },
+                    {
+                      value: 'user',
+                      inputValue: 'user',
+                      cursorTarget: 4,
+                      data: commands.user,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
+
+      ([
+        [undefined, undefined, undefined],
+        ['u', 1, 'u'],
+        ['user', 1, 'u'],
+        ['user', 'user'.length, 'user'],
+      ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
+        it(`calls function with '${expected}' for input '${value}' at index: ${index}`, (done) => {
+          const commands = jest.fn();
+
+          inputState({
+            command: { commands },
+            value,
+            index,
+            onUpdate: afterNCalls(1, () => {
+              expect(commands).toHaveBeenCalledWith(expected);
+              done();
+            }),
+          });
+        });
+      });
     });
   });
 
-  it('calls matching function with options', () => {
-    const options = { a: 1 };
-    const run = jest.fn();
-    const input = inputState({ user: { run } });
+  describe('sub-commands', () => {
+    describe('object', () => {
+      const root = {
+        commands: {
+          profile: { commands: crud },
+          user: { commands: crud },
+        },
+      };
 
-    input.update({ value: 'user' }).run(options);
-    expect(run).toHaveBeenCalledTimes(1);
-    expect(run).toHaveBeenCalledWith({ commands: ['user'], options });
+      it('returns sub-commands', (done) => {
+        inputState({
+          command: root,
+          value: 'user ',
+          index: 'user '.length,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 'user '.length,
+                  options: [
+                    {
+                      value: 'create',
+                      inputValue: 'user create',
+                      cursorTarget: 'user create'.length,
+                      data: root.commands?.user.commands?.create,
+                    },
+                    {
+                      value: 'read',
+                      inputValue: 'user read',
+                      cursorTarget: 'user read'.length,
+                      data: root.commands?.user.commands?.read,
+                    },
+                    {
+                      value: 'update',
+                      inputValue: 'user update',
+                      cursorTarget: 'user update'.length,
+                      data: root.commands?.user.commands?.update,
+                    },
+                    {
+                      value: 'destroy',
+                      inputValue: 'user destroy',
+                      cursorTarget: 'user destroy'.length,
+                      data: root.commands?.user.commands?.destroy,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
+
+      it('returns filtered sub-commands', (done) => {
+        inputState({
+          command: root,
+          value: 'user crea',
+          index: 'user crea'.length,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 'user '.length,
+                  options: [
+                    {
+                      value: 'create',
+                      inputValue: 'user create',
+                      cursorTarget: 11,
+                      data: root.commands?.user.commands?.create,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
+    });
+
+    describe('async function', () => {
+      const root = {
+        commands: {
+          profile: { commands: crud },
+          user: { commands: crud },
+        },
+      };
+
+      it('returns sub-commands', (done) => {
+        inputState({
+          command: root,
+          value: 'user ',
+          index: 'user '.length,
+          onUpdate: afterNCalls(1, ({ mock }) => {
+            expect(mock.calls).toEqual([
+              [
+                {
+                  exhausted: false,
+                  nodeStart: 'user '.length,
+                  options: [
+                    {
+                      value: 'create',
+                      inputValue: 'user create',
+                      cursorTarget: 11,
+                      data: root.commands?.user.commands?.create,
+                    },
+                    {
+                      value: 'read',
+                      inputValue: 'user read',
+                      cursorTarget: 9,
+                      data: root.commands?.user.commands?.read,
+                    },
+                    {
+                      value: 'update',
+                      inputValue: 'user update',
+                      cursorTarget: 11,
+                      data: root.commands?.user.commands?.update,
+                    },
+                    {
+                      value: 'destroy',
+                      inputValue: 'user destroy',
+                      cursorTarget: 12,
+                      data: root.commands?.user.commands?.destroy,
+                    },
+                  ],
+                },
+              ],
+            ]);
+            done();
+          }),
+        });
+      });
+    });
   });
-});
 
-describe('runnable', () => {
-  const run = jest.fn();
-  const input = inputState({ user: { run } });
-
-  it('returns true when command is matched', () => {
-    expect(input.update({ value: 'user' }).runnable).toBe(true);
-  });
-
-  it('returns false when command is not matched', () => {
-    expect(input.update({ value: 'use' }).runnable).toBe(false);
-  });
-});
-
-describe('exhausted', () => {
-  const input = inputState({
-    user: {
+  describe('args', () => {
+    const root = {
       commands: {
-        addRole: {
+        user: {
           args: {
-            id: {
-              type: String,
-            },
-            force: {
-              type: Boolean,
-            },
-          },
-        },
-        remove: {
-          args: {
-            force: {
-              type: Boolean,
-            },
+            id: {},
+            email: {},
           },
         },
       },
-    },
-  });
+    };
 
-  it('returns true when no other options can be submitted', () => {
-    expect(input.update({ value: 'user remove --force' }).exhausted).toBe(true);
-  });
+    it('returns args', (done) => {
+      inputState({
+        value: 'user ',
+        index: 'user '.length,
+        command: root,
+        onUpdate: afterNCalls(1, ({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                exhausted: false,
+                nodeStart: 'user '.length,
+                options: [
+                  {
+                    value: '--id',
+                    inputValue: 'user --id',
+                    cursorTarget: 'user --id'.length,
+                    data: root.commands?.user.args?.id,
+                  },
+                  {
+                    value: '--email',
+                    inputValue: 'user --email',
+                    cursorTarget: 'user --email'.length,
+                    data: root.commands?.user.args?.email,
+                  },
+                ],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
+    });
 
-  [
-    'u',
-    'user',
-    'user addRole',
-    'user addRole --force --id',
-    'user addRole --id 1 --',
-    'user remove --for',
-  ].forEach((value) => {
-    it(`returns false when no other options can be submitted: ${value}`, () => {
-      expect(input.update({ value }).exhausted).toBe(false);
+    it('returns filtred args', (done) => {
+      inputState({
+        value: 'user --em',
+        index: 'user --em'.length,
+        command: root,
+        onUpdate: afterNCalls(1, ({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                exhausted: false,
+                nodeStart: 'user '.length,
+                options: [
+                  {
+                    value: '--email',
+                    inputValue: 'user --email',
+                    cursorTarget: 'user --email'.length,
+                    data: root.commands?.user.args?.email,
+                  },
+                ],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
+    });
+
+    it('returns filtred args at index', (done) => {
+      const options = [{ value: 'foo' }];
+
+      inputState({
+        value: 'user --email foo',
+        index: 'user --em'.length,
+        command: { commands: { user: { args: { email: { options } } } } },
+        onUpdate: afterNCalls(1, ({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                exhausted: true,
+                nodeStart: 'user '.length,
+                options: [
+                  {
+                    value: '--email',
+                    inputValue: 'user --email foo',
+                    cursorTarget: 'user --email'.length,
+                    data: { options },
+                  },
+                ],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
     });
   });
+
+  // describe('arg.options', () => {
+  // describe.only('object', () => {
+  // });
+
+  // const options = [{ value: 'a' }, { value: 'ab' }];
+
+  // const root  = {
+  // commands: {
+  // user: {
+  // args: {
+  // email: {
+  // options,
+  // },
+  // name: {
+  // options: async (_: any): Promise<Array<{ value: string }>> =>
+  // Promise.resolve(options),
+  // },
+  // },
+  // },
+  // },
+  // };
+
+  // it('returns arg options', (done) => {
+  // inputState({
+  // value: 'user --email a',
+  // index: 'user --email a'.length,
+  // command: root,
+  // onUpdate: afterNCalls(1, ({ mock }) => {
+  // expect(mock.calls).toEqual([
+  // [
+  // {
+  // exhausted: false,
+  // nodeStart: 'user --email '.length,
+  // options: [
+  // {
+  // value: 'a',
+  // inputValue: 'user --email a',
+  // cursorTarget: 'user --email a'.length,
+  // data: options[0],
+  // },
+  // {
+  // value: 'ab',
+  // inputValue: 'user --email ab',
+  // cursorTarget: 'user --email ab'.length,
+  // data: options[1],
+  // },
+  // ],
+  // },
+  // ],
+  // ]);
+
+  // done();
+  // }),
+  // });
+  // });
+
+  // it('returns arg options function', (done) => {
+  // inputState({
+  // value: 'user --name a',
+  // index: 'user --name a'.length,
+  // command: root,
+  // onUpdate: afterNCalls(1, ({ mock }) => {
+  // expect(mock.calls).toEqual([
+  // [
+  // {
+  // exhausted: false,
+  // nodeStart: 'user --name '.length,
+  // options: [
+  // {
+  // value: 'a',
+  // inputValue: 'user --name a',
+  // cursorTarget: 'user --name a'.length,
+  // data: options[0],
+  // },
+  // {
+  // value: 'ab',
+  // inputValue: 'user --name ab',
+  // cursorTarget: 'user --name ab'.length,
+  // data: options[1],
+  // },
+  // ],
+  // },
+  // ],
+  // ]);
+
+  // done();
+  // }),
+  // });
+  // });
+  // });
 });

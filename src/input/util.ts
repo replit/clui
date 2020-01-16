@@ -61,20 +61,8 @@ export const getArgs = ({ result }: IResult) => {
   }, {});
 };
 
-export const getNode = (nodes: Array<INode>, index: number): INode | undefined => {
-  for (const node of nodes) {
-    if (index >= node.start && index < node.end) {
-      return node;
-    }
-  }
-
-  return undefined;
-};
-
-export interface ICommandContext {
-  command: ICommand;
-  key?: string;
-}
+export const getNode = (nodes: Array<INode>, index: number): INode | undefined =>
+  nodes.find((node) => node.start <= index && index < node.end);
 
 export const getArgContext = ({
   command,
@@ -89,25 +77,28 @@ export const getArgContext = ({
     return undefined;
   }
 
-  let prevNode = getNode(ast.result.value, index - 1);
-  if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
-    return command.args[prevNode.value.replace(/^-?(-)/, '')];
+  const queue = [];
+
+  const current = getNode(ast.result.value, index - 1);
+  if (current) {
+    queue.push(current);
   }
 
-  if (prevNode?.type === 'WHITESPACE') {
-    prevNode = getNode(ast.result.value, prevNode.start - 1);
-    if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
-      return command.args[prevNode.value.replace(/^-?(-)/, '')];
+  while (queue.length) {
+    const node = queue.shift();
+
+    if (!node || node.type === 'COMMAND') {
+      break;
     }
-  }
 
-  if (prevNode?.type === 'ARG_VALUE') {
-    prevNode = getNode(ast.result.value, prevNode.start - 1);
-    if (prevNode?.type === 'WHITESPACE') {
-      prevNode = getNode(ast.result.value, prevNode.start - 1);
-      if (prevNode?.type === 'ARG_KEY' && typeof prevNode.value === 'string') {
-        return command.args[prevNode.value.replace(/^-?(-)/, '')];
-      }
+    if (node.type === 'ARG_KEY' && typeof node.value === 'string') {
+      return command.args[node.value.replace(/^-?(-)/, '')];
+    }
+
+    const prev = getNode(ast.result.value, node.start - 1);
+
+    if (prev) {
+      queue.push(prev);
     }
   }
 

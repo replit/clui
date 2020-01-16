@@ -1,6 +1,6 @@
 import { parse } from '../parser';
-import { commandPath, getArgs, getNode } from '../util';
-import { ILocation, INode } from '../types';
+import { commandPath, getArgs, getNode, getArgContext } from '../util';
+import { ILocation, INode, IArg, ICommand, ICommands } from '../types';
 
 describe('commandPath', () => {
   ([
@@ -50,28 +50,55 @@ describe('getArgs', () => {
       expect(getArgs(parse(command))).toEqual(expected);
     });
   });
+});
 
-  describe('getNode', () => {
-    const first: INode = { start: 0, end: 3, type: 'COMMAND', value: '123' };
-    const second: INode = { start: 3, end: 8, type: 'COMMAND', value: '4567' };
-    const third: INode = { start: 8, end: 12, type: 'COMMAND', value: '8910' };
+describe('getArgContext', () => {
+  const root: ICommand = {
+    commands: {
+      user: {
+        args: {
+          name: { type: String },
+          email: { type: Boolean },
+        },
+      },
+    },
+  };
+  const user = (root.commands as ICommands).user as ICommand;
 
-    const nodes = [first, second, third];
+  ([
+    ['user --name', 'user --name'.length, user.args?.name],
+    ['user -name', 'user -name'.length, user.args?.name],
+    ['user --name --email', 'user --name --email'.length, user.args?.email],
+    ['user --name --email fo', 'user --name --email fo'.length, user.args?.email],
+    ['user --na', 'user --na'.length, undefined],
+    ['user', 'user'.length, undefined],
+  ] as Array<[string, number, IArg | undefined]>).forEach(([input, index, expected]) => {
+    it('gets arg context', () => {
+      expect(getArgContext({ index, command: user, ast: parse(input) })).toEqual(expected);
+    });
+  });
+});
 
-    const table: Array<[number, ILocation | undefined]> = [
-      [0, first],
-      [2, first],
-      [3, second],
-      [7, second],
-      [8, third],
-      [11, third],
-      [12, undefined],
-    ];
+describe('getNode', () => {
+  const first: INode = { start: 0, end: 3, type: 'COMMAND', value: '123' };
+  const second: INode = { start: 3, end: 8, type: 'COMMAND', value: '4567' };
+  const third: INode = { start: 8, end: 12, type: 'COMMAND', value: '8910' };
 
-    table.forEach(([index, expected]) => {
-      it(`gets node at index: ${index}`, () => {
-        expect(getNode(nodes, index)).toEqual(expected);
-      });
+  const nodes = [first, second, third];
+
+  const table: Array<[number, ILocation | undefined]> = [
+    [0, first],
+    [2, first],
+    [3, second],
+    [7, second],
+    [8, third],
+    [11, third],
+    [12, undefined],
+  ];
+
+  table.forEach(([index, expected]) => {
+    it(`gets node at index: ${index}`, () => {
+      expect(getNode(nodes, index)).toEqual(expected);
     });
   });
 });

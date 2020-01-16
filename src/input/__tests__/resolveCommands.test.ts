@@ -2,6 +2,65 @@ import { ICommand, ICommands } from '../types';
 import resolveCommands from '../resolveCommands';
 import { parse } from '../parser';
 
+describe('resolveCommands functions', () => {
+  ([
+    ['', 0, undefined],
+    [undefined, 0, undefined],
+    [undefined, undefined, undefined],
+    ['u', 1, 'u'],
+    ['user', 1, 'u'],
+    ['user', 'user'.length, 'user'],
+    ['user add', 'user'.length, 'user'],
+  ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
+    it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
+      const commands = jest.fn(async (key?: string) => ({
+        [key || '']: { commands: {} },
+      }));
+
+      await resolveCommands({
+        root: { commands },
+        ast: parse(value || ''),
+        index: index || 0,
+        cache: {},
+      });
+
+      expect(commands).toHaveBeenCalledWith(expected);
+    });
+  });
+});
+
+describe('resolveCommands nested functions', () => {
+  ([
+    ['user ', 'user '.length, undefined],
+    ['user a', 'user a'.length, 'a'],
+    ['user add', 'user a'.length, 'a'],
+    ['user add', 'user add'.length, 'add'],
+  ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
+    it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
+      const subCommands = jest.fn(async (key?: string) => ({
+        [key || '']: { commands: {} },
+      }));
+
+      const commands = jest.fn(async (key?: string) => ({
+        [key || '']: { commands: subCommands },
+      }));
+
+      const root: ICommand = {
+        commands,
+      };
+
+      await resolveCommands({
+        root,
+        ast: parse(value || ''),
+        index: index || 0,
+        cache: {},
+      });
+
+      expect(subCommands).toHaveBeenCalledWith(expected);
+    });
+  });
+});
+
 describe('resolveCommands', () => {
   it('resolves async commands', async () => {
     const root = {
@@ -56,7 +115,7 @@ describe('resolveCommands', () => {
     const c = await resolveCommands({
       root,
       ast: parse('user add role'),
-      index: 'user add role '.length,
+      index: 'user add role'.length,
       cache,
     });
 
@@ -212,7 +271,7 @@ describe('resolveCommands', () => {
       cache: {},
     });
 
-    expect(userCommands).toHaveBeenCalledWith({ value: 'up' });
+    expect(userCommands).toHaveBeenCalledWith('up');
   });
 
   it('calls commands function with different values', async () => {
@@ -220,7 +279,7 @@ describe('resolveCommands', () => {
     const root: ICommand = {
       commands: {
         user: {
-          commands: async ({ value }: { value?: string }) => ({
+          commands: async (value) => ({
             [value !== 'bb' ? `${value || ''}b` : value]: {},
           }),
         },
@@ -280,6 +339,6 @@ describe('resolveCommands', () => {
       cache: {},
     });
 
-    expect(userCommands).toHaveBeenCalledWith({ value: 'u' });
+    expect(userCommands).toHaveBeenCalledWith('u');
   });
 });

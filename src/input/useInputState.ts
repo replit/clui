@@ -1,12 +1,12 @@
 import { useReducer, useCallback, useRef, useEffect } from 'react';
 import { ICommand } from './types';
-import { inputState, IInputStateUpdates } from './asyncState';
+import { inputState, IInputStateUpdates } from './state';
 
 type Updates = Partial<{ value: string; index: number }>;
 
 type Action = {
   type: 'UPDATE';
-  updates: Partial<IRState>;
+  updates: Partial<IState>;
 };
 
 interface IOptions {
@@ -17,13 +17,13 @@ interface IOptions {
 
 type Updater = (updates: Updates) => void;
 
-interface IRState extends IInputStateUpdates {
+interface IState extends IInputStateUpdates {
   value: string;
   index: number;
   loading: boolean;
 }
 
-const reducer = (state: IRState, action: Action) => {
+const reducer = (state: IState, action: Action) => {
   switch (action.type) {
     case 'UPDATE':
       return {
@@ -35,7 +35,7 @@ const reducer = (state: IRState, action: Action) => {
   }
 };
 
-const useInputState = (options: IOptions): [IRState, Updater] => {
+const useInputState = (options: IOptions): [IState, Updater] => {
   const input = useRef<Updater | null>(null);
 
   const [state, dispatch] = useReducer(reducer, {

@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import Downshift from 'downshift';
 
-import { useInputState, ISuggestion, Session, ISessionItemProps } from '../src';
+import { useInputState, IOption, Session, ISessionItemProps } from '../src';
 import command from './command';
 
 interface IProps extends ISessionItemProps {
@@ -16,7 +16,7 @@ const Prompt = (props: IProps) => {
     value: props.value || '',
     index: (props.value || '').length,
   });
-  const [selection, setSelection] = React.useState<ISuggestion>(null);
+  const [selection, setSelection] = React.useState<IOption>(null);
 
   const onKeyUp = React.useCallback(
     (e) => {
@@ -55,7 +55,7 @@ const Prompt = (props: IProps) => {
       inputValue={state.value}
       initialHighlightedIndex={0}
       defaultHighlightedIndex={0}
-      onChange={(suggestion: ISuggestion) => {
+      onChange={(suggestion: IOption) => {
         if (!suggestion) {
           return;
         }

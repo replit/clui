@@ -57,7 +57,7 @@ const commands: Record<string, ICommand> = {
   weather: {
     name: 'weather',
     run: (props) => <Run {...props} />,
-    commands: async ({ value }: { value: string }) => {
+    commands: async (value) => {
       if (value && value.startsWith('fo')) {
         return {
           foo: {
@@ -65,7 +65,7 @@ const commands: Record<string, ICommand> = {
             args: {
               wat: {},
             },
-            commands: async ({ value: value2 }) => ({
+            commands: async (value2) => ({
               baz: {
                 name: 'baz',
               },

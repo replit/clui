@@ -1,4 +1,4 @@
-export { inputState, IInputState } from './state';
+export { inputState } from './state';
 export {
   ICommands,
   ICommand,
@@ -6,6 +6,6 @@ export {
   IArg,
   ArgType,
   ArgTypeDef,
-  ISuggestion,
+  IOption,
   IRunOptions,
 } from './types';

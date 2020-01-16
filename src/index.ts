@@ -7,7 +7,7 @@ import {
   IArg,
   ArgType,
   ArgTypeDef,
-  ISuggestion,
+  IOption,
   IRunOptions,
 } from './input';
 
@@ -26,7 +26,7 @@ export {
   IArg,
   ArgType,
   ArgTypeDef,
-  ISuggestion,
+  IOption,
   IRunOptions,
   useInputState,
 };
