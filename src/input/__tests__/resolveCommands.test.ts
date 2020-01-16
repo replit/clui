@@ -196,6 +196,33 @@ describe('resolveCommands', () => {
     ).toEqual({ command: root.commands.user, commands: root.commands.user.commands, key: 'user' });
   });
 
+  it('resolves nested command with async function', async () => {
+    const ast = parse('user --name add ');
+
+    const root = {
+      commands: async () => ({
+        user: {
+          args: {
+            name: {},
+          },
+          commands: async () => ({
+            add: {},
+          }),
+        },
+      }),
+    };
+
+    const { commands, key } = await resolveCommands({
+      root,
+      ast,
+      index: 'user --name add '.length,
+      cache: {},
+    });
+
+    expect(key).toEqual('user');
+    expect(commands).toEqual({ add: {} });
+  });
+
   it('resolves nested commands with async function', async () => {
     const ast = parse('user up');
 
@@ -295,7 +322,7 @@ describe('resolveCommands', () => {
 
     expect(a.key).toEqual('user');
     expect(a.command).toEqual((root.commands as ICommands).user);
-    expect(a.commands).toEqual({ ab: {} });
+    expect(a.commands).toEqual({ b: {} });
 
     const b = await resolveCommands({
       root,
@@ -306,7 +333,7 @@ describe('resolveCommands', () => {
 
     expect(b.key).toEqual('user');
     expect(b.command).toEqual((root.commands as ICommands).user);
-    expect(b.commands).toEqual({ bb: {} });
+    expect(b.commands).toEqual({ b: {} });
 
     const c = await resolveCommands({
       root,

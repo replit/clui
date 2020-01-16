@@ -49,10 +49,10 @@ const resolveCommands = async (config: IConfig): Promise<IResolved> => {
     return { key, command: config.root };
   }
 
+  const paths = commandPath(config.ast, config.index);
+
   let command = config.root;
   let commands: ICommands | undefined;
-
-  const paths = commandPath(config.ast, config.index);
 
   if (!paths.length) {
     commands = await getCommands({
@@ -66,47 +66,38 @@ const resolveCommands = async (config: IConfig): Promise<IResolved> => {
 
   const atEnd = config.ast.result.source.length === config.index;
   const prevNode = getNode(config.ast.result.value, config.index - 1);
-  if (prevNode?.type === 'WHITESPACE' || atEnd) {
-    paths.push({
-      type: 'WHITESPACE',
-      start: prevNode ? prevNode.start : config.index,
-      end: prevNode ? prevNode.start : config.index,
-      value: '',
-    });
-  }
 
   let index = 0;
 
-  const queue = [command];
-
+  const queue = [...paths];
   while (queue.length) {
-    const item = queue.shift();
+    const node = queue.shift();
 
-    if (!item) {
+    if (!node) {
       break;
     }
 
-    if (item.commands) {
-      const keyPath = paths.slice(0, index + 1).map((p) => p.value);
+    const keyPath = [...paths.slice(0, index), node].map((p) => p.value);
+    // eslint-disable-next-line
+    commands = await getCommands({
+      command,
+      keyPath,
+      cache: config.cache,
+    });
 
-      // eslint-disable-next-line
-      commands = await getCommands({
-        keyPath,
-        command: item,
-        cache: config.cache,
-      });
-
-      const node = paths[index];
-
-      if (commands && node && commands[node.value]) {
-        key = node.value;
-        command = commands[key];
-        queue.push(command);
+    if (commands && commands[node.value]) {
+      key = node.value;
+      command = commands[key];
+      if (prevNode?.type === 'WHITESPACE' || atEnd) {
+        queue.push({
+          type: 'WHITESPACE',
+          start: prevNode ? prevNode.end : index,
+          end: prevNode ? prevNode.end : index,
+          value: '',
+        });
       } else {
-        break;
+        commands = undefined;
       }
-    } else {
-      commands = undefined;
     }
 
     index++;

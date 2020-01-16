@@ -9,14 +9,14 @@ export interface IOption<D = any> {
 export type ArgTypeDef = BooleanConstructor | StringConstructor | NumberConstructor;
 export type ArgType = boolean | string | number;
 
-type ArgsOption = { value: string };
+export interface IArgsOption {
+  value: string;
+}
 
-type ArgsOptionsFn = (str?: string) => Promise<Array<ArgsOption>>;
+type ArgsOptionsFn = (str?: string) => Promise<Array<IArgsOption>>;
 
 export interface IArg {
-  name?: string;
-  description?: string;
-  options?: ArgsOptionsFn | Array<ArgsOption>;
+  options?: ArgsOptionsFn | Array<IArgsOption>;
   type?: ArgTypeDef;
   required?: true;
 }
@@ -37,12 +37,12 @@ export interface IRunOptions<O = any> {
 
 type CommandsFn = (str?: string) => Promise<ICommands>;
 
+type RunFn<O, R> = (options: IRunOptions<O>) => R;
+
 export interface ICommand<O = any, R = any> {
-  name?: string;
-  description?: string;
   args?: ICommandArgs;
   commands?: ICommands | CommandsFn;
-  run?: (ro: IRunOptions<O>) => R;
+  run?: RunFn<O, R>;
 }
 
 // AST Types

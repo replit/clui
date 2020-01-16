@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ISessionItemProps, ICommand, IRunOptions, ICommands } from '../src';
+import { IArgsOption } from '../src/input/types';
 
 interface IProps extends ISessionItemProps, IRunOptions {}
 
@@ -36,6 +37,16 @@ const commands: Record<string, ICommand> = {
   todo: {
     run: (props) => <Run {...props} />,
     commands: {
+      note: {
+        args: {
+          place: {
+            options: async (s: string): Promise<Array<IArgsOption>> =>
+              [{ value: 'foo' }, { value: 'bar' }, { value: 'wat' }].filter((v) =>
+                v.value.includes(s),
+              ),
+          },
+        },
+      },
       list: {
         run: (props) => <Run {...props} />,
         args: {

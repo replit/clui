@@ -232,12 +232,57 @@ describe('options', () => {
       });
     });
 
-    describe('async function', () => {
+    describe('async function with args', () => {
       const root = {
         commands: {
-          profile: { commands: crud },
-          user: { commands: crud },
+          a: {
+            args: {
+              name: {},
+            },
+            commands: {
+              b: {},
+              c: {},
+            },
+          },
         },
+      };
+
+      ([
+        ['a --name b', 'a --name b'.length, 'a --name '.length],
+        ['a --name b', 'a --name '.length, 'a --name '.length],
+        ['a --name b', 'a --name'.length, 'a '.length],
+        ['a --name b ', 'a --name b '.length, 'a --name '.length],
+      ] as Array<[string, number, number]>).forEach(([value, index, nodeStart]) => {
+        it('returns sub-commands', (done) => {
+          inputState({
+            command: root,
+            value,
+            index,
+            onUpdate: afterNCalls(1, ({ mock }) => {
+              expect(mock.calls).toEqual([
+                [
+                  {
+                    exhausted: false,
+                    nodeStart,
+                    options: [],
+                  },
+                ],
+              ]);
+              done();
+            }),
+          });
+        });
+      });
+    });
+
+    describe('async function', () => {
+      const commands = {
+        profile: { commands: crud },
+        user: { commands: crud },
+      };
+
+      const root = {
+        commands: async () => commands,
       };
 
       it('returns sub-commands', (done) => {
@@ -256,25 +301,25 @@ describe('options', () => {
                       value: 'create',
                       inputValue: 'user create',
                       cursorTarget: 11,
-                      data: root.commands?.user.commands?.create,
+                      data: commands.user.commands?.create,
                     },
                     {
                       value: 'read',
                       inputValue: 'user read',
                       cursorTarget: 9,
-                      data: root.commands?.user.commands?.read,
+                      data: commands.user.commands?.read,
                     },
                     {
                       value: 'update',
                       inputValue: 'user update',
                       cursorTarget: 11,
-                      data: root.commands?.user.commands?.update,
+                      data: commands.user.commands?.update,
                     },
                     {
                       value: 'destroy',
                       inputValue: 'user destroy',
                       cursorTarget: 12,
-                      data: root.commands?.user.commands?.destroy,
+                      data: commands.user.commands?.destroy,
                     },
                   ],
                 },
@@ -377,6 +422,35 @@ describe('options', () => {
                     value: '--email',
                     inputValue: 'user --email foo',
                     cursorTarget: 'user --email'.length,
+                    data: { options },
+                  },
+                ],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
+    });
+
+    it('returns unique args', (done) => {
+      const options = [{ value: 'foo' }];
+
+      inputState({
+        value: 'user --name f -',
+        index: 'user --name f -'.length,
+        command: { commands: { user: { args: { email: { options }, name: { options } } } } },
+        onUpdate: afterNCalls(1, ({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                exhausted: false,
+                nodeStart: 'user --name f '.length,
+                options: [
+                  {
+                    value: '--email',
+                    inputValue: 'user --name f --email',
+                    cursorTarget: 'user --name f --email'.length,
                     data: { options },
                   },
                 ],

@@ -1,5 +1,5 @@
 import { parse } from '../parser';
-import { commandPath, getArgs, getNode, getArgContext } from '../util';
+import { commandPath, getArgs, getNode, getArgContext, argKeys } from '../util';
 import { ILocation, INode, IArg, ICommand, ICommands } from '../types';
 
 describe('commandPath', () => {
@@ -8,6 +8,7 @@ describe('commandPath', () => {
     ['user', 1, [{ start: 0, end: 1, type: 'COMMAND', value: 'u' }]],
     ['user', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
     ['user update', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
+    ['user --a b', 'user --a b'.length, [{ start: 0, end: 4, type: 'COMMAND', value: 'user' }]],
     [
       'user update',
       'user up'.length,
@@ -99,6 +100,20 @@ describe('getNode', () => {
   table.forEach(([index, expected]) => {
     it(`gets node at index: ${index}`, () => {
       expect(getNode(nodes, index)).toEqual(expected);
+    });
+  });
+});
+
+describe('argKeys', () => {
+  ([
+    ['user --name', 'user --name'.length, ['--name']],
+    ['user --name', 'user '.length, []],
+    ['user --name foo --email', 'user '.length, []],
+    ['user --name foo --email', 'user --name foo --email'.length, ['--name', '--email']],
+    ['user --name foo --email', 'user --name fo'.length, ['--name']],
+  ] as Array<[string, number, IArg | undefined]>).forEach(([input, index, expected]) => {
+    it(`gets arg keys at index: ${index}`, () => {
+      expect(argKeys(parse(input), index)).toEqual(expected);
     });
   });
 });

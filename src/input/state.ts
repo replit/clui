@@ -1,8 +1,8 @@
-import { ICommands, ICommand, IOption /* , IArg */, IResult, IArg } from './types';
+import { ICommands, ICommand, IOption, IResult, IArg, IArgsOption } from './types';
 import resolveCommands from './resolveCommands';
 
 import { parse } from './parser';
-import { getNode, getArgs, commandPath, getArgContext } from './util';
+import { getNode, getArgs, commandPath, getArgContext, argKeys } from './util';
 
 // const DEBUG = true;
 
@@ -119,21 +119,6 @@ const argsToSuggestions = (options: {
   }, []);
 };
 
-const argKeys = (ast: IResult, index?: number) =>
-  ast.result.value.reduce((acc: Array<string>, node) => {
-    if (
-      node.type === 'ARG_KEY' &&
-      typeof node.value === 'string' &&
-      (!index || index <= node.end)
-    ) {
-      const value =
-        index && index > node.start ? node.value.slice(0, index - node.start) : node.value;
-      acc.push(value);
-    }
-
-    return acc;
-  }, []);
-
 const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Record<string, string | true> }) =>
   Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
     const value = args[key];
@@ -155,6 +140,7 @@ const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Record<string, string |
 
 export const inputState = (config: IConfig) => {
   const commandsCache: Record<string, ICommands> = {};
+  const optionsCache: Record<string, Array<IArgsOption>> = {};
 
   let currentCommand = config.command;
   let updatedAt = Date.now();
@@ -201,8 +187,13 @@ export const inputState = (config: IConfig) => {
       }
 
       if (typeof opt.arg.options === 'function') {
+        const cacheKey = ['arg', value, opt.filter].join(':');
+
+        if (optionsCache[cacheKey]) {
+          return optionsCache[cacheKey];
+        }
         const res = await Promise.resolve(opt.arg.options(opt.filter));
-        // TODO cache
+        optionsCache[cacheKey] = res;
 
         return res;
       }
@@ -220,14 +211,8 @@ export const inputState = (config: IConfig) => {
       }
 
       if (currentNode?.type === 'ARG_KEY' || currentNode?.type === 'COMMAND') {
-        // console.log({ currentNode, prevNode });
-
         return false;
       }
-
-      // if (prevNode?.type === 'ARG_VALUE') {
-      // return false;
-      // }
 
       return true;
     };
@@ -243,6 +228,18 @@ export const inputState = (config: IConfig) => {
     if (current !== updatedAt) {
       return;
     }
+
+    const showCommandOptions = () => {
+      if (!ctx.commands) {
+        return false;
+      }
+
+      if (prevNode?.type === 'ARG_VALUE' || currentNode?.type === 'ARG_VALUE') {
+        return false;
+      }
+
+      return true;
+    };
 
     const showArgKeyOptions = () => {
       if (!currentCommand.args) {
@@ -260,20 +257,9 @@ export const inputState = (config: IConfig) => {
       return true;
     };
 
-    // console.log({
-    // argCtx,
-    // valueSlice,
-    // sliceStart,
-    // index,
-    // currentNode,
-    // prevNode,
-    // argOptions,
-    // currentCommand,
-    // });
-
     // debug({ prevNode, currentNode, sliceStart, valueSlice }, ctx);
     const options: Array<IOption> = [
-      ...(ctx.commands
+      ...(ctx.commands && showCommandOptions()
         ? dataToSuggestions({
             value,
             data: ctx.commands,
@@ -375,10 +361,10 @@ export const inputState = (config: IConfig) => {
       updatedAt = Date.now();
     }
 
-    setImmediate(processUpdates);
+    processUpdates();
   };
 
-  setImmediate(processUpdates);
+  processUpdates();
 
   return update;
 };

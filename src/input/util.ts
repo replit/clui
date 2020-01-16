@@ -64,6 +64,21 @@ export const getArgs = ({ result }: IResult) => {
 export const getNode = (nodes: Array<INode>, index: number): INode | undefined =>
   nodes.find((node) => node.start <= index && index < node.end);
 
+export const argKeys = (ast: IResult, index?: number) =>
+  ast.result.value.reduce((acc: Array<string>, node) => {
+    if (
+      node.type === 'ARG_KEY' &&
+      typeof node.value === 'string' &&
+      (!index || node.end <= index)
+    ) {
+      const value =
+        index && index > node.start ? node.value.slice(0, index - node.start) : node.value;
+      acc.push(value);
+    }
+
+    return acc;
+  }, []);
+
 export const getArgContext = ({
   command,
   ast,
