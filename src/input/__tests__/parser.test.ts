@@ -5,10 +5,9 @@ describe('parser', () => {
     const testCase = (command: string): [string, any] => [
       command,
       {
-        start: 0,
-        end: command.length,
-        type: 'ROOT',
-        value: [{ start: 0, end: command.length, type: 'COMMAND', value: command }],
+        index: command.length,
+        isError: false,
+        result: [{ start: 0, end: command.length, type: 'COMMAND', value: command }],
         source: command,
       },
     ];
@@ -22,7 +21,7 @@ describe('parser', () => {
       testCase('123addRole'),
     ].forEach(([command, expected]) => {
       it(`parses '${command}'`, () => {
-        expect(parse(command).result).toEqual(expected);
+        expect(parse(command)).toEqual(expected);
       });
     });
   });
@@ -30,24 +29,17 @@ describe('parser', () => {
   describe('commands', () => {
     const testCase = (...input: Array<string>): [string, any] => {
       const inputStr = input.join('');
-      const end = inputStr.length;
 
       return [
         inputStr,
-        {
-          start: 0,
-          end,
-          type: 'ROOT',
-          value: [
-            ...input.map((str, i) => {
-              const type = i % 2 === 0 ? 'COMMAND' : 'WHITESPACE';
-              const start = input.slice(0, i).join('').length;
+        [
+          ...input.map((str, i) => {
+            const type = i % 2 === 0 ? 'COMMAND' : 'WHITESPACE';
+            const start = input.slice(0, i).join('').length;
 
-              return { type, start, end: start + str.length, value: str };
-            }),
-          ],
-          source: inputStr,
-        },
+            return { type, start, end: start + str.length, value: str };
+          }),
+        ],
       ];
     };
 
@@ -115,7 +107,7 @@ describe('parser', () => {
       it(`parses '${args}'`, () => {
         const parsed = parse(`user ${args}`);
         // console.log(JSON.stringify(parsed, null, 2));
-        expect(parsed.result.value.slice(2)).toEqual(expected);
+        expect(parsed.result.slice(2)).toEqual(expected);
       });
     });
   });

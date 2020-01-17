@@ -1,19 +1,6 @@
 import { ICommand, ICommands, IResult } from './types';
 import { commandPath, getNode } from './util';
 
-interface IConfig {
-  root: ICommand;
-  ast: IResult;
-  index: number;
-  cache: Record<string, ICommands>;
-}
-
-interface IResolved {
-  command: ICommand;
-  commands?: ICommands;
-  key: string;
-}
-
 const getCommands = async (options: {
   cache: Record<string, ICommands>;
   keyPath: Array<string>;
@@ -26,7 +13,7 @@ const getCommands = async (options: {
   }
 
   if (typeof command.commands === 'function') {
-    const cacheKey = ['commands', ...keyPath].join(':');
+    const cacheKey = keyPath.join(':');
 
     if (cache[cacheKey]) {
       return cache[cacheKey];
@@ -42,62 +29,54 @@ const getCommands = async (options: {
   return undefined;
 };
 
+interface IConfig {
+  root: ICommand;
+  ast: IResult;
+  index: number;
+  cache: Record<string, ICommands>;
+}
+
+interface IResolved {
+  command: ICommand;
+  commands?: ICommands;
+  key: string;
+}
+
 const resolveCommands = async (config: IConfig): Promise<IResolved> => {
-  let key = '';
-
-  if (!config.root.commands) {
-    return { key, command: config.root };
-  }
-
-  const paths = commandPath(config.ast, config.index);
-
-  let command = config.root;
-  let commands: ICommands | undefined;
-
-  if (!paths.length) {
-    commands = await getCommands({
-      command,
-      keyPath: [],
-      cache: config.cache,
-    });
-
-    return { key, command, commands };
-  }
-
-  const atEnd = config.ast.result.source.length === config.index;
-  const prevNode = getNode(config.ast.result.value, config.index - 1);
-
-  let index = 0;
+  const paths: Array<string> = commandPath(config.ast, config.index).map((p) => p.value);
+  const atEnd = config.ast.source.length === config.index;
+  const atWhitespace = () => getNode(config.ast.result, config.index - 1)?.type === 'WHITESPACE';
 
   const queue = [...paths];
-  while (queue.length) {
-    const node = queue.shift();
 
-    if (!node) {
+  if (!queue.length || atEnd || atWhitespace()) {
+    queue.push('');
+  }
+
+  let key = '';
+  let command = config.root;
+  let commands: ICommands | undefined;
+  let index = 0;
+
+  while (queue.length) {
+    const path = queue.shift();
+
+    if (path === undefined) {
       break;
     }
 
-    const keyPath = [...paths.slice(0, index), node].map((p) => p.value);
-    // eslint-disable-next-line
+    const keyPath = [...paths.slice(0, index), path];
+    // eslint-disable-next-line no-await-in-loop
     commands = await getCommands({
       command,
       keyPath,
       cache: config.cache,
     });
 
-    if (commands && commands[node.value]) {
-      key = node.value;
+    if (commands && commands[path]) {
+      key = path;
       command = commands[key];
-      if (prevNode?.type === 'WHITESPACE' || atEnd) {
-        queue.push({
-          type: 'WHITESPACE',
-          start: prevNode ? prevNode.end : index,
-          end: prevNode ? prevNode.end : index,
-          value: '',
-        });
-      } else {
-        commands = undefined;
-      }
+      commands = undefined;
     }
 
     index++;

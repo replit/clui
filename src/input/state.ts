@@ -119,12 +119,12 @@ const argsToSuggestions = (options: {
   }, []);
 };
 
-const parseArgs = ({ cmd, args }: { cmd: ICommand; args: Record<string, string | true> }) =>
+const parseArgs = ({ command, args }: { command: ICommand; args: Record<string, string | true> }) =>
   Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
     const value = args[key];
 
-    if (cmd.args && cmd.args[key] && cmd.args[key].type) {
-      const argType = cmd.args[key].type;
+    if (command.args && command.args[key] && command.args[key].type) {
+      const argType = command.args[key].type;
 
       if (argType === Boolean && value === true) {
         acc[key] = value;
@@ -148,9 +148,29 @@ export const inputState = (config: IConfig) => {
   let index = config.index || 0;
   let ast: IResult = parse(value);
 
+  const getArgOptions = async ({ arg, filter }: { arg: IArg; filter?: string }) => {
+    if (typeof arg.options === 'object') {
+      return arg.options;
+    }
+
+    if (typeof arg.options === 'function') {
+      const cacheKey = [value, filter].join(':');
+
+      if (optionsCache[cacheKey]) {
+        return optionsCache[cacheKey];
+      }
+      const res = await Promise.resolve(arg.options(filter));
+      optionsCache[cacheKey] = res;
+
+      return res;
+    }
+
+    return [];
+  };
+
   const processUpdates = async () => {
-    const currentNode = getNode(ast.result.value, index);
-    const prevNode = getNode(ast.result.value, (currentNode ? currentNode?.start : index) - 1);
+    const currentNode = getNode(ast.result, index);
+    const prevNode = getNode(ast.result, (currentNode ? currentNode?.start : index) - 1);
 
     let sliceStart = 0;
     let sliceEnd: undefined | number;
@@ -180,26 +200,6 @@ export const inputState = (config: IConfig) => {
       ast,
       index,
     });
-
-    const getArgOptions = async (opt: { arg: IArg; filter?: string }) => {
-      if (typeof opt.arg.options === 'object') {
-        return opt.arg.options;
-      }
-
-      if (typeof opt.arg.options === 'function') {
-        const cacheKey = ['arg', value, opt.filter].join(':');
-
-        if (optionsCache[cacheKey]) {
-          return optionsCache[cacheKey];
-        }
-        const res = await Promise.resolve(opt.arg.options(opt.filter));
-        optionsCache[cacheKey] = res;
-
-        return res;
-      }
-
-      return [];
-    };
 
     const showArgValueOptions = () => {
       if (!currentCommand.args) {
@@ -296,7 +296,7 @@ export const inputState = (config: IConfig) => {
             throw new Error(`Invalid input: "${value}"`);
           }
 
-          const parsedArgs = parseArgs({ cmd: currentCommand, args: getArgs(ast) });
+          const parsedArgs = parseArgs({ command: currentCommand, args: getArgs(ast) });
 
           return currentCommand.run({
             args: Object.keys(parsedArgs).length ? parsedArgs : undefined,
@@ -314,7 +314,7 @@ export const inputState = (config: IConfig) => {
         return true;
       }
 
-      const parsedArgs = parseArgs({ cmd: currentCommand, args: getArgs(ast) });
+      const parsedArgs = parseArgs({ command: currentCommand, args: getArgs(ast) });
       const parsedArgKeys = Object.keys(parsedArgs);
       // debug({ parsedArgs, ast });
 
@@ -326,13 +326,13 @@ export const inputState = (config: IConfig) => {
     };
 
     const nodeStart = () => {
-      let node = getNode(ast.result.value, index);
+      let node = getNode(ast.result, index);
 
       if (node && node.type !== 'WHITESPACE') {
         return node.start;
       }
 
-      node = getNode(ast.result.value, index - 1);
+      node = getNode(ast.result, index - 1);
 
       if (node) {
         return node.type === 'WHITESPACE' ? index : node.start;

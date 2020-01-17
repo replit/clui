@@ -6,18 +6,25 @@ import { INode, IData } from './types';
 const keyword = A.regex(/^[a-zA-Z0-9][^\s\\]*/);
 const flagPrefix = A.regex(/^-?(-)/);
 
-const toNode = (type: NodeType) => (result: Pick<INode, 'type' | 'value'>) => ({
+type IBaseNode = Pick<INode, 'type' | 'node'>;
+
+interface IFromData {
+  data: IData;
+  result: IBaseNode;
+}
+
+const toNode = (type: NodeType) => (result: IBaseNode) => ({
   value: result,
   type,
 });
 
-const toLocation = ({ data, result }: { data: IData; result: Pick<INode, 'type' | 'value'> }) => ({
+const toLocation = ({ data, result }: IFromData) => ({
   ...result,
   start: data.index,
   end: data.index + (result.value ? result.value.length : 0),
 });
 
-const setIndex = ({ result, data }: { data: IData; result: Pick<INode, 'type' | 'value'> }) =>
+const setIndex = ({ result, data }: IFromData) =>
   A.setData({
     ...data,
     index: result && result.value ? data.index + result.value.length : data.index,
@@ -99,14 +106,15 @@ const commands = A.many(A.sequenceOf([command, commandTerminator]))
   .map(flatten)
   .map(nullify);
 
-const parser = A.withData(
-  A.sequenceOf([commands, A.possibly(args)]).mapFromData(({ data, result }) => ({
-    type: 'ROOT',
-    value: flatten(result),
-    start: 0,
-    end: data.index,
-    source: data.source,
-  })),
-);
+const parser = A.withData(A.sequenceOf([commands, A.possibly(args)]).map(flatten));
 
-export const parse = (str: string) => parser({ index: 0, source: str }).run(str);
+export const parse = (source: string) => {
+  const parsed = parser({ index: 0 }).run(source);
+
+  return {
+    isError: parsed.isError,
+    index: parsed.data.index,
+    source,
+    result: parsed.result,
+  };
+};
