@@ -109,3 +109,30 @@ export const getArgContext = ({
 
   return undefined;
 };
+
+export const parseArgs = ({
+  command,
+  args,
+}: {
+  command: ICommand;
+  args: Record<string, string | true>;
+}) =>
+  Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
+    const value = args[key];
+
+    if (command.args && command.args[key] && command.args[key].type) {
+      const argType = command.args[key].type;
+
+      if (argType === Boolean && value === true) {
+        acc[key] = value;
+      } else if (argType === Boolean) {
+        acc[key] = !!value;
+      } else if (value !== true && argType && argType !== Boolean) {
+        acc[key] = argType(value);
+      }
+    } else if (typeof value !== 'boolean') {
+      acc[key] = value;
+    }
+
+    return acc;
+  }, {});

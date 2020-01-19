@@ -2,6 +2,7 @@
 export interface IOption<D = any> {
   value: string;
   inputValue: string;
+  searchValue?: string;
   cursorTarget: number;
   data?: D;
 }
@@ -13,12 +14,15 @@ export interface IArgsOption {
   value: string;
 }
 
-type ArgsOptionsFn = (str?: string) => Promise<Array<IArgsOption>>;
+type PValue<T> = Promise<T> | T;
 
-export interface IArg {
+type ArgsOptionsFn = (str?: string) => PValue<Array<IArgsOption>>;
+
+export interface IArg<D = any> {
   options?: ArgsOptionsFn | Array<IArgsOption>;
   type?: ArgTypeDef;
   required?: true;
+  data?: D;
 }
 
 export interface ICommands {
@@ -35,15 +39,21 @@ export interface IRunOptions<O = any> {
   options?: O;
 }
 
-type CommandsFn = (str?: string) => Promise<ICommands>;
+type ThunkFn<V> = (str?: string) => Promise<V>;
+type Thunk<V> = V | ThunkFn<V>;
 
 type RunFn<O, R> = (options: IRunOptions<O>) => R;
 
-export interface ICommand<O = any, R = any> {
+interface ICommandBase<O = any, R = any> {
   args?: ICommandArgs;
-  commands?: ICommands | CommandsFn;
+  commands?: Thunk<ICommands>;
   run?: RunFn<O, R>;
 }
+
+export type ICommand<D = {}, O = any, R = any> = {
+  [K in keyof D]: D[K];
+} &
+  ICommandBase<O, R>;
 
 // AST Types
 type NodeType = 'COMMAND' | 'ARG_KEY' | 'ARG_VALUE' | 'ARG_VALUE_QUOTED' | 'WHITESPACE';

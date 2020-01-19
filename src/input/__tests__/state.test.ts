@@ -73,6 +73,7 @@ describe('options', () => {
                     {
                       value: 'user',
                       inputValue: 'user',
+                      searchValue: 'use',
                       cursorTarget: 4,
                       data: root.commands?.user,
                     },
@@ -219,6 +220,7 @@ describe('options', () => {
                     {
                       value: 'create',
                       inputValue: 'user create',
+                      searchValue: 'crea',
                       cursorTarget: 11,
                       data: root.commands?.user.commands?.create,
                     },
@@ -251,7 +253,7 @@ describe('options', () => {
         ['a --name b', 'a --name b'.length, 'a --name '.length],
         ['a --name b', 'a --name '.length, 'a --name '.length],
         ['a --name b', 'a --name'.length, 'a '.length],
-        ['a --name b ', 'a --name b '.length, 'a --name '.length],
+        ['a --name b ', 'a --name b '.length, 'a --name b '.length],
       ] as Array<[string, number, number]>).forEach(([value, index, nodeStart]) => {
         it('returns sub-commands', (done) => {
           inputState({
@@ -393,6 +395,7 @@ describe('options', () => {
                     value: '--email',
                     inputValue: 'user --email',
                     cursorTarget: 'user --email'.length,
+                    searchValue: 'em',
                     data: root.commands?.user.args?.email,
                   },
                 ],
@@ -422,6 +425,7 @@ describe('options', () => {
                     value: '--email',
                     inputValue: 'user --email foo',
                     cursorTarget: 'user --email'.length,
+                    searchValue: 'em',
                     data: { options },
                   },
                 ],
@@ -462,95 +466,137 @@ describe('options', () => {
       });
     });
   });
+});
 
-  // describe('arg.options', () => {
-  // describe.only('object', () => {
-  // });
+describe('options variations', () => {
+  const options = [{ value: 'foo' }];
+  const commands = {
+    user: {
+      args: {
+        verbose: { type: Boolean },
+        email: { options },
+        name: { options },
+      },
+    },
+  };
 
-  // const options = [{ value: 'a' }, { value: 'ab' }];
+  const root = { commands };
 
-  // const root  = {
-  // commands: {
-  // user: {
-  // args: {
-  // email: {
-  // options,
-  // },
-  // name: {
-  // options: async (_: any): Promise<Array<{ value: string }>> =>
-  // Promise.resolve(options),
-  // },
-  // },
-  // },
-  // },
-  // };
+  it('returns remaining arg options', (done) => {
+    inputState({
+      value: 'user --name bar ',
+      index: 'user --name bar '.length,
+      command: root,
+      onUpdate: afterNCalls(1, ({ mock }) => {
+        expect(mock.calls).toEqual([
+          [
+            {
+              exhausted: false,
+              nodeStart: 'user --name bar '.length,
+              options: [
+                {
+                  value: '--verbose',
+                  inputValue: 'user --name bar --verbose',
+                  cursorTarget: 'user --name bar --verbose'.length,
+                  data: commands.user.args.verbose,
+                },
+                {
+                  value: '--email',
+                  inputValue: 'user --name bar --email',
+                  cursorTarget: 'user --name bar --email'.length,
+                  data: commands.user.args.email,
+                },
+              ],
+            },
+          ],
+        ]);
+        done();
+      }),
+    });
+  });
 
-  // it('returns arg options', (done) => {
-  // inputState({
-  // value: 'user --email a',
-  // index: 'user --email a'.length,
-  // command: root,
-  // onUpdate: afterNCalls(1, ({ mock }) => {
-  // expect(mock.calls).toEqual([
-  // [
-  // {
-  // exhausted: false,
-  // nodeStart: 'user --email '.length,
-  // options: [
-  // {
-  // value: 'a',
-  // inputValue: 'user --email a',
-  // cursorTarget: 'user --email a'.length,
-  // data: options[0],
-  // },
-  // {
-  // value: 'ab',
-  // inputValue: 'user --email ab',
-  // cursorTarget: 'user --email ab'.length,
-  // data: options[1],
-  // },
-  // ],
-  // },
-  // ],
-  // ]);
+  it('returns options after Boolean flag', (done) => {
+    inputState({
+      value: 'user --verbose ',
+      index: 'user --verbose '.length,
+      command: root,
+      onUpdate: afterNCalls(1, ({ mock }) => {
+        expect(mock.calls).toEqual([
+          [
+            {
+              exhausted: false,
+              nodeStart: 'user --verbose '.length,
+              options: [
+                {
+                  value: '--email',
+                  inputValue: 'user --verbose --email',
+                  cursorTarget: 'user --verbose --email'.length,
+                  data: commands.user.args.email,
+                },
+                {
+                  value: '--name',
+                  inputValue: 'user --verbose --name',
+                  cursorTarget: 'user --verbose --name'.length,
+                  data: commands.user.args.name,
+                },
+              ],
+            },
+          ],
+        ]);
+        done();
+      }),
+    });
+  });
 
-  // done();
-  // }),
-  // });
-  // });
+  ([
+    ['user --verbose ', 'user --verbose'.length],
+    ['user --name ', 'user --name'.length],
+  ] as Array<[string, number]>).forEach(([value, index]) => {
+    it('returns no options', (done) => {
+      inputState({
+        value,
+        index,
+        command: root,
+        onUpdate: afterNCalls(1, ({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                exhausted: false,
+                nodeStart: 'user '.length,
+                options: [],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
+    });
+  });
 
-  // it('returns arg options function', (done) => {
-  // inputState({
-  // value: 'user --name a',
-  // index: 'user --name a'.length,
-  // command: root,
-  // onUpdate: afterNCalls(1, ({ mock }) => {
-  // expect(mock.calls).toEqual([
-  // [
-  // {
-  // exhausted: false,
-  // nodeStart: 'user --name '.length,
-  // options: [
-  // {
-  // value: 'a',
-  // inputValue: 'user --name a',
-  // cursorTarget: 'user --name a'.length,
-  // data: options[0],
-  // },
-  // {
-  // value: 'ab',
-  // inputValue: 'user --name ab',
-  // cursorTarget: 'user --name ab'.length,
-  // data: options[1],
-  // },
-  // ],
-  // },
-  // ],
-  // ]);
-
-  // done();
-  // }),
-  // });
-  // });
-  // });
+  it('returns arg value options when value type is not Boolean', (done) => {
+    inputState({
+      value: 'user --name ',
+      index: 'user --name '.length,
+      command: root,
+      onUpdate: afterNCalls(1, ({ mock }) => {
+        expect(mock.calls).toEqual([
+          [
+            {
+              exhausted: false,
+              nodeStart: 'user --name '.length,
+              options: [
+                {
+                  value: 'foo',
+                  inputValue: 'user --name foo',
+                  cursorTarget: 'user --name foo'.length,
+                  data: options[0],
+                },
+              ],
+            },
+          ],
+        ]);
+        done();
+      }),
+    });
+  });
 });

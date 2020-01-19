@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useRef, useEffect } from 'react';
+import { useReducer, useCallback, useRef } from 'react';
 import { ICommand } from './types';
 import { inputState, IInputStateUpdates } from './state';
 
@@ -9,8 +9,8 @@ type Action = {
   updates: Partial<IState>;
 };
 
-interface IOptions {
-  command: ICommand;
+interface IOptions<C extends ICommand = ICommand> {
+  command: C;
   value?: string;
   index?: number;
 }
@@ -46,7 +46,7 @@ const useInputState = (options: IOptions): [IState, Updater] => {
     exhausted: false,
   });
 
-  useEffect(() => {
+  if (!input.current) {
     input.current = inputState({
       command: options.command,
       value: options.value,
@@ -55,14 +55,31 @@ const useInputState = (options: IOptions): [IState, Updater] => {
         dispatch({ type: 'UPDATE', updates: { loading: false, ...updates } });
       },
     });
-  }, [dispatch, options.index, options.value, options.command]);
+  }
 
-  const update = useCallback((updates: Updates) => {
-    if (input.current) {
-      input.current(updates);
-      dispatch({ type: 'UPDATE', updates: { loading: true, ...updates } });
-    }
-  }, []);
+  const update = useCallback(
+    (updates: Updates) => {
+      if (input.current) {
+        const different: Updates = {};
+
+        if (updates.value !== undefined && updates.value !== state.value) {
+          different.value = updates.value;
+        }
+
+        if (updates.index !== undefined && updates.index !== state.index) {
+          different.index = updates.index;
+        }
+
+        if (!Object.keys(different).length) {
+          return;
+        }
+
+        input.current(different);
+        dispatch({ type: 'UPDATE', updates: { loading: true, ...different } });
+      }
+    },
+    [dispatch, state.value, state.index],
+  );
 
   return [state, update];
 };

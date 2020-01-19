@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import Downshift from 'downshift';
 
@@ -10,44 +10,17 @@ interface IProps extends ISessionItemProps {
 }
 
 const Prompt = (props: IProps) => {
-  const input = useRef<HTMLInputElement>(null);
-  const [state, update] = useInputState({
-    command,
-    value: props.value || '',
-    index: (props.value || '').length,
-  });
-  const [selection, setSelection] = React.useState<IOption>(null);
+  const [state, update] = useInputState({ command });
 
-  const onKeyUp = React.useCallback(
-    (e) => {
-      const index = e.target.selectionStart;
-      if (state.index !== index) {
-        update({ index });
-      }
-    },
-    [state.index],
-  );
+  const onKeyUp = React.useCallback((e) => update({ index: e.target.selectionStart }), [update]);
 
   const run = React.useCallback(() => {
     if (!props.item || !state.run) {
       return;
     }
 
-    props.item.insertAfter(state.run(), <Prompt value="" {...props} />).next();
-  }, [state.run, props.item]);
-
-  React.useEffect(() => {
-    if (state.run && state.exhausted) {
-      run();
-    }
-  }, [state.run]);
-
-  React.useEffect(() => {
-    if (selection && input.current) {
-      const index = selection.cursorTarget + 1;
-      input.current.setSelectionRange(index, index);
-    }
-  }, [selection, input]);
+    props.item.insertAfter(state.run(), <Prompt {...props} value="" />).next();
+  }, [props.item, state.run]);
 
   return (
     <Downshift
@@ -55,12 +28,15 @@ const Prompt = (props: IProps) => {
       inputValue={state.value}
       initialHighlightedIndex={0}
       defaultHighlightedIndex={0}
-      onChange={(suggestion: IOption) => {
-        if (!suggestion) {
+      onChange={(option: IOption) => {
+        if (!option) {
           return;
         }
 
-        update({ value: `${suggestion.inputValue} `, index: suggestion.cursorTarget + 1 });
+        update({
+          value: `${option.inputValue} `,
+          index: option.cursorTarget + 1,
+        });
       }}
       itemToString={() => state.value}
     >
@@ -69,7 +45,6 @@ const Prompt = (props: IProps) => {
           <div className="input-container">
             <input
               {...ds.getInputProps({
-                ref: input,
                 autoFocus: true,
                 spellCheck: false,
                 placeholder: 'type a command',
@@ -78,11 +53,8 @@ const Prompt = (props: IProps) => {
                   update({ value: target.value, index: target.selectionStart });
                 },
                 onKeyDown: (event) => {
-                  setSelection(null);
                   if (event.key === 'Enter' && !state.options.length && state.run) {
-                    console.log('handle enter');
-                    // debugger;
-                    // run();
+                    run();
                   }
                 },
               })}
@@ -90,21 +62,15 @@ const Prompt = (props: IProps) => {
             <div className="menu-anchor">
               <div className="menu">
                 <div className="menu-offset">{state.value.slice(0, state.index)}</div>
-                <ul {...ds.getMenuProps({ style: { listStyle: 'none', margin: 0, padding: 0 } })}>
-                  {state.options.length
-                    ? state.options.map((item, index) => (
-                        <li
-                          className={ds.highlightedIndex === index ? 'highlighted' : undefined}
-                          {...ds.getItemProps({
-                            key: item.value,
-                            index,
-                            item,
-                          })}
-                        >
-                          {item.value}
-                        </li>
-                      ))
-                    : null}
+                <ul {...ds.getMenuProps()}>
+                  {state.options.map((item, index) => (
+                    <li
+                      className={ds.highlightedIndex === index ? 'highlighted' : undefined}
+                      {...ds.getItemProps({ key: item.value, index, item })}
+                    >
+                      {item.value}
+                    </li>
+                  ))}
                   {state.loading ? <li>loading...</li> : null}
                 </ul>
               </div>
@@ -153,6 +119,7 @@ const Prompt = (props: IProps) => {
 
               ul {
                 padding: 0;
+                margin: 0;
                 list-style: none;
                 background-color: rgba(255, 255, 255, 0.2);
               }

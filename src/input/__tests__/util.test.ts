@@ -1,5 +1,5 @@
 import { parse } from '../parser';
-import { commandPath, getArgs, getNode, getArgContext, argKeys } from '../util';
+import { commandPath, getArgs, getNode, getArgContext, argKeys, parseArgs } from '../util';
 import { ILocation, INode, IArg, ICommand, ICommands } from '../types';
 
 describe('commandPath', () => {
@@ -114,6 +114,32 @@ describe('argKeys', () => {
   ] as Array<[string, number, IArg | undefined]>).forEach(([input, index, expected]) => {
     it(`gets arg keys at index: ${index}`, () => {
       expect(argKeys(parse(input), index)).toEqual(expected);
+    });
+  });
+});
+
+describe('parseArgs', () => {
+  const command = {
+    args: {
+      name: {},
+      email: { type: String },
+      count: { type: Number },
+      verbose: { type: Boolean },
+    },
+  };
+
+  ([
+    ['name', 'foo', 'foo'],
+    ['name', true, undefined],
+    ['email', 'foo', 'foo'],
+    ['count', 1, 1],
+    ['count', '1', 1],
+    ['verbose', '1', true],
+    ['verbose', true, true],
+  ] as Array<[string, any, any]>).forEach(([key, input, output]) => {
+    it('parses args', () => {
+      const parsed = parseArgs({ command, args: { [key]: input } });
+      expect(parsed[key]).toEqual(output);
     });
   });
 });

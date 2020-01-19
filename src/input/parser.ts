@@ -49,9 +49,7 @@ const between = (char: string) =>
 
 const quoted = A.choice([between('"'), between("'")]).map(toNode('ARG_VALUE_QUOTED'));
 
-const literal = A.everythingUntil(A.choice([A.str('-'), A.str(' -'), A.endOfInput])).map(
-  toNode('ARG_VALUE'),
-);
+const literal = keyword.map(toNode('ARG_VALUE'));
 
 const argValue = A.choice([quoted, literal])
   .mapFromData(toLocation)
@@ -85,7 +83,17 @@ const commandTerminator = A.choice([A.endOfInput, A.whitespace])
   .chainFromData(setIndex);
 
 function flatten<D>(list: Array<Array<D>>): Array<D> {
-  return list.reduce((acc, item) => [...acc, ...(item || [])], []);
+  return list.reduce((acc, item) => {
+    if (Array.isArray(item)) {
+      return [...acc, ...item];
+    }
+
+    if (item) {
+      return [...acc, item];
+    }
+
+    return acc;
+  }, []);
 }
 
 function nullify<D>(list: Array<Array<D>>): Array<D> {

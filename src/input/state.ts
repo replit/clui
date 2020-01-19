@@ -2,16 +2,16 @@ import { ICommands, ICommand, IOption, IResult, IArg, IArgsOption } from './type
 import resolveCommands from './resolveCommands';
 
 import { parse } from './parser';
-import { getNode, getArgs, commandPath, getArgContext, argKeys } from './util';
+import { getNode, getArgs, commandPath, getArgContext, argKeys, parseArgs } from './util';
 
 // const DEBUG = true;
 
 // eslint-disable-next-line
 // const debug = (...args: any) => DEBUG && console.log('DEBUG:', ...args);
 
-interface IConfig {
+interface IConfig<C extends ICommand = ICommand> {
   onUpdate: (updates: IInputStateUpdates) => void;
-  command: ICommand;
+  command: C;
   value?: string;
   index?: number;
 }
@@ -44,6 +44,7 @@ function valuesToOptions<D extends { value: string }>(options: {
       acc.push({
         data,
         value: data.value,
+        searchValue: filter || undefined,
         inputValue:
           inputValueStart +
           (data.value && sliceEnd !== undefined ? data.value.slice(sliceEnd) : ''),
@@ -76,6 +77,7 @@ function dataToSuggestions<D>(options: {
         value: key,
         data: data[key],
         inputValue,
+        searchValue: filter || undefined,
         cursorTarget: inputValueStart.length,
       });
     }
@@ -111,6 +113,7 @@ const argsToSuggestions = (options: {
         value: flag,
         data: args[key],
         inputValue,
+        searchValue: filter || undefined,
         cursorTarget: inputValueStart.length,
       });
     }
@@ -118,25 +121,6 @@ const argsToSuggestions = (options: {
     return acc;
   }, []);
 };
-
-const parseArgs = ({ command, args }: { command: ICommand; args: Record<string, string | true> }) =>
-  Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
-    const value = args[key];
-
-    if (command.args && command.args[key] && command.args[key].type) {
-      const argType = command.args[key].type;
-
-      if (argType === Boolean && value === true) {
-        acc[key] = value;
-      } else if (value !== true && argType && argType !== Boolean) {
-        acc[key] = argType(value);
-      }
-    } else {
-      acc[key] = value;
-    }
-
-    return acc;
-  }, {});
 
 export const inputState = (config: IConfig) => {
   const commandsCache: Record<string, ICommands> = {};
@@ -207,12 +191,30 @@ export const inputState = (config: IConfig) => {
       }
 
       if (currentNode?.type === 'ARG_VALUE') {
+        // console.log(0, currentCommand, { prevNode, currentNode });
+
         return true;
       }
 
       if (currentNode?.type === 'ARG_KEY' || currentNode?.type === 'COMMAND') {
         return false;
       }
+
+      if (prevNode?.type === 'WHITESPACE') {
+        if (getNode(ast.result, prevNode.start - 1)?.type === 'ARG_KEY') {
+          // console.log(1, currentCommand, { prevNode, currentNode });
+
+          return true;
+        }
+
+        return false;
+      }
+
+      if (prevNode?.type === 'ARG_KEY') {
+        return false;
+      }
+
+      // console.log(2, currentCommand, { prevNode, currentNode });
 
       return true;
     };
@@ -238,21 +240,54 @@ export const inputState = (config: IConfig) => {
         return false;
       }
 
+      if (prevNode?.type === 'WHITESPACE') {
+        if (getNode(ast.result, prevNode.start - 1)?.type !== 'COMMAND') {
+          return false;
+        }
+      }
+
       return true;
     };
 
     const showArgKeyOptions = () => {
       if (!currentCommand.args) {
+        // console.log(0, currentCommand);
+
+        return false;
+      }
+
+      if (currentNode?.type === 'WHITESPACE') {
+        // console.log(1, prevNode, currentNode);
+
         return false;
       }
 
       if (currentNode?.type === 'ARG_KEY') {
+        // console.log(1, prevNode, currentNode);
+
         return true;
       }
 
       if (prevNode?.type === 'ARG_VALUE') {
-        return false;
+        // console.log(2, prevNode, currentNode);
+
+        return true;
       }
+
+      if (prevNode?.type === 'WHITESPACE') {
+        const prevPrevNode = getNode(ast.result, prevNode.start - 1);
+        if (prevPrevNode?.type === 'ARG_KEY') {
+          const key = prevPrevNode.value.replace(/^-?(-)/, '');
+
+          return (
+            currentCommand.args &&
+            currentCommand.args[key] &&
+            currentCommand.args[key].type === Boolean
+          );
+        }
+      }
+
+      // console.log(3, prevNode, currentNode);
 
       return true;
     };
