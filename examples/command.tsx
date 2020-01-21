@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { ISessionItemProps, ICommand, IRunOptions, ICommands } from '../src';
-import { IArgsOption } from '../src/input/types';
+import { ISessionItemProps, ICommand, IRunOptions, SubCommands } from '../src';
 
 interface IProps extends ISessionItemProps, IRunOptions {}
 
@@ -12,14 +11,94 @@ const Run = (props: IProps) => {
   }, []);
 
   return (
-    <pre>
+    <pre style={{ fontSize: 10 }}>
       <code>{JSON.stringify(props, null, 2)}</code>
     </pre>
   );
 };
 
-const makeCommands = (depth: number) => async (__: any) => {
-  const ret: ICommands = {};
+interface IAppCommand extends ICommand {
+  description?: string;
+  commands?: SubCommands<IAppCommand>;
+}
+
+const help: IAppCommand = {
+  description: 'Show help info',
+  args: {
+    verbose: {
+      type: Boolean,
+    },
+    subCommands: {
+      options: (filter?: string) => {
+        const res = [{ value: 'sub1' }, { value: 'sub2' }];
+
+        if (!filter) {
+          return res;
+        }
+
+        return res.filter((o) => o.value.includes(filter));
+      },
+    },
+    related: {
+      options: async (filter?: string) => {
+        const res = [{ value: 'rel1' }, { value: 'rel2' }];
+
+        if (!filter) {
+          return res;
+        }
+
+        return res.filter((o) => o.value.includes(filter));
+      },
+    },
+  },
+  run: (args) => <Run {...args} />,
+};
+
+const weather: IAppCommand = {
+  run: (props) => <Run {...props} />,
+  commands: async (value: string): Promise<Record<string, IAppCommand>> => {
+    if (value && value.startsWith('fo')) {
+      return {
+        foo: {
+          args: {
+            wat: {},
+          },
+          commands: async (value2: string): Promise<Record<string, IAppCommand>> => ({
+            baz: {
+              description: 'baz',
+            },
+            [value2 || 'ss']: {},
+            aaa: {},
+          }),
+        },
+        bar: {
+          description: 'bar',
+        },
+      };
+    }
+
+    return new Promise((resolve) => {
+      setTimeout(
+        () =>
+          resolve({
+            nyc: {},
+            orl: {},
+            sf: {},
+          }),
+        300,
+      );
+    });
+  },
+  args: {
+    zipcode: {
+      type: String,
+      required: true,
+    },
+  },
+};
+
+const makeCommands = (depth: number) => async (__: any): Promise<Record<string, IAppCommand>> => {
+  const ret: Record<string, IAppCommand> = {};
 
   [...Array(depth)].forEach((_, index) => {
     ret[`depth:${depth}:${index}`] = {
@@ -30,85 +109,18 @@ const makeCommands = (depth: number) => async (__: any) => {
   return ret;
 };
 
-const commands: Record<string, ICommand> = {
-  depth: {
-    commands: makeCommands(1),
-  },
-  todo: {
-    run: (props) => <Run {...props} />,
-    commands: {
-      note: {
-        args: {
-          place: {
-            options: async (s: string): Promise<Array<IArgsOption>> =>
-              [{ value: 'foo' }, { value: 'bar' }, { value: 'wat' }].filter((v) =>
-                v.value.includes(s),
-              ),
-          },
-        },
-      },
-      list: {
-        run: (props) => <Run {...props} />,
-        args: {
-          all: {
-            type: Boolean,
-          },
-        },
-      },
-      new: {
-        run: (props) => <Run {...props} />,
-        args: {
-          text: {
-            type: String,
-          },
-        },
-      },
-    },
-  },
-  weather: {
-    name: 'weather',
-    run: (props) => <Run {...props} />,
-    commands: async (value) => {
-      if (value && value.startsWith('fo')) {
-        return {
-          foo: {
-            name: 'foo',
-            args: {
-              wat: {},
-            },
-            commands: async (value2) => ({
-              baz: {
-                name: 'baz',
-              },
-              [value2 || 'ss']: {},
-              aaa: {},
-            }),
-          },
-          bar: {
-            name: 'bar',
-          },
-        };
-      }
-
-      return new Promise((resolve) => {
-        setTimeout(
-          () =>
-            resolve({
-              nyc: {},
-              orl: {},
-              sf: {},
-            }),
-          300,
-        );
-      });
-    },
-    args: {
-      zipcode: {
-        type: String,
-        required: true,
-      },
-    },
-  },
+const depth: IAppCommand = {
+  commands: makeCommands(1),
 };
 
-export default { commands };
+const root: IAppCommand = {
+  description: 'Root command',
+  commands: {
+    help,
+    weather,
+    depth,
+  },
+  run: (args) => <Run {...args} />,
+};
+
+export default root;

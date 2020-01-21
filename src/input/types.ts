@@ -25,8 +25,8 @@ export interface IArg<D = any> {
   data?: D;
 }
 
-export interface ICommands {
-  [key: string]: ICommand;
+export interface ICommands<C = ICommand> {
+  [key: string]: C;
 }
 
 export interface ICommandArgs {
@@ -44,16 +44,13 @@ type Thunk<V> = V | ThunkFn<V>;
 
 type RunFn<O, R> = (options: IRunOptions<O>) => R;
 
-interface ICommandBase<O = any, R = any> {
+export interface ICommand<O = any, R = any> {
   args?: ICommandArgs;
-  commands?: Thunk<ICommands>;
+  commands?: Thunk<ICommands<ICommand>>;
   run?: RunFn<O, R>;
 }
 
-export type ICommand<D = {}, O = any, R = any> = {
-  [K in keyof D]: D[K];
-} &
-  ICommandBase<O, R>;
+export type SubCommands<C extends ICommand> = Thunk<ICommands<C>>;
 
 // AST Types
 type NodeType = 'COMMAND' | 'ARG_KEY' | 'ARG_VALUE' | 'ARG_VALUE_QUOTED' | 'WHITESPACE';

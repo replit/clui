@@ -1,4 +1,5 @@
 import { inputState } from '../state';
+import { ICommand, ICommands } from '../types';
 
 const afterNCalls = (calls: number, cb: (mock: jest.Mock) => void) => {
   const fn: jest.Mock = jest.fn(() => cb(fn));
@@ -464,6 +465,93 @@ describe('options', () => {
           done();
         }),
       });
+    });
+  });
+});
+
+describe('function commands cache', () => {
+  const commands = {
+    user: {
+      commands: {
+        info: {
+          commands: async (str?: string): Promise<ICommands> => {
+            if (str === 'a') {
+              return { x: {} };
+            }
+            if (str === 'aa') {
+              return { xx: {} };
+            }
+            if (str === 'b') {
+              return { z: {} };
+            }
+
+            return {};
+          },
+        },
+      },
+    },
+  };
+
+  const root: ICommand = { commands };
+
+  it('returns different commands', (done) => {
+    let step = 0;
+
+    const update = inputState({
+      value: 'user info a',
+      index: 'user info a'.length,
+      command: root,
+      onUpdate: (arg) => {
+        if (step === 0) {
+          expect(arg.options).toEqual([
+            {
+              inputValue: 'user info x',
+              cursorTarget: 11,
+              data: {},
+              value: 'x',
+              searchValue: 'a',
+            },
+          ]);
+
+          update({
+            value: 'user info aa',
+            index: 'user info aa'.length,
+          });
+        }
+
+        if (step === 1) {
+          expect(arg.options).toEqual([
+            {
+              inputValue: 'user info xx',
+              cursorTarget: 12,
+              data: {},
+              value: 'xx',
+              searchValue: 'aa',
+            },
+          ]);
+
+          update({
+            value: 'user info b',
+            index: 'user info b'.length,
+          });
+        }
+
+        if (step === 2) {
+          expect(arg.options).toEqual([
+            {
+              inputValue: 'user info z',
+              cursorTarget: 11,
+              data: {},
+              value: 'z',
+              searchValue: 'b',
+            },
+          ]);
+
+          done();
+        }
+
+        step++;
+      },
     });
   });
 });

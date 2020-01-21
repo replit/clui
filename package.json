@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A CLI with UI",
   "main": "dist/index.js",
   "files": [
@@ -28,10 +28,10 @@
     "@types/enzyme-adapter-react-16": "^1.0.5",
     "@types/faker": "^4.1.9",
     "@types/jest": "^24.9.0",
-    "@types/react-dom": "^16.9.4",
+    "@types/react-dom": "^16.9.5",
     "@types/styled-jsx": "^2.2.8",
-    "@typescript-eslint/eslint-plugin": "^2.16.0",
-    "@typescript-eslint/parser": "^2.16.0",
+    "@typescript-eslint/eslint-plugin": "^2.17.0",
+    "@typescript-eslint/parser": "^2.17.0",
     "docz": "^2.2.0",
     "downshift": "^4.0.7",
     "enzyme": "^3.11.0",

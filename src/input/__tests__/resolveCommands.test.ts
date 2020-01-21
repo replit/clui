@@ -104,8 +104,8 @@ describe('resolveCommands', () => {
 
     const b = await resolveCommands({
       root,
-      ast: parse('user add'),
-      index: 'user add'.length,
+      ast: parse('user add '),
+      index: 'user add '.length,
       cache,
     });
 
@@ -114,8 +114,8 @@ describe('resolveCommands', () => {
 
     const c = await resolveCommands({
       root,
-      ast: parse('user add role'),
-      index: 'user add role'.length,
+      ast: parse('user add role '),
+      index: 'user add role '.length,
       cache,
     });
 
@@ -306,9 +306,17 @@ describe('resolveCommands', () => {
     const root: ICommand = {
       commands: {
         user: {
-          commands: async (value) => ({
-            [value !== 'bb' ? `${value || ''}b` : value]: {},
-          }),
+          commands: async (value): Promise<ICommands> => {
+            if (value === 'a') {
+              return { x: {} };
+            }
+
+            if (value === 'b') {
+              return { y: {} };
+            }
+
+            return {};
+          },
         },
       },
     };
@@ -322,7 +330,7 @@ describe('resolveCommands', () => {
 
     expect(a.key).toEqual('user');
     expect(a.command).toEqual((root.commands as ICommands).user);
-    expect(a.commands).toEqual({ b: {} });
+    expect(a.commands).toEqual({ x: {} });
 
     const b = await resolveCommands({
       root,
@@ -333,18 +341,16 @@ describe('resolveCommands', () => {
 
     expect(b.key).toEqual('user');
     expect(b.command).toEqual((root.commands as ICommands).user);
-    expect(b.commands).toEqual({ b: {} });
+    expect(b.commands).toEqual({ y: {} });
 
     const c = await resolveCommands({
       root,
-      ast: parse('user bb'),
-      index: 'user bb'.length,
+      ast: parse('user c'),
+      index: 'user c'.length,
       cache,
     });
 
-    expect(c.key).toEqual('bb');
-    expect(c.command).toEqual({});
-    expect(c.commands).toEqual(undefined);
+    expect(c.key).toEqual('user');
   });
 
   it('calls commands function with value at index', async () => {

@@ -8,4 +8,5 @@ export {
   ArgTypeDef,
   IOption,
   IRunOptions,
+  SubCommands,
 } from './types';

@@ -4,11 +4,6 @@ import resolveCommands from './resolveCommands';
 import { parse } from './parser';
 import { getNode, getArgs, commandPath, getArgContext, argKeys, parseArgs } from './util';
 
-// const DEBUG = true;
-
-// eslint-disable-next-line
-// const debug = (...args: any) => DEBUG && console.log('DEBUG:', ...args);
-
 interface IConfig<C extends ICommand = ICommand> {
   onUpdate: (updates: IInputStateUpdates) => void;
   command: C;
@@ -26,13 +21,13 @@ export interface IInputStateUpdates<D = any, R = any> {
 function valuesToOptions<D extends { value: string }>(options: {
   values: Array<D>;
   inputValue?: string;
-  filter?: string;
+  valueSlice?: string;
+  isFn?: boolean;
   sliceStart?: number;
   sliceEnd?: number;
 }) {
   const { values, inputValue, sliceStart, sliceEnd } = options;
-  const filter = options.filter?.trim();
-  // console.log('valuesToOptions', { values, filter, inputValue, sliceStart });
+  const filter = !options.isFn && options.valueSlice ? options.valueSlice?.trim() : undefined;
 
   return values.reduce((acc: Array<IOption>, data) => {
     const inputValueStart =
@@ -44,7 +39,7 @@ function valuesToOptions<D extends { value: string }>(options: {
       acc.push({
         data,
         value: data.value,
-        searchValue: filter || undefined,
+        searchValue: options.valueSlice || undefined,
         inputValue:
           inputValueStart +
           (data.value && sliceEnd !== undefined ? data.value.slice(sliceEnd) : ''),
@@ -58,13 +53,14 @@ function valuesToOptions<D extends { value: string }>(options: {
 
 function dataToSuggestions<D>(options: {
   data: Record<string, D>;
+  isFn?: boolean;
   value?: string;
-  filter?: string;
+  valueSlice?: string;
   sliceStart?: number;
   sliceEnd?: number;
 }) {
   const { data, value, sliceStart, sliceEnd } = options;
-  const filter = options.filter?.trim();
+  const filter = !options.isFn && options.valueSlice ? options.valueSlice?.trim() : undefined;
 
   return Object.keys(data).reduce((acc: Array<IOption>, key) => {
     const inputValueStart =
@@ -77,7 +73,7 @@ function dataToSuggestions<D>(options: {
         value: key,
         data: data[key],
         inputValue,
-        searchValue: filter || undefined,
+        searchValue: options.valueSlice || undefined,
         cursorTarget: inputValueStart.length,
       });
     }
@@ -89,13 +85,13 @@ function dataToSuggestions<D>(options: {
 const argsToSuggestions = (options: {
   args: NonNullable<ICommand['args']>;
   value?: string;
-  filter?: string;
+  valueSlice?: string;
   exclude?: Array<string>;
   sliceStart?: number;
   sliceEnd?: number;
 }) => {
   const { args, exclude, value, sliceStart, sliceEnd } = options;
-  const filter = options.filter?.trim().replace(/^-?(-)/, '');
+  const filter = options.valueSlice?.trim().replace(/^-?(-)/, '');
 
   return Object.keys(args).reduce((acc: Array<IOption>, key) => {
     if (
@@ -191,8 +187,6 @@ export const inputState = (config: IConfig) => {
       }
 
       if (currentNode?.type === 'ARG_VALUE') {
-        // console.log(0, currentCommand, { prevNode, currentNode });
-
         return true;
       }
 
@@ -202,8 +196,6 @@ export const inputState = (config: IConfig) => {
 
       if (prevNode?.type === 'WHITESPACE') {
         if (getNode(ast.result, prevNode.start - 1)?.type === 'ARG_KEY') {
-          // console.log(1, currentCommand, { prevNode, currentNode });
-
           return true;
         }
 
@@ -213,8 +205,6 @@ export const inputState = (config: IConfig) => {
       if (prevNode?.type === 'ARG_KEY') {
         return false;
       }
-
-      // console.log(2, currentCommand, { prevNode, currentNode });
 
       return true;
     };
@@ -251,26 +241,18 @@ export const inputState = (config: IConfig) => {
 
     const showArgKeyOptions = () => {
       if (!currentCommand.args) {
-        // console.log(0, currentCommand);
-
         return false;
       }
 
       if (currentNode?.type === 'WHITESPACE') {
-        // console.log(1, prevNode, currentNode);
-
         return false;
       }
 
       if (currentNode?.type === 'ARG_KEY') {
-        // console.log(1, prevNode, currentNode);
-
         return true;
       }
 
       if (prevNode?.type === 'ARG_VALUE') {
-        // console.log(2, prevNode, currentNode);
-
         return true;
       }
 
@@ -287,8 +269,6 @@ export const inputState = (config: IConfig) => {
         }
       }
 
-      // console.log(3, prevNode, currentNode);
-
       return true;
     };
 
@@ -298,7 +278,8 @@ export const inputState = (config: IConfig) => {
         ? dataToSuggestions({
             value,
             data: ctx.commands,
-            filter: typeof ctx.command.commands !== 'function' ? valueSlice : undefined,
+            valueSlice,
+            isFn: typeof ctx.command.commands === 'function',
             sliceStart,
             sliceEnd,
           })
@@ -307,7 +288,7 @@ export const inputState = (config: IConfig) => {
         ? argsToSuggestions({
             value,
             args: currentCommand.args,
-            filter: valueSlice,
+            valueSlice,
             sliceStart,
             sliceEnd,
             exclude: argKeys(ast, index),
@@ -317,7 +298,8 @@ export const inputState = (config: IConfig) => {
         ? valuesToOptions({
             inputValue: value,
             values: argOptions,
-            filter: typeof argCtx?.options !== 'function' ? valueSlice : undefined,
+            valueSlice,
+            isFn: typeof argCtx?.options === 'function',
             sliceStart,
             sliceEnd,
           })

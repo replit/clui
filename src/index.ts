@@ -9,6 +9,7 @@ import {
   ArgTypeDef,
   IOption,
   IRunOptions,
+  SubCommands,
 } from './input';
 
 export interface ICluiItemProps extends ISessionItemProps, IRunOptions {}
@@ -28,5 +29,6 @@ export {
   ArgTypeDef,
   IOption,
   IRunOptions,
+  SubCommands,
   useInputState,
 };

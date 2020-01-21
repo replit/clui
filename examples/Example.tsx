@@ -76,7 +76,7 @@ const Prompt = (props: IProps) => {
               </div>
             </div>
           </div>
-          {true && (
+          {!true && (
             <pre style={{ fontSize: 10 }}>
               <code>{JSON.stringify({ state }, null, 2)}</code>
             </pre>

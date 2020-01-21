@@ -44,12 +44,11 @@ interface IResolved {
 
 const resolveCommands = async (config: IConfig): Promise<IResolved> => {
   const paths: Array<string> = commandPath(config.ast, config.index).map((p) => p.value);
-  const atEnd = config.ast.source.length === config.index;
   const atWhitespace = () => getNode(config.ast.result, config.index - 1)?.type === 'WHITESPACE';
 
   const queue = [...paths];
 
-  if (!queue.length || atEnd || atWhitespace()) {
+  if (!queue.length || atWhitespace()) {
     queue.push('');
   }
 
@@ -66,6 +65,7 @@ const resolveCommands = async (config: IConfig): Promise<IResolved> => {
     }
 
     const keyPath = [...paths.slice(0, index), path];
+
     // eslint-disable-next-line no-await-in-loop
     commands = await getCommands({
       command,
