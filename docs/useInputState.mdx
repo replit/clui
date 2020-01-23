@@ -1,0 +1,50 @@
+---
+name: useInputState
+route: /use-input-state
+---
+
+## `useInputState`
+
+A basic React hook to manage the lifecycle on an `inputState`. It's more of an example for refrnence. Depending on the use-case you might use your own hook. For example, if you have a loading indicatore and are loading commands asynchronously, you might want to debounce the loading state to reduce UI flicker.
+
+## How it's used
+
+```js
+import { useInputState } from '@replit/clui';
+
+const Prompt = () => {
+  const root = { /* your commands */};
+  const [state, update] = useInputState({
+    command: root
+    value: '',
+    index: 0,
+  });
+
+  return (
+    <div>
+      <input
+        placeholder: 'type a command',
+        onKeyUp={e => {
+          update({ index: e.target.selectionStart });
+        }}
+        onChange={e => {
+          update({ value: e.target.value, index: e.target.selectionStart });
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !state.options.length && state.run) {
+            state.run();
+          }
+        }},
+      })}
+    />
+    <ul>
+      {/* List of suggests */}
+      {state.options.map((option) => (
+        <li>{option.value}</li>
+      )}
+    </ul>
+  <div>
+  );
+}
+
+```

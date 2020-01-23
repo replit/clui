@@ -1,4 +1,4 @@
 .docz/
 dist/
-docs/
+typedoc/
 node_modules/

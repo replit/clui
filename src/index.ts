@@ -14,6 +14,8 @@ import {
 
 export interface ICluiItemProps extends ISessionItemProps, IRunOptions {}
 
+export { inputState } from './input/state';
+
 export {
   Session,
   Step,

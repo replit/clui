@@ -1,0 +1,90 @@
+---
+name: inputState
+route: /input-state
+---
+
+import { Playground } from 'docz'
+import { InputState } from './inputState'
+
+`inputState` object that returns an updater function and calls an `onUpdate` function with some data. It's a framework agnostic primitive that can be wrapped by more specific framework or application code (like a react hook).
+
+## How it's used
+
+```js
+import { inputState } from '@replit/clui'; 
+
+// This function will be called when `state.run` is called
+const run = (args: any) => window.alert(`ran with args: ${JSON.stringify(args, null, 2)}`);
+
+// A root command for `inputState`
+const root = {
+  commands: {
+    user: {
+      commands: {
+        create: {
+          args: {
+            email: {},
+            name: {},
+          },
+          run,
+        },
+        read: {
+          args: {
+            id: {},
+          },
+          run,
+        },
+        update: {
+          args: {
+            id: {},
+            email: {},
+            name: {},
+          },
+          run,
+        },
+        destroy: {
+          args: {
+            id: {},
+          },
+          run,
+        },
+      },
+    },
+    help: {
+      run,
+    },
+  },
+};
+
+// Reference to latest state
+let state;
+
+// Created updater object with a root command, initial state, and onUpdate callback
+const update = inputState({
+  command: root,
+  value: '',
+  index: 0,
+  // runs asynchronously
+  onUpdate: (updates) => state = updates;
+});
+
+
+// Handle updates in your app when user types...
+update({ value: 'u', index; 1 });
+
+// after `onUpdate` callback is called, `state.options` will be:
+{
+  "value": "user",
+  "inputValue": "user",
+  "searchValue": "u",
+  "cursorTarget": 4
+}
+
+// You application code should call this when the user "submits" their input
+state.run()
+```
+
+## Interactive example
+<Playground>
+  <InputState />
+</Playground>

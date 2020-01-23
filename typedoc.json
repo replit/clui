@@ -4,5 +4,5 @@
   "includeDeclarations": true,
   "excludeExternals": true,
   "exclude": ["src/__tests__/**/*", "src/*/__tests__/**/*", "src/setupEnzyme.ts"],
-  "out": "docs"
+  "out": "typedoc"
 }
