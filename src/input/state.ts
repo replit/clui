@@ -1,8 +1,23 @@
-import { ICommands, ICommand, IOption, IResult, IArg, IArgsOption } from './types';
+import {
+  ICommands,
+  ICommand,
+  IOption,
+  IResult,
+  IArg,
+  IArgsOption,
+  ArgType,
+} from './types';
 import resolveCommands from './resolveCommands';
 
 import { parse } from './parser';
-import { getNode, getArgs, commandPath, getArgContext, argKeys, parseArgs } from './util';
+import {
+  getNode,
+  getArgs,
+  commandPath,
+  getArgContext,
+  argKeys,
+  parseArgs,
+} from './util';
 
 interface IConfig<C extends ICommand = ICommand> {
   onUpdate: (updates: IInputStateUpdates) => void;
@@ -13,6 +28,8 @@ interface IConfig<C extends ICommand = ICommand> {
 
 export interface IInputStateUpdates<D = any, R = any> {
   nodeStart?: number;
+  commands: Array<string>;
+  args?: Record<string, ArgType>;
   exhausted: boolean;
   options: Array<IOption>;
   run?: (opt?: D) => R;
@@ -27,7 +44,10 @@ function valuesToOptions<D extends { value: string }>(options: {
   sliceEnd?: number;
 }) {
   const { values, inputValue, sliceStart, sliceEnd } = options;
-  const filter = !options.isFn && options.valueSlice ? options.valueSlice?.trim() : undefined;
+  const filter =
+    !options.isFn && options.valueSlice
+      ? options.valueSlice?.trim()
+      : undefined;
 
   return values.reduce((acc: Array<IOption>, data) => {
     const inputValueStart =
@@ -42,7 +62,9 @@ function valuesToOptions<D extends { value: string }>(options: {
         searchValue: options.valueSlice || undefined,
         inputValue:
           inputValueStart +
-          (data.value && sliceEnd !== undefined ? data.value.slice(sliceEnd) : ''),
+          (data.value && sliceEnd !== undefined
+            ? data.value.slice(sliceEnd)
+            : ''),
         cursorTarget: inputValueStart.length,
       });
     }
@@ -60,13 +82,19 @@ function dataToSuggestions<D>(options: {
   sliceEnd?: number;
 }) {
   const { data, value, sliceStart, sliceEnd } = options;
-  const filter = !options.isFn && options.valueSlice ? options.valueSlice?.trim() : undefined;
+  const filter =
+    !options.isFn && options.valueSlice
+      ? options.valueSlice?.trim()
+      : undefined;
 
   return Object.keys(data).reduce((acc: Array<IOption>, key) => {
     const inputValueStart =
-      value && sliceStart !== undefined ? value.slice(0, sliceStart) + key : key;
+      value && sliceStart !== undefined
+        ? value.slice(0, sliceStart) + key
+        : key;
     const inputValue =
-      inputValueStart + (value && sliceEnd !== undefined ? value.slice(sliceEnd) : '');
+      inputValueStart +
+      (value && sliceEnd !== undefined ? value.slice(sliceEnd) : '');
 
     if ((filter && key.includes(filter)) || !filter) {
       acc.push({
@@ -101,9 +129,12 @@ const argsToSuggestions = (options: {
       const flag = `--${key}`;
 
       const inputValueStart =
-        value && sliceStart !== undefined ? value.slice(0, sliceStart) + flag : flag;
+        value && sliceStart !== undefined
+          ? value.slice(0, sliceStart) + flag
+          : flag;
       const inputValue =
-        inputValueStart + (value && sliceEnd !== undefined ? value.slice(sliceEnd) : '');
+        inputValueStart +
+        (value && sliceEnd !== undefined ? value.slice(sliceEnd) : '');
 
       acc.push({
         value: flag,
@@ -128,7 +159,13 @@ export const inputState = (config: IConfig) => {
   let index = config.index || 0;
   let ast: IResult = parse(value);
 
-  const getArgOptions = async ({ arg, filter }: { arg: IArg; filter?: string }) => {
+  const getArgOptions = async ({
+    arg,
+    filter,
+  }: {
+    arg: IArg;
+    filter?: string;
+  }) => {
     if (typeof arg.options === 'object') {
       return arg.options;
     }
@@ -150,14 +187,20 @@ export const inputState = (config: IConfig) => {
 
   const processUpdates = async () => {
     const currentNode = getNode(ast.result, index);
-    const prevNode = getNode(ast.result, (currentNode ? currentNode?.start : index) - 1);
+    const prevNode = getNode(
+      ast.result,
+      (currentNode ? currentNode?.start : index) - 1,
+    );
 
     let sliceStart = 0;
     let sliceEnd: undefined | number;
     if (currentNode) {
       sliceStart = currentNode.start;
       sliceEnd = currentNode.end;
-    } else if (prevNode && ['COMMAND', 'ARG_KEY', 'ARG_VALUE'].includes(prevNode.type)) {
+    } else if (
+      prevNode &&
+      ['COMMAND', 'ARG_KEY', 'ARG_VALUE'].includes(prevNode.type)
+    ) {
       sliceStart = prevNode.start;
     } else if (prevNode && prevNode.type === 'WHITESPACE') {
       sliceStart = prevNode.end;
@@ -253,7 +296,7 @@ export const inputState = (config: IConfig) => {
       }
 
       if (prevNode?.type === 'ARG_VALUE') {
-        return true;
+        return false;
       }
 
       if (prevNode?.type === 'WHITESPACE') {
@@ -306,14 +349,17 @@ export const inputState = (config: IConfig) => {
         : []),
     ];
 
+    const parsedArgs = parseArgs({
+      command: currentCommand,
+      args: getArgs(ast),
+    });
+
     const run = !currentCommand.run
       ? undefined
       : <O>(opt: O) => {
           if (!currentCommand.run) {
             throw new Error(`Invalid input: "${value}"`);
           }
-
-          const parsedArgs = parseArgs({ command: currentCommand, args: getArgs(ast) });
 
           return currentCommand.run({
             args: Object.keys(parsedArgs).length ? parsedArgs : undefined,
@@ -331,12 +377,13 @@ export const inputState = (config: IConfig) => {
         return true;
       }
 
-      const parsedArgs = parseArgs({ command: currentCommand, args: getArgs(ast) });
       const parsedArgKeys = Object.keys(parsedArgs);
       // debug({ parsedArgs, ast });
 
       const remaining = currentCommand.args
-        ? Object.keys(currentCommand.args).filter((key) => !parsedArgKeys.includes(key))
+        ? Object.keys(currentCommand.args).filter(
+            (key) => !parsedArgKeys.includes(key),
+          )
         : [];
 
       return !remaining.length;
@@ -363,6 +410,8 @@ export const inputState = (config: IConfig) => {
       options,
       exhausted: exhausted(),
       nodeStart: nodeStart(),
+      commands: commandPath(ast).map((p) => p.value),
+      args: Object.keys(parsedArgs).length ? parsedArgs : undefined,
     });
   };
 

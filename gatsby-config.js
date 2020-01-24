@@ -1,3 +1,3 @@
 module.exports = {
-  plugins: ['gatsby-plugin-styled-jsx'],
+  plugins: ['gatsby-plugin-styled-jsx', 'gatsby-plugin-react-head'],
 };

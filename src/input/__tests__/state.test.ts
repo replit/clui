@@ -35,6 +35,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: [],
                   exhausted: false,
                   nodeStart: 0,
                   options: [
@@ -68,6 +69,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: ['use'],
                   exhausted: false,
                   nodeStart: 0,
                   options: [
@@ -105,6 +107,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: [],
                   exhausted: false,
                   nodeStart: 0,
                   options: [
@@ -134,21 +137,23 @@ describe('options', () => {
         ['u', 1, 'u'],
         ['user', 1, 'u'],
         ['user', 'user'.length, 'user'],
-      ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
-        it(`calls function with '${expected}' for input '${value}' at index: ${index}`, (done) => {
-          const commands = jest.fn();
+      ] as Array<[string?, number?, string?]>).forEach(
+        ([value, index, expected]) => {
+          it(`calls function with '${expected}' for input '${value}' at index: ${index}`, (done) => {
+            const commands = jest.fn();
 
-          inputState({
-            command: { commands },
-            value,
-            index,
-            onUpdate: afterNCalls(1, () => {
-              expect(commands).toHaveBeenCalledWith(expected);
-              done();
-            }),
+            inputState({
+              command: { commands },
+              value,
+              index,
+              onUpdate: afterNCalls(1, () => {
+                expect(commands).toHaveBeenCalledWith(expected);
+                done();
+              }),
+            });
           });
-        });
-      });
+        },
+      );
     });
   });
 
@@ -170,6 +175,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: ['user'],
                   exhausted: false,
                   nodeStart: 'user '.length,
                   options: [
@@ -215,6 +221,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: ['user', 'crea'],
                   exhausted: false,
                   nodeStart: 'user '.length,
                   options: [
@@ -251,31 +258,40 @@ describe('options', () => {
       };
 
       ([
-        ['a --name b', 'a --name b'.length, 'a --name '.length],
-        ['a --name b', 'a --name '.length, 'a --name '.length],
-        ['a --name b', 'a --name'.length, 'a '.length],
-        ['a --name b ', 'a --name b '.length, 'a --name b '.length],
-      ] as Array<[string, number, number]>).forEach(([value, index, nodeStart]) => {
-        it('returns sub-commands', (done) => {
-          inputState({
-            command: root,
-            value,
-            index,
-            onUpdate: afterNCalls(1, ({ mock }) => {
-              expect(mock.calls).toEqual([
-                [
-                  {
-                    exhausted: false,
-                    nodeStart,
-                    options: [],
-                  },
-                ],
-              ]);
-              done();
-            }),
+        ['a --name b', 'a --name b'.length, 'a --name '.length, { name: 'b' }],
+        ['a --name b', 'a --name '.length, 'a --name '.length, { name: 'b' }],
+        ['a --name b', 'a --name'.length, 'a '.length, { name: 'b' }],
+        [
+          'a --name b ',
+          'a --name b '.length,
+          'a --name b '.length,
+          { name: 'b' },
+        ],
+      ] as Array<[string, number, number, {}]>).forEach(
+        ([value, index, nodeStart, args]) => {
+          it('returns sub-commands', (done) => {
+            inputState({
+              command: root,
+              value,
+              index,
+              onUpdate: afterNCalls(1, ({ mock }) => {
+                expect(mock.calls).toEqual([
+                  [
+                    {
+                      exhausted: false,
+                      commands: ['a'],
+                      args,
+                      nodeStart,
+                      options: [],
+                    },
+                  ],
+                ]);
+                done();
+              }),
+            });
           });
-        });
-      });
+        },
+      );
     });
 
     describe('async function', () => {
@@ -297,6 +313,7 @@ describe('options', () => {
             expect(mock.calls).toEqual([
               [
                 {
+                  commands: ['user'],
                   exhausted: false,
                   nodeStart: 'user '.length,
                   options: [
@@ -357,6 +374,7 @@ describe('options', () => {
             [
               {
                 exhausted: false,
+                commands: ['user'],
                 nodeStart: 'user '.length,
                 options: [
                   {
@@ -390,6 +408,7 @@ describe('options', () => {
             [
               {
                 exhausted: false,
+                commands: ['user'],
                 nodeStart: 'user '.length,
                 options: [
                   {
@@ -420,6 +439,8 @@ describe('options', () => {
             [
               {
                 exhausted: true,
+                commands: ['user'],
+                args: { email: 'foo' },
                 nodeStart: 'user '.length,
                 options: [
                   {
@@ -444,12 +465,18 @@ describe('options', () => {
       inputState({
         value: 'user --name f -',
         index: 'user --name f -'.length,
-        command: { commands: { user: { args: { email: { options }, name: { options } } } } },
+        command: {
+          commands: {
+            user: { args: { email: { options }, name: { options } } },
+          },
+        },
         onUpdate: afterNCalls(1, ({ mock }) => {
           expect(mock.calls).toEqual([
             [
               {
                 exhausted: false,
+                commands: ['user'],
+                args: { name: 'f' },
                 nodeStart: 'user --name f '.length,
                 options: [
                   {
@@ -579,6 +606,8 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              commands: ['user'],
+              args: { name: 'bar' },
               exhausted: false,
               nodeStart: 'user --name bar '.length,
               options: [
@@ -612,6 +641,8 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              commands: ['user'],
+              args: { verbose: true },
               exhausted: false,
               nodeStart: 'user --verbose '.length,
               options: [
@@ -637,9 +668,9 @@ describe('options variations', () => {
   });
 
   ([
-    ['user --verbose ', 'user --verbose'.length],
-    ['user --name ', 'user --name'.length],
-  ] as Array<[string, number]>).forEach(([value, index]) => {
+    ['user --verbose ', 'user --verbose'.length, { verbose: true }],
+    ['user --name ', 'user --name'.length, undefined],
+  ] as Array<[string, number, {}]>).forEach(([value, index, args]) => {
     it('returns no options', (done) => {
       inputState({
         value,
@@ -649,6 +680,8 @@ describe('options variations', () => {
           expect(mock.calls).toEqual([
             [
               {
+                commands: ['user'],
+                args,
                 exhausted: false,
                 nodeStart: 'user '.length,
                 options: [],
@@ -670,6 +703,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              commands: ['user'],
               exhausted: false,
               nodeStart: 'user --name '.length,
               options: [

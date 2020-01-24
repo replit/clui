@@ -13,7 +13,7 @@ A basic React hook to manage the lifecycle on an `inputState`. It's more of an e
 import { useInputState } from '@replit/clui';
 
 const Prompt = () => {
-  const root = { /* your commands */};
+  const root = { /* your commands */ };
   const [state, update] = useInputState({
     command: root
     value: '',
@@ -28,17 +28,20 @@ const Prompt = () => {
           update({ index: e.target.selectionStart });
         }}
         onChange={e => {
-          update({ value: e.target.value, index: e.target.selectionStart });
+          update({
+            value: e.target.value,
+            index: e.target.selectionStart
+          });
         }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && !state.options.length && state.run) {
+        onKeyDown={e => {
+          if (e.key === 'Enter' && state.run) {
             state.run();
           }
         }},
       })}
     />
     <ul>
-      {/* List of suggests */}
+      {/* Manage selecting from list of suggests. Check out https://github.com/downshift-js/downshift */}
       {state.options.map((option) => (
         <li>{option.value}</li>
       )}
