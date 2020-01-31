@@ -27,7 +27,8 @@ const toLocation = ({ data, result }: IFromData) => ({
 const setIndex = ({ result, data }: IFromData) =>
   A.setData({
     ...data,
-    index: result && result.value ? data.index + result.value.length : data.index,
+    index:
+      result && result.value ? data.index + result.value.length : data.index,
   });
 
 const whitespace = A.whitespace
@@ -35,7 +36,10 @@ const whitespace = A.whitespace
   .mapFromData(toLocation)
   .chainFromData(setIndex);
 
-const argKey = A.sequenceOf([flagPrefix, A.everythingUntil(A.choice([A.endOfInput, whitespace]))])
+const argKey = A.sequenceOf([
+  flagPrefix,
+  A.everythingUntil(A.choice([A.endOfInput, whitespace])),
+])
   .map(nullify)
   .map((result) => result.join(''))
   .map(toNode('ARG_KEY'))
@@ -43,11 +47,15 @@ const argKey = A.sequenceOf([flagPrefix, A.everythingUntil(A.choice([A.endOfInpu
   .chainFromData(setIndex);
 
 const between = (char: string) =>
-  A.sequenceOf([A.char(char), A.everythingUntil(A.char(char)), A.char(char)]).map((r) =>
-    r.join(''),
-  );
+  A.sequenceOf([
+    A.char(char),
+    A.everythingUntil(A.char(char)),
+    A.char(char),
+  ]).map((r) => r.join(''));
 
-const quoted = A.choice([between('"'), between("'")]).map(toNode('ARG_VALUE_QUOTED'));
+const quoted = A.choice([between('"'), between("'")]).map(
+  toNode('ARG_VALUE_QUOTED'),
+);
 
 const literal = keyword.map(toNode('ARG_VALUE'));
 
@@ -55,9 +63,15 @@ const argValue = A.choice([quoted, literal])
   .mapFromData(toLocation)
   .chainFromData(setIndex);
 
-const arg = A.sequenceOf([argKey, A.possibly(whitespace), A.possibly(argValue)]).map(nullify);
+const arg = A.sequenceOf([
+  argKey,
+  A.possibly(whitespace),
+  A.possibly(argValue),
+]).map(nullify);
 
-const args = A.many(A.sequenceOf([arg, A.possibly(A.choice([whitespace, A.endOfInput]))]))
+const args = A.many(
+  A.sequenceOf([arg, A.possibly(A.choice([whitespace, A.endOfInput]))]),
+)
   .map(flatten)
   .map(nullify)
   .map(flatten);
@@ -114,7 +128,9 @@ const commands = A.many(A.sequenceOf([command, commandTerminator]))
   .map(flatten)
   .map(nullify);
 
-const parser = A.withData(A.sequenceOf([commands, A.possibly(args)]).map(flatten));
+const parser = A.withData(
+  A.sequenceOf([commands, A.possibly(args)]).map(flatten),
+);
 
 export const parse = (source: string) => {
   const parsed = parser({ index: 0 }).run(source);

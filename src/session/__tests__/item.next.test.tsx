@@ -44,21 +44,27 @@ describe('item.next()', () => {
       </Session>,
     );
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(0);
 
     act(() => {
       (wrapper.find('.a').prop('item') as ISessionItem).next();
     });
     wrapper.update();
 
-    expect((wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
+    expect(
+      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
 
     act(() => {
       (wrapper.find('.b').prop('item') as ISessionItem).next();
     });
     wrapper.update();
 
-    expect((wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
+    expect(
+      (wrapper.find('.b').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
   });
 
   it('calls onDone when at last child', () => {
@@ -104,20 +110,26 @@ describe('item.next()', () => {
     );
 
     expect(wrapper.find('.a')).toHaveLength(1);
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(0);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(0);
     expect(wrapper.find('.b')).toHaveLength(0);
 
     act(() => {
       (wrapper.find('.a').prop('item') as ISessionItem).next();
     });
     wrapper.update();
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
 
     act(() => {
       (wrapper.find('.a').prop('item') as ISessionItem).next();
     });
     wrapper.update();
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex).toEqual(1);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.currentIndex,
+    ).toEqual(1);
   });
 
   it('does not change currentIndex if next is called on non-active item', () => {

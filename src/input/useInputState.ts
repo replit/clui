@@ -43,6 +43,7 @@ const useInputState = (options: IOptions): [IState, Updater] => {
     index: options.index || 0,
     options: [],
     loading: false,
+    commands: [],
     exhausted: false,
   });
 

@@ -1,5 +1,12 @@
 import { parse } from '../parser';
-import { commandPath, getArgs, getNode, getArgContext, argKeys, parseArgs } from '../util';
+import {
+  commandPath,
+  getArgs,
+  getNode,
+  getArgContext,
+  argKeys,
+  parseArgs,
+} from '../util';
 import { ILocation, INode, IArg, ICommand, ICommands } from '../types';
 
 describe('commandPath', () => {
@@ -8,7 +15,11 @@ describe('commandPath', () => {
     ['user', 1, [{ start: 0, end: 1, type: 'COMMAND', value: 'u' }]],
     ['user', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
     ['user update', 2, [{ start: 0, end: 2, type: 'COMMAND', value: 'us' }]],
-    ['user --a b', 'user --a b'.length, [{ start: 0, end: 4, type: 'COMMAND', value: 'user' }]],
+    [
+      'user --a b',
+      'user --a b'.length,
+      [{ start: 0, end: 4, type: 'COMMAND', value: 'user' }],
+    ],
     [
       'user update',
       'user up'.length,
@@ -25,11 +36,13 @@ describe('commandPath', () => {
         { start: 5, end: 11, type: 'COMMAND', value: 'update' },
       ],
     ],
-  ] as Array<[string, number | undefined, Array<INode>]>).forEach(([input, index, expected]) => {
-    it(`returns path for "${input}"`, () => {
-      expect(commandPath(parse(input), index)).toEqual(expected);
-    });
-  });
+  ] as Array<[string, number | undefined, Array<INode>]>).forEach(
+    ([input, index, expected]) => {
+      it(`returns path for "${input}"`, () => {
+        expect(commandPath(parse(input), index)).toEqual(expected);
+      });
+    },
+  );
 });
 
 describe('getArgs', () => {
@@ -70,14 +83,22 @@ describe('getArgContext', () => {
     ['user --name', 'user --name'.length, user.args?.name],
     ['user -name', 'user -name'.length, user.args?.name],
     ['user --name --email', 'user --name --email'.length, user.args?.email],
-    ['user --name --email fo', 'user --name --email fo'.length, user.args?.email],
+    [
+      'user --name --email fo',
+      'user --name --email fo'.length,
+      user.args?.email,
+    ],
     ['user --na', 'user --na'.length, undefined],
     ['user', 'user'.length, undefined],
-  ] as Array<[string, number, IArg | undefined]>).forEach(([input, index, expected]) => {
-    it('gets arg context', () => {
-      expect(getArgContext({ index, command: user, ast: parse(input) })).toEqual(expected);
-    });
-  });
+  ] as Array<[string, number, IArg | undefined]>).forEach(
+    ([input, index, expected]) => {
+      it('gets arg context', () => {
+        expect(
+          getArgContext({ index, command: user, ast: parse(input) }),
+        ).toEqual(expected);
+      });
+    },
+  );
 });
 
 describe('getNode', () => {
@@ -109,13 +130,19 @@ describe('argKeys', () => {
     ['user --name', 'user --name'.length, ['--name']],
     ['user --name', 'user '.length, []],
     ['user --name foo --email', 'user '.length, []],
-    ['user --name foo --email', 'user --name foo --email'.length, ['--name', '--email']],
+    [
+      'user --name foo --email',
+      'user --name foo --email'.length,
+      ['--name', '--email'],
+    ],
     ['user --name foo --email', 'user --name fo'.length, ['--name']],
-  ] as Array<[string, number, IArg | undefined]>).forEach(([input, index, expected]) => {
-    it(`gets arg keys at index: ${index}`, () => {
-      expect(argKeys(parse(input), index)).toEqual(expected);
-    });
-  });
+  ] as Array<[string, number, IArg | undefined]>).forEach(
+    ([input, index, expected]) => {
+      it(`gets arg keys at index: ${index}`, () => {
+        expect(argKeys(parse(input), index)).toEqual(expected);
+      });
+    },
+  );
 });
 
 describe('parseArgs', () => {

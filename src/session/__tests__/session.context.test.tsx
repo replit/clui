@@ -12,7 +12,9 @@ describe('item.context', () => {
       </Session>,
     );
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.context).toEqual(context);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.context,
+    ).toEqual(context);
   });
 
   it('passes through object', () => {
@@ -23,7 +25,9 @@ describe('item.context', () => {
       </Session>,
     );
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.context).toEqual(context);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.context,
+    ).toEqual(context);
   });
 
   it('passes through updated values', () => {
@@ -39,14 +43,20 @@ describe('item.context', () => {
 
     const wrapper = mount(<Wrap />);
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.context.val).toEqual(1);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.context.val,
+    ).toEqual(1);
 
     act(() => {
-      (wrapper.find('.a').prop('item') as ISessionItem).session.context.setVal(2);
+      (wrapper.find('.a').prop('item') as ISessionItem).session.context.setVal(
+        2,
+      );
     });
 
     wrapper.update();
 
-    expect((wrapper.find('.a').prop('item') as ISessionItem).session.context.val).toEqual(2);
+    expect(
+      (wrapper.find('.a').prop('item') as ISessionItem).session.context.val,
+    ).toEqual(2);
   });
 });

@@ -11,22 +11,24 @@ describe('resolveCommands functions', () => {
     ['user', 1, 'u'],
     ['user', 'user'.length, 'user'],
     ['user add', 'user'.length, 'user'],
-  ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
-    it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
-      const commands = jest.fn(async (key?: string) => ({
-        [key || '']: { commands: {} },
-      }));
+  ] as Array<[string?, number?, string?]>).forEach(
+    ([value, index, expected]) => {
+      it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
+        const commands = jest.fn(async (key?: string) => ({
+          [key || '']: { commands: {} },
+        }));
 
-      await resolveCommands({
-        root: { commands },
-        ast: parse(value || ''),
-        index: index || 0,
-        cache: {},
+        await resolveCommands({
+          root: { commands },
+          ast: parse(value || ''),
+          index: index || 0,
+          cache: {},
+        });
+
+        expect(commands).toHaveBeenCalledWith(expected);
       });
-
-      expect(commands).toHaveBeenCalledWith(expected);
-    });
-  });
+    },
+  );
 });
 
 describe('resolveCommands nested functions', () => {
@@ -35,30 +37,32 @@ describe('resolveCommands nested functions', () => {
     ['user a', 'user a'.length, 'a'],
     ['user add', 'user a'.length, 'a'],
     ['user add', 'user add'.length, 'add'],
-  ] as Array<[string?, number?, string?]>).forEach(([value, index, expected]) => {
-    it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
-      const subCommands = jest.fn(async (key?: string) => ({
-        [key || '']: { commands: {} },
-      }));
+  ] as Array<[string?, number?, string?]>).forEach(
+    ([value, index, expected]) => {
+      it(`calls function with '${expected}' for input '${value}' at index: ${index}`, async () => {
+        const subCommands = jest.fn(async (key?: string) => ({
+          [key || '']: { commands: {} },
+        }));
 
-      const commands = jest.fn(async (key?: string) => ({
-        [key || '']: { commands: subCommands },
-      }));
+        const commands = jest.fn(async (key?: string) => ({
+          [key || '']: { commands: subCommands },
+        }));
 
-      const root: ICommand = {
-        commands,
-      };
+        const root: ICommand = {
+          commands,
+        };
 
-      await resolveCommands({
-        root,
-        ast: parse(value || ''),
-        index: index || 0,
-        cache: {},
+        await resolveCommands({
+          root,
+          ast: parse(value || ''),
+          index: index || 0,
+          cache: {},
+        });
+
+        expect(subCommands).toHaveBeenCalledWith(expected);
       });
-
-      expect(subCommands).toHaveBeenCalledWith(expected);
-    });
-  });
+    },
+  );
 });
 
 describe('resolveCommands', () => {
@@ -144,7 +148,11 @@ describe('resolveCommands', () => {
         index: 'user '.length,
         cache: {},
       }),
-    ).toEqual({ command: root.commands.user, commands: undefined, key: 'user' });
+    ).toEqual({
+      command: root.commands.user,
+      commands: undefined,
+      key: 'user',
+    });
   });
 
   it('resolves top-level commands', async () => {
@@ -193,7 +201,11 @@ describe('resolveCommands', () => {
         index: 'user '.length,
         cache: {},
       }),
-    ).toEqual({ command: root.commands.user, commands: root.commands.user.commands, key: 'user' });
+    ).toEqual({
+      command: root.commands.user,
+      commands: root.commands.user.commands,
+      key: 'user',
+    });
   });
 
   it('resolves nested command with async function', async () => {

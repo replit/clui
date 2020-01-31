@@ -7,7 +7,10 @@ export interface IOption<D = any> {
   data?: D;
 }
 
-export type ArgTypeDef = BooleanConstructor | StringConstructor | NumberConstructor;
+export type ArgTypeDef =
+  | BooleanConstructor
+  | StringConstructor
+  | NumberConstructor;
 export type ArgType = boolean | string | number;
 
 export interface IArgsOption {
@@ -53,7 +56,12 @@ export interface ICommand<O = any, R = any> {
 export type SubCommands<C extends ICommand> = Thunk<ICommands<C>>;
 
 // AST Types
-type NodeType = 'COMMAND' | 'ARG_KEY' | 'ARG_VALUE' | 'ARG_VALUE_QUOTED' | 'WHITESPACE';
+type NodeType =
+  | 'COMMAND'
+  | 'ARG_KEY'
+  | 'ARG_VALUE'
+  | 'ARG_VALUE_QUOTED'
+  | 'WHITESPACE';
 
 export interface IData {
   index: number;

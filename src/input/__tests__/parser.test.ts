@@ -7,7 +7,9 @@ describe('parser', () => {
       {
         index: command.length,
         isError: false,
-        result: [{ start: 0, end: command.length, type: 'COMMAND', value: command }],
+        result: [
+          { start: 0, end: command.length, type: 'COMMAND', value: command },
+        ],
         source: command,
       },
     ];

@@ -49,7 +49,8 @@ const Step: React.FC<IProps> = ({ item, wait, children }: IProps) => {
 
     const timer = setTimeout(item.next, wait);
 
-    return () => clearTimeout(timer); /* eslint-disable-line consistent-return */
+    /* eslint-disable-next-line consistent-return */
+    return () => clearTimeout(timer);
   }, []);
 
   return <>{children}</>;

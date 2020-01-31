@@ -32,37 +32,49 @@ const flagToKey = (str: string) => str.replace(/^-?(-)/, '');
 export const getArgs = ({ result }: IResult) => {
   const argNodes = result.filter(isArgNode);
 
-  return argNodes.reduce((acc: Record<string, string | true>, node: INode, index: number) => {
-    if (node.type === 'ARG_KEY') {
-      acc[flagToKey(node.value)] = true;
+  return argNodes.reduce(
+    (acc: Record<string, string | true>, node: INode, index: number) => {
+      if (node.type === 'ARG_KEY') {
+        acc[flagToKey(node.value)] = true;
 
-      return acc;
-    }
-
-    const prev = argNodes[index - 1];
-
-    if (prev && prev.type === 'ARG_KEY' && argValueNodeTypes.includes(node.type)) {
-      let { value } = node;
-
-      if (node.type === 'ARG_VALUE_QUOTED') {
-        value = value.slice(1, value.length - 1);
+        return acc;
       }
 
-      acc[flagToKey(prev.value)] = value;
-    }
+      const prev = argNodes[index - 1];
 
-    return acc;
-  }, {});
+      if (
+        prev &&
+        prev.type === 'ARG_KEY' &&
+        argValueNodeTypes.includes(node.type)
+      ) {
+        let { value } = node;
+
+        if (node.type === 'ARG_VALUE_QUOTED') {
+          value = value.slice(1, value.length - 1);
+        }
+
+        acc[flagToKey(prev.value)] = value;
+      }
+
+      return acc;
+    },
+    {},
+  );
 };
 
-export const getNode = (nodes: Array<INode>, index: number): INode | undefined =>
+export const getNode = (
+  nodes: Array<INode>,
+  index: number,
+): INode | undefined =>
   nodes.find((node) => node.start <= index && index < node.end);
 
 export const argKeys = (ast: IResult, index?: number) =>
   ast.result.reduce((acc: Array<string>, node) => {
     if (node.type === 'ARG_KEY' && (!index || node.end <= index)) {
       const value =
-        index && index > node.start ? node.value.slice(0, index - node.start) : node.value;
+        index && index > node.start
+          ? node.value.slice(0, index - node.start)
+          : node.value;
       acc.push(value);
     }
 
@@ -117,22 +129,25 @@ export const parseArgs = ({
   command: ICommand;
   args: Record<string, string | true>;
 }) =>
-  Object.keys(args).reduce((acc: Record<string, string | boolean | number>, key) => {
-    const value = args[key];
+  Object.keys(args).reduce(
+    (acc: Record<string, string | boolean | number>, key) => {
+      const value = args[key];
 
-    if (command.args && command.args[key] && command.args[key].type) {
-      const argType = command.args[key].type;
+      if (command.args && command.args[key] && command.args[key].type) {
+        const argType = command.args[key].type;
 
-      if (argType === Boolean && value === true) {
+        if (argType === Boolean && value === true) {
+          acc[key] = value;
+        } else if (argType === Boolean) {
+          acc[key] = !!value;
+        } else if (value !== true && argType && argType !== Boolean) {
+          acc[key] = argType(value);
+        }
+      } else if (typeof value !== 'boolean') {
         acc[key] = value;
-      } else if (argType === Boolean) {
-        acc[key] = !!value;
-      } else if (value !== true && argType && argType !== Boolean) {
-        acc[key] = argType(value);
       }
-    } else if (typeof value !== 'boolean') {
-      acc[key] = value;
-    }
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {},
+  );

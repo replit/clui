@@ -20,7 +20,9 @@ const getCommands = async (options: {
     }
 
     const value = keyPath.length ? keyPath[keyPath.length - 1] : undefined;
-    const commands = await Promise.resolve(command.commands(value || undefined));
+    const commands = await Promise.resolve(
+      command.commands(value || undefined),
+    );
     cache[cacheKey] = commands;
 
     return commands;
@@ -43,8 +45,11 @@ interface IResolved {
 }
 
 const resolveCommands = async (config: IConfig): Promise<IResolved> => {
-  const paths: Array<string> = commandPath(config.ast, config.index).map((p) => p.value);
-  const atWhitespace = () => getNode(config.ast.result, config.index - 1)?.type === 'WHITESPACE';
+  const paths: Array<string> = commandPath(config.ast, config.index).map(
+    (p) => p.value,
+  );
+  const atWhitespace = () =>
+    getNode(config.ast.result, config.index - 1)?.type === 'WHITESPACE';
 
   const queue = [...paths];
 
