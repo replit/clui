@@ -149,6 +149,36 @@ const argsToSuggestions = (options: {
   }, []);
 };
 
+const getArgOptions = async ({
+  arg,
+  filter,
+  value,
+  cache,
+}: {
+  arg: IArg;
+  filter?: string;
+  value: string;
+  cache: Record<string, Array<IArgsOption>>;
+}) => {
+  if (typeof arg.options === 'object') {
+    return arg.options;
+  }
+
+  if (typeof arg.options === 'function') {
+    const cacheKey = [value, filter].join(':');
+
+    if (cache[cacheKey]) {
+      return cache[cacheKey];
+    }
+    const res = await Promise.resolve(arg.options(filter));
+    cache[cacheKey] = res;
+
+    return res;
+  }
+
+  return [];
+};
+
 export const inputState = (config: IConfig) => {
   const commandsCache: Record<string, ICommands> = {};
   const optionsCache: Record<string, Array<IArgsOption>> = {};
@@ -158,32 +188,6 @@ export const inputState = (config: IConfig) => {
   let value = config.value || '';
   let index = config.index || 0;
   let ast: IResult = parse(value);
-
-  const getArgOptions = async ({
-    arg,
-    filter,
-  }: {
-    arg: IArg;
-    filter?: string;
-  }) => {
-    if (typeof arg.options === 'object') {
-      return arg.options;
-    }
-
-    if (typeof arg.options === 'function') {
-      const cacheKey = [value, filter].join(':');
-
-      if (optionsCache[cacheKey]) {
-        return optionsCache[cacheKey];
-      }
-      const res = await Promise.resolve(arg.options(filter));
-      optionsCache[cacheKey] = res;
-
-      return res;
-    }
-
-    return [];
-  };
 
   const processUpdates = async () => {
     const currentNode = getNode(ast.result, index);
@@ -257,6 +261,8 @@ export const inputState = (config: IConfig) => {
         ? await getArgOptions({
             arg: argCtx,
             filter: valueSlice,
+            cache: optionsCache,
+            value,
           })
         : undefined;
 

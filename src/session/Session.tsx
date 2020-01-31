@@ -150,12 +150,18 @@ function Session<C = any>(props: IProps<C>) {
 
   const [state, dispatch] = useReducer<React.Reducer<IState, Action>>(reducer, {
     currentIndex:
-      props.initialIndex !== undefined ? Math.min(props.initialIndex, children.length - 1) : 0,
+      props.initialIndex !== undefined
+        ? Math.min(props.initialIndex, children.length - 1)
+        : 0,
     nodes: children.map((_, index) => index),
+    sessionKey: Math.random(),
   });
 
   const nodes = useMemo(() => {
-    const reduce = (acc: Array<React.ReactElement>, node: React.ReactElement | number) => {
+    const reduce = (
+      acc: Array<React.ReactElement>,
+      node: React.ReactElement | number,
+    ) => {
       if (typeof node !== 'number') {
         acc.push(node);
       } else if (typeof node === 'number' && children[node]) {
@@ -201,14 +207,6 @@ function Session<C = any>(props: IProps<C>) {
 
           return ret;
         },
-        // next: () => {
-        // dispatch({
-        // type: 'SET_INDEX',
-        // index: index + indexOffset + 1,
-        // });
-
-        // return ret;
-        // },
         previous: () => {
           dispatch({
             type: 'SET_INDEX',
@@ -254,7 +252,15 @@ function Session<C = any>(props: IProps<C>) {
 
       return ret;
     },
-    [dispatch, props.onDone, state.currentIndex, nodes, currentNodes, props.item, session],
+    [
+      dispatch,
+      props.onDone,
+      state.currentIndex,
+      nodes,
+      currentNodes,
+      props.item,
+      session,
+    ],
   );
 
   useEffect(() => {
@@ -278,11 +284,11 @@ function Session<C = any>(props: IProps<C>) {
   }, [props.item]);
 
   return (
-    <>
+    <React.Fragment key={state.sessionKey}>
       {React.Children.map(currentNodes, (element, index) =>
         React.cloneElement(element, { item: item(index) }),
       )}
-    </>
+    </React.Fragment>
   );
 }
 

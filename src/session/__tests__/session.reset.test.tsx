@@ -36,7 +36,9 @@ describe('session.reset()', () => {
     );
 
     act(() => {
-      (wrapper.find('.a').prop('item') as ISessionItem).insertAfter(<i className="b" />).next();
+      (wrapper.find('.a').prop('item') as ISessionItem)
+        .insertAfter(<i className="b" />)
+        .next();
     });
     wrapper.update();
     expect(wrapper.find('.b')).toHaveLength(1);
@@ -49,5 +51,38 @@ describe('session.reset()', () => {
     const item = wrapper.find('.a').prop('item') as ISessionItem;
     expect(wrapper.find('.b')).toHaveLength(0);
     expect(item.session.currentIndex).toEqual(0);
+  });
+
+  it('resets first item state', () => {
+    const wrapper = mount(
+      <Session>
+        <input className="a" />
+      </Session>,
+    );
+
+    act(() => {
+      wrapper.find('input').getDOMNode<HTMLInputElement>().value = 'updated';
+
+      (wrapper.find('input').prop('item') as ISessionItem)
+        .insertAfter(<i className="b" />)
+        .next();
+    });
+    wrapper.update();
+    expect(wrapper.find('.b')).toHaveLength(1);
+    expect(wrapper.find('input').getDOMNode<HTMLInputElement>().value).toEqual(
+      'updated',
+    );
+
+    act(() => {
+      (wrapper.find('.a').prop('item') as ISessionItem).session.reset();
+    });
+    wrapper.update();
+
+    const item = wrapper.find('.a').prop('item') as ISessionItem;
+    expect(wrapper.find('.b')).toHaveLength(0);
+    expect(item.session.currentIndex).toEqual(0);
+    expect(wrapper.find('input').getDOMNode<HTMLInputElement>().value).toEqual(
+      '',
+    );
   });
 });

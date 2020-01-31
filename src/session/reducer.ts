@@ -20,6 +20,11 @@ export interface IState {
    * the index of a passed in child.
    */
   nodes: Nodes;
+
+  /**
+   * Key used internally to remount entire Session on reset
+   */
+  sessionKey: number;
 }
 
 export type Action =
@@ -73,7 +78,9 @@ const remove = (state: IState, index: number) => {
   return {
     ...state,
     currentIndex:
-      state.currentIndex > filterdNodes.length - 1 ? filterdNodes.length - 1 : state.currentIndex,
+      state.currentIndex > filterdNodes.length - 1
+        ? filterdNodes.length - 1
+        : state.currentIndex,
     nodes: filterdNodes,
   };
 };
@@ -95,7 +102,10 @@ const reducer = (state: IState, action: Action) => {
     case 'SET_INDEX':
       return {
         ...state,
-        currentIndex: Math.max(Math.min(action.index, state.nodes.length - 1), 0),
+        currentIndex: Math.max(
+          Math.min(action.index, state.nodes.length - 1),
+          0,
+        ),
       };
     case 'INSERT':
       return {
@@ -135,6 +145,7 @@ const reducer = (state: IState, action: Action) => {
         ...state,
         nodes: action.nodes,
         currentIndex: 0,
+        sessionKey: Math.random(),
       };
     default:
       return state;
