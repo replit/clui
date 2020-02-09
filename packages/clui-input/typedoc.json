@@ -1,0 +1,8 @@
+{
+  "moduleResolution": "node",
+  "name":"CLUI Input",
+  "includeDeclarations": true,
+  "excludeExternals": true,
+  "exclude": ["src/__tests__/**/*"],
+  "out": "typedeoc"
+}

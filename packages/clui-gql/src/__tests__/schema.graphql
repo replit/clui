@@ -1,0 +1,39 @@
+type Services {
+  name: String!
+}
+
+type Weather {
+  config: String
+  services: Services
+}
+
+enum STATUS {
+  ACTIVE
+  INACTIVE
+}
+
+"""Cli root"""
+type Cli {
+  """Get weather info"""
+  status: STATUS!
+  weather(
+    """Zipcode"""
+    zipcode: String!,
+    view: String,
+    count: Int,
+    time: Float,
+    days: [String],
+    hours: [Int],
+    minutes: [Float!]!,
+    tomorrow: Boolean,
+    today: Boolean!
+    status: STATUS): Weather
+}
+
+type Root {
+  cli: Cli
+}
+
+schema {
+  query: Root
+}

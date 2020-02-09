@@ -3,12 +3,11 @@
     "outDir": "./dist",
     "rootDir": "./src/",
     "esModuleInterop": true,
-    "jsx": "react",
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es5",
     "strict": true,
-    "lib": ["dom", "es2017", "esnext.asynciterable"],
+    "lib": ["es2017", "esnext.asynciterable"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "sourceMap": true,
@@ -17,7 +16,11 @@
     "noImplicitAny": true,
     "removeComments": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./node_modules/@types", "./typings"],
+    "typeRoots": [
+      "../../node_modules/@types",
+      "./node_modules/@types",
+      "./typings"
+    ],
     "baseUrl": ".",
     "paths": {
       "*": ["src/*", "typings/*"]
@@ -25,5 +28,5 @@
     "downlevelIteration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/__tests__", "examples/**/*", "src/setupEnzyme.ts"]
+  "exclude": ["src/**/__tests__"]
 }
