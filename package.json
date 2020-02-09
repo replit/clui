@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui",
-  "version": "0.0.7",
+  "version": "1.22.0",
   "description": "A CLI with UI",
   "main": "dist/index.js",
   "files": [
@@ -64,7 +64,8 @@
     "styled-jsx": "^3.2.4",
     "ts-jest": "^24.3.0",
     "typedoc": "^0.16.8",
-    "typescript": "^3.7.5"
+    "typescript": "^3.7.5",
+    "yarn": "^1.22.0"
   },
   "peerDependencies": {
     "react": ">=16",
@@ -84,5 +85,6 @@
   },
   "dependencies": {
     "arcsecond": "^2.0.3"
-  }
+  },
+  "repository": "git@github.com:replit/clui.git"
 }
