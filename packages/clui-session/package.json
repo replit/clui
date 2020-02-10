@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "A utility library to manage a list of react components",
   "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "author": "moudy@repl.it",
   "license": "MIT",
   "scripts": {
