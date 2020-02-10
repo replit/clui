@@ -87,7 +87,10 @@ const typeFromScalar = (name: string) => {
   }
 };
 
-const toArgs = (args: Array<__InputValue>) => {
+const toArgs = (
+  args: Array<__InputValue>,
+  transformName?: (name: string) => string,
+) => {
   const ret = args.reduce((acc: any, inputValue: __InputValue) => {
     const arg: any = {
       description: inputValue.description || undefined,
@@ -112,7 +115,10 @@ const toArgs = (args: Array<__InputValue>) => {
       }
     }
 
-    acc[inputValue.name] = arg;
+    const name = transformName
+      ? transformName(inputValue.name)
+      : inputValue.name;
+    acc[name] = arg;
 
     return acc;
   }, {});
@@ -140,6 +146,7 @@ export const toCommand = (options: {
   outputFn: OutputFn;
   outputFragmentsFn?: OutputFn;
   transformCommandName?: (str: string) => string;
+  transformArgName?: (str: string) => string;
   skipArgs?: boolean;
 }) => {
   const {
@@ -159,7 +166,9 @@ export const toCommand = (options: {
     for (const field of fields) {
       const path = [...fieldPath, field.name];
       const command = {
-        args: options.skipArgs ? undefined : toArgs(field.args),
+        args: options.skipArgs
+          ? undefined
+          : toArgs(field.args, options.transformArgName),
         description: field.description || undefined,
         run: runFn({
           field,

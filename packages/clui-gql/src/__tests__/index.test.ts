@@ -54,6 +54,19 @@ describe('toCommand', () => {
     expect(command.commands.WEATHER).toBeTruthy();
   });
 
+  it('transforms arg name', async () => {
+    const data = await query<__Type>({ name: 'Cli' });
+    const command = toCommand({
+      type: data.__type,
+      transformArgName: (str: string) => str.toUpperCase(),
+      mountPath: ['cli'],
+      // eslint-disable-next-line
+      runFn: () => () => {},
+      outputFn: () => 'name',
+    });
+    expect(command.commands.weather.args.ZIPCODE).toBeTruthy();
+  });
+
   it('skips args', async () => {
     const data = await query<__Type>({ name: 'Cli' });
     const command = toCommand({
