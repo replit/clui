@@ -26,7 +26,7 @@ export interface ISessionItemProps<S = {}> {
  * An object containing methods and properties related to a `Session` instance.
  * In the following case each `Session` component has its own `session` object.
  *
- * ```
+ * ```jsx
  * <Session>
  *   <Item />
  *   <Item />
@@ -38,9 +38,26 @@ export interface ISessionItemProps<S = {}> {
  * ```
  */
 export interface ISession<C = any> {
+  /**
+   * Resets the session to it's original state. This will remount initially
+   * rendered child/children.
+   */
   reset: () => void;
+
+  /**
+   * The index of the last visibile child.
+   */
   currentIndex: number;
+
+  /**
+   * The total length of the list of children (rendered or not).
+   */
   length: number;
+
+  /**
+   * The context value `Session` was potentially initialized with. Useful
+   * for sharing state/data within a session .
+   */
   context: C;
 }
 
@@ -87,7 +104,7 @@ export interface ISessionItem<C = any> {
   insertAfter: (...nodes: Array<React.ReactElement>) => ISessionItem;
 
   /**
-   * Inserts 1 or more element before.
+   * Inserts 1 or more element before item.
    */
   insertBefore: (...nodes: Array<React.ReactElement>) => ISessionItem;
 
@@ -123,7 +140,7 @@ interface IProps<C> extends ISessionItemProps<C> {
 /**
  * A component to wrap child elements. By default it will display the first child.
  *
- * ```
+ * ```jsx
  * <Session>
  *  <div>shown</div>
  *  <div>not shown</div>
@@ -135,7 +152,7 @@ interface IProps<C> extends ISessionItemProps<C> {
  *
  * To initially show more then the first child use the`initialIndex` prop.
  *
- * ```
+ * ```jsx
  * <Session initialIndex={1}>
  *  <div>shown</div>
  *  <div>shown</div>

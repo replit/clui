@@ -1,6 +1,7 @@
 # CLUI GraphQL
 
-A utility to transform GraphQL introspection type into a CLUI command
+`@replit/clui-gql` is a small utility that transforms [GraphQL introspection](https://graphql.org/learn/introspection) data for a type into commands.
+
 
 ## Install
 
@@ -11,7 +12,6 @@ npm install @replit/clui-gql
 ## Usage
 
 ```js
-
 import { toCommand } from '@replit/clui-gql';
 
 const command = toCommand({
