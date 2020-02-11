@@ -19,7 +19,7 @@ import {
   parseArgs,
 } from './util';
 
-interface IConfig<C extends ICommand = ICommand> {
+export interface IConfig<C extends ICommand = ICommand> {
   onUpdate: (updates: IInputStateUpdates) => void;
   command: C;
   value?: string;

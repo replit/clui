@@ -1,4 +1,4 @@
-import { inputState } from './state';
+import { inputState, IConfig, IInputStateUpdates } from './state';
 
 export {
   ICommands,
@@ -11,5 +11,7 @@ export {
   IRunOptions,
   SubCommands,
 } from './types';
+
+export { IConfig, IInputStateUpdates };
 
 export default inputState;
