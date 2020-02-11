@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src/",
+    "esModuleInterop": true,
+    "jsx": "react",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es5",
+    "strict": true,
+    "lib": ["es2017", "esnext.asynciterable"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "sourceMap": true,
+    "declaration": true,
+    "declarationDir": "./dist",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": [
+      "../../node_modules/@types",
+      "./node_modules/@types",
+      "./typings"],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["src/*", "typings/*"]
+    },
+    "downlevelIteration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/__tests__", "examples/**/*"]
+}

@@ -1,0 +1,12 @@
+overwrite: true
+generates:
+  src/graphqlTypes.ts:
+    schema: "./src/schema.graphql"
+    documents: "./src/graphqlTypes.graphql"
+    plugins:
+      - "typescript"
+  src/__tests__/generated/schema.ts:
+    schema: "./src/__tests__/schema.graphql"
+    documents: "./src/graphqlTypes.graphql"
+    plugins:
+      - "typescript"

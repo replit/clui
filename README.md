@@ -2,26 +2,151 @@
 
 [![Run on Repl.it](https://repl.it/badge/github/replit/clui)](https://repl.it/github/replit/clui)
 
-CLUI is a JavaScript library for building command-line interfaces with context-aware autocomplete.
+CLUI is a collection of JavaScript libraries for building command-line interfaces with context-aware autocomplete.
 
-## Overview
+## Packages
 
-### `inputState`
+### `@replit/clui-input`
 
-The core functionality is an `inputState` object that reruns the and updater function and calls an `onUpdate` function with some data. It's a framework agnostic primitive that can be wrapped by more specific framework or application code (like a react hook).
+`@replit/clui-input` implementes the logic for mapping text input to suggestions and a potential `run` function.
 
-[more info](/input-state)
+```jsx
+import input from '@replit/clui-input';
 
-### `useInputState`
+const rootCommand = {
+  commands: {
+    open: {
+      commands: {
+        sesame: {
+          run: (args) => {
+            /* do something */
+          },
+        },
+      },
+    },
+  },
+};
 
-A basic React hook to manage the lifecycle on an `inputState`. It's more of an example for refrnence. Depending on the use-case you might use your own hook. For example, if you have a loading indicatore and are loading commands asynchronously, you might want to debounce the loading state to reduce UI flicker.
+const update = input({
+  command: rootCommand,
+  onUpdate: (updates) => {
+    /* Update #1: `updates.options` will be
+     * [
+     *   {
+     *     "value": "open",
+     *     "inputValue": "open",
+     *     "searchValue": "o",
+     *     "cursorTarget": 4
+     *   }
+     * ]
+     */
 
-For managing dropdown selection UX I highly recommend [downshift](https://github.com/downshift-js/downshift).
+    /* Update #2: `updates.options` will be
+     * [
+     *   {
+     *     "value": "sesame",
+     *     "inputValue": "open sesame",
+     *     "searchValue": "s",
+     *     "cursorTarget": 12
+     *   }
+     * ]
+     */
+  },
+});
 
-[more info](/use-input-state)
+/* Update #1 */
+update({ value: 'o', index: 1 });
 
-### `<Session />`
+/* Update #2 */
+update({ value: 'open s', index: 6 });
+```
 
-`Session` is a React component that manages a list of child components. When buiding a command-line UX with autocomplete, `inputState` can be used to manage possible states as the user is typing and `Session` can be used to manage a list of React components as the user submits inputs (appending output, clearing previous outpu, showing next prompt, etc.).
+When the input matches a command with a `run` function, the `onUpdate` callback will include a refrence to it.
 
-[more info](/session)
+```jsx
+const update = input({
+  command: rootCommand,
+  onUpdate: (updates) => {
+    // call or store reference to `updates.run` based on user interaction
+  },
+});
+
+update({ value: 'open sesame', index: 6 });
+```
+
+`@replit/clui-input` a framework agnostic primitive that can be wrapped by more specific framework or application code (like a react hook). If using react you will most likey want to keep the result of `onUpdate` in a state object. For managing dropdown selection UX I highly recommend [downshift](https://github.com/downshift-js/downshift).
+
+### `@replit/clui-session`
+
+`@replit/clui-session` implementes the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
+
+```jsx
+import React from 'react'
+import { render } from 'react-dom'
+import Session, { Do } from '@replit/clui-session';
+
+/* `Do` is helper that exposes the `item` prop
+ * You will most likey render your own component
+ * which will get `item` injected as a prop so 
+ * that component can call `item.next` based
+ * on specific application logic
+ */
+render(
+  <Session>
+    <Do>
+      {item => <button onClick={item.next}>next 1</button>}
+    </Do>
+    <Do>
+      {item => <button onClick={item.next}>next 2</button>}
+    </Do>
+    <Do>
+      {item => <button onClick={item.next}>next 3</button>}
+    </Do>
+  </Session>,
+  document.getElementById('root'),
+);
+```
+
+### `@replit/clui-gql`
+
+`@replit/clui-gql` is a small utility that transforms [GraphQL introspection](https://graphql.org/learn/introspection) data for a type into commands.
+
+#### Install
+
+```sh
+npm install @replit/clui-gql
+```
+
+#### Usage
+
+```js
+import { toCommand } from '@replit/clui-gql';
+
+const command = toCommand({
+  // 'query' or 'mutation'
+  operation: 'query',
+
+  // GraphQL introspection data for type
+  type: TypeInfo,
+
+  // the path at wich the above type appears in the graph
+  mountPath: ['cli', 'admin'],
+
+  // Return a `run` function for given command
+  runFn: (gqlOptions) => (runOptions) => doSomehtingWith({ gqlOptions, runOptions }),
+
+  // Configure fields and fragments for GraphQL operation
+  outputFn: () => ({
+    fields: '...Output',
+    fragments: `
+      fragment Output on YourOutputTypes {
+        ...on SuccessOutput {
+          message
+        }
+        ...on ErrorOutput {
+          error
+        }
+      }`,
+  }),
+});
+```

@@ -1,0 +1,64 @@
+{
+  "name": "@replit/clui-gql",
+  "version": "0.0.5",
+  "description": "A utility to transform GraphQL introspection type into a CLUI command",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "prepublishOnly": "npm run test && npm run build",
+    "typedoc:build": "typedoc src",
+    "typedoc:serve": "npm run typedoc:build && npx serve docs",
+    "test": "npm-run-all --parallel test:*",
+    "test:format": "prettier --check \"src/**/*.{js,json,ts,tsx}\"",
+    "test:lint": "eslint src/ --ext .js,.ts,.tsx",
+    "test:tsc": "tsc",
+    "test:unit": "jest"
+  },
+  "author": "moudy@repl.it",
+  "license": "MIT",
+  "devDependencies": {
+    "@graphql-codegen/cli": "^1.11.2",
+    "@graphql-codegen/introspection": "1.11.2",
+    "@graphql-codegen/typescript": "1.11.2",
+    "@graphql-codegen/typescript-operations": "^1.11.2",
+    "@types/jest": "^24.9.0",
+    "@types/node": "^13.1.8",
+    "@typescript-eslint/eslint-plugin": "^2.17.0",
+    "@typescript-eslint/parser": "^2.17.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-import-resolver-typescript": "^2.0.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jest": "^23.6.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "graphql": "^14.5.8",
+    "graphql-tag": "^2.10.1",
+    "husky": "^4.0.10",
+    "jest": "^24.9.0",
+    "lint-staged": "^10.0.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^1.19.1",
+    "ts-jest": "^24.3.0",
+    "typedoc": "^0.16.7",
+    "typescript": "^3.7.5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  }
+}

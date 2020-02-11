@@ -1,0 +1,8 @@
+type Query {
+  root: String
+}
+
+schema {
+  query: Query
+}
+

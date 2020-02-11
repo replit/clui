@@ -1,0 +1,77 @@
+{
+  "name": "@replit/clui-session",
+  "version": "0.0.1",
+  "description": "A utility library to manage a list of react components",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "author": "moudy@repl.it",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "npm run test && npm run build",
+    "typedoc:build": "typedoc src",
+    "typedoc:serve": "npm run docs:build && npx serve docs",
+    "test": "npm-run-all --parallel test:*",
+    "test:format": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "test:lint": "eslint src/ --ext .js,.ts,.tsx",
+    "test:tsc": "tsc",
+    "test:unit": "jest"
+  },
+  "devDependencies": {
+    "@types/enzyme": "^3.10.4",
+    "@types/enzyme-adapter-react-16": "^1.0.5",
+    "@types/jest": "^24.9.0",
+    "@types/react-dom": "^16.9.5",
+    "@types/react-helmet": "^5.0.15",
+    "@types/styled-jsx": "^2.2.8",
+    "@typescript-eslint/eslint-plugin": "^2.17.0",
+    "@typescript-eslint/parser": "^2.17.0",
+    "downshift": "^4.0.7",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.2",
+    "enzyme-to-json": "^3.4.3",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-import-resolver-typescript": "^2.0.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jest": "^23.6.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-react": "^7.18.0",
+    "events": "^3.1.0",
+    "html-colors": "0.0.6",
+    "husky": "^4.2.0",
+    "jest": "^24.9.0",
+    "lint-staged": "^9.5.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^1.19.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-head": "^3.3.0",
+    "react-helmet": "^5.2.1",
+    "styled-jsx": "^3.2.4",
+    "ts-jest": "^24.3.0",
+    "typedoc": "^0.16.8",
+    "typescript": "^3.7.5"
+  },
+  "peerDependencies": {
+    "react": ">=16",
+    "react-dom": ">=16"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "repository": "git@github.com:replit/clui.git"
+}
