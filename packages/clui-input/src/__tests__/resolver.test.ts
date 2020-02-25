@@ -10,7 +10,7 @@ it('resolves command', async () => {
   const resolved = await resolve('user', root);
 
   expect(resolved.command?.ref).toEqual({});
-  expect(resolved.command?.node).toEqual({
+  expect(resolved.command?.token).toEqual({
     type: 'KEYWORD',
     value: 'user',
     start: 0,
@@ -33,7 +33,7 @@ it('resolves subcommand', async () => {
 
   expect(resolved.command?.command?.parent?.ref).toEqual(root.commands.user);
   expect(resolved.command?.command?.ref).toEqual({});
-  expect(resolved.command?.command?.node).toEqual({
+  expect(resolved.command?.command?.token).toEqual({
     type: 'KEYWORD',
     value: 'add',
     start: 5,

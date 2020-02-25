@@ -1,22 +1,9 @@
 import { tokenize } from './tokenizer';
 import { ICommand, ICommands } from './types';
 
-import { IArgFlagNode, IArgNode, ICmdNode, IAst } from './ast';
+import { IArgFlagNode, IArgNode, ICmdNode, IAst, commandPath } from './ast';
 
 const flagPrefix = /^-(-?)/;
-
-const commandPath = (root: ICmdNode) => {
-  const path = [];
-
-  let node: ICmdNode | void = root;
-
-  while (node) {
-    path.push(node.token.value);
-    node = node.parent;
-  }
-
-  return path;
-};
 
 export const parse = (
   source: string,
@@ -103,23 +90,29 @@ export const parse = (
       const argCtx = cmdNodeCtx.ref.args[argKey];
 
       let argNode;
-      if (argCtx.type && argCtx.type !== Boolean) {
-        argNode = {
-          parent: cmdNodeCtx,
-          ref: argCtx,
-          kind: 'ARG',
-        } as IArgNode;
-        argNode.key = { parent: argNode, token, kind: 'ARG_KEY' };
-
-        // Set arg context since arg's value is a key/value pair (rather than flag)
-        argNodeCtx = argNode;
-      } else {
+      if (argCtx.type === Boolean) {
         argNode = {
           parent: cmdNodeCtx,
           ref: argCtx,
           kind: 'ARG_FLAG',
           token,
+          name: token.value.replace(/^-(-?)/, ''),
         } as IArgFlagNode;
+      } else {
+        argNode = {
+          parent: cmdNodeCtx,
+          ref: argCtx,
+          kind: 'ARG',
+        } as IArgNode;
+        argNode.key = {
+          parent: argNode,
+          token,
+          kind: 'ARG_KEY',
+          name: token.value.replace(/^-(-?)/, ''),
+        };
+
+        // Set arg context since arg's value is a key/value pair (rather than flag)
+        argNodeCtx = argNode;
       }
 
       if (cmdNodeCtx.args) {
@@ -142,7 +135,11 @@ export const parse = (
       };
       cmdNodeCtx = cmdNodeCtx.command;
     } else if (cmdNodeCtx && typeof cmdNodeCtx.ref.commands === 'function') {
-      const path = ['command', ...commandPath(cmdNodeCtx), token.value];
+      const path = [
+        'command',
+        ...commandPath(cmdNodeCtx).map((c) => c.token.value),
+        token.value,
+      ];
       const hit: ICommands | null = cacheGet ? cacheGet(path) : null;
 
       if (hit && hit[token.value]) {

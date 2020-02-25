@@ -1,4 +1,5 @@
-import { parse, IAst } from './parser2';
+import { parse } from './parser2';
+import { IAst } from './ast';
 import { ICommand, ICommands } from './types';
 
 const join = (path: Array<string>) => path.join(':');
@@ -20,10 +21,13 @@ export const resolve = async (input: string, program: ICommand) => {
     const ast = parse(input, program, cacheGet);
 
     if (ast.pending && tries < 20) {
-      const result = await ast.pending.resolve(ast.pending.node.value);
-      cacheSet(ast.pending.path, result);
+      const { value } = ast.pending.token;
+      const result = await ast.pending.resolve(value || undefined);
+      if (result) {
+        cacheSet(ast.pending.path, result);
 
-      return run();
+        return run();
+      }
     }
 
     return ast;

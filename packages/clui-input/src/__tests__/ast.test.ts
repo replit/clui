@@ -1,51 +1,98 @@
-import { parse, IAst, ICmdNode } from '../parser2';
+import { parse } from '../parser2';
+import { find, closestPrevious, IArgNode } from '../ast';
 
-const find = (ast: IAst, index: number): ICmdNode |  {
-  const queue = ast.command ? [ast.command] : [];
-
-  while (queue.length) {
-    const node = queue.shift();
-
-    if (!node) {
-      throw Error('Expected node');
-    }
-
-    if (index >= node.node.start && index < node.node.end) {
-      return node;
-    }
-
-    if (node.args) {
-      queue.push(...node.args);
-    }
-
-    if (node.command) {
-      queue.push(node.command);
-    }
-  }
-
-  return null;
-};
-
-it('finds node', async () => {
-  const root = {
-    commands: {
-      user: {
-        commands: {
-          add: {},
+const root = {
+  commands: {
+    user: {
+      commands: {
+        add: {
+          args: {
+            name: {
+              type: String,
+            },
+            info: {},
+          },
         },
       },
     },
-  };
+  },
+};
 
-  const ast = parse('user add', root);
+const ast = parse('user add --info --name foo', root);
 
-  [0, 1, 2, 3].forEach((num) => {
-    const node = find(ast, num);
-    expect(node).toEqual(ast.command);
+describe('find', () => {
+  it('finds command node', async () => {
+    [0, 1, 2, 3].forEach((num) => {
+      const node = find(ast, num);
+      expect(node).toEqual(ast.command);
+    });
+
+    expect(find(ast, 4)).toEqual(null);
   });
 
-  [5].forEach((num) => {
-    const node = find(ast, num);
-    expect(node).toEqual(ast.command?.command);
+  it('finds subcommand node', async () => {
+    [5, 6, 7].forEach((num) => {
+      const node = find(ast, num);
+      expect(node).toEqual(ast.command?.command);
+    });
+
+    expect(find(ast, 8)).toEqual(null);
+  });
+
+  it('finds arg flag node', async () => {
+    [9, 10, 11, 12, 13, 14].forEach((num) => {
+      const node = find(ast, num);
+
+      if (!ast.command?.command?.args) {
+        throw Error('expected args');
+      }
+
+      expect(node).toEqual(ast.command?.command?.args[0]);
+    });
+
+    expect(find(ast, 15)).toEqual(null);
+  });
+
+  it('finds arg key node', async () => {
+    [16, 17, 18, 19, 20, 21].forEach((num) => {
+      const node = find(ast, num);
+
+      if (!ast.command?.command?.args) {
+        throw Error('expected args');
+      }
+
+      const arg = ast.command?.command?.args[1] as IArgNode;
+      expect(node).toEqual(arg.key);
+    });
+
+    expect(find(ast, 22)).toEqual(null);
+  });
+
+  it('finds arg value node', async () => {
+    [23, 24, 25].forEach((num) => {
+      const node = find(ast, num);
+
+      if (!ast.command?.command?.args) {
+        throw Error('expected args');
+      }
+
+      const arg = ast.command?.command?.args[1] as IArgNode;
+      expect(node).toEqual(arg.value);
+    });
+
+    expect(find(ast, 26)).toEqual(null);
+  });
+
+  it('finds remainder node', async () => {
+    const ast2 = parse('us', root);
+    const node = find(ast2, 1);
+
+    expect(node?.kind).toEqual('REMAINDER');
+  });
+});
+
+describe('closestPrevious', () => {
+  it('finds closest previous command node', async () => {
+    expect(closestPrevious(ast, 4)).toEqual(ast.command);
   });
 });
