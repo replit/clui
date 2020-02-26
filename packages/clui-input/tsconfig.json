@@ -18,12 +18,11 @@
     "forceConsistentCasingInFileNames": true,
     "typeRoots": [
       "../../node_modules/@types",
-      "./node_modules/@types",
-      "./typings"
+      "./node_modules/@types"
     ],
     "baseUrl": ".",
     "paths": {
-      "*": ["src/*", "typings/*"]
+      "*": ["src/*"]
     },
     "downlevelIteration": true
   },

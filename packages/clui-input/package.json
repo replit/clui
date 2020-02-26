@@ -1,7 +1,7 @@
 {
   "name": "@replit/clui-input",
-  "version": "0.0.2",
-  "description": "A utility library for building CLI style interfaces with autocomple",
+  "version": "0.0.3",
+  "description": "A utility library for building CLI style interfaces with autocomplete",
   "main": "dist/index.js",
   "files": [
     "dist"
@@ -54,9 +54,6 @@
       "prettier --write",
       "git add"
     ]
-  },
-  "dependencies": {
-    "arcsecond": "^2.0.3"
   },
   "repository": "git@github.com:replit/clui.git"
 }

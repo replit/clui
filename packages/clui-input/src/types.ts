@@ -11,7 +11,6 @@ export type ArgTypeDef =
   | BooleanConstructor
   | StringConstructor
   | NumberConstructor;
-export type ArgType = boolean | string | number;
 
 export interface IArgsOption {
   value: string;
@@ -36,9 +35,12 @@ export interface ICommandArgs {
   [key: string]: IArg;
 }
 
+export type ArgType = string | boolean | number;
+export type ArgsMap = Record<string, ArgType>;
+
 export interface IRunOptions<O = any> {
-  commands: Array<string>;
-  args?: Record<string, ArgType>;
+  commands: Array<{ name: string; args?: ArgsMap }>;
+  args?: ArgsMap;
   options?: O;
 }
 

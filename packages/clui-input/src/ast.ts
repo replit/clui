@@ -1,5 +1,5 @@
 import { IToken } from './tokenizer';
-import { ICommand, ICommands, IArg } from './types';
+import { ICommand, ICommands, IArg, ArgsMap, ArgType } from './types';
 
 export type ASTNodeKind =
   | 'COMMAND'
@@ -156,9 +156,6 @@ export const commandPath = (root: ICmdNode): Array<ICmdNode> => {
 
   return path;
 };
-
-type ArgType = string | boolean | number;
-type ArgsMap = Record<string, ArgType>;
 
 const removeQuotes = (str: string) => {
   for (const quote of ["'", '"']) {

@@ -737,7 +737,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
-                commands: ['user'],
+                commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
                 options: [
@@ -783,7 +783,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
-                commands: ['user'],
+                commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
                 options: [
@@ -823,7 +823,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
-                commands: ['user'],
+                commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
                 options: [
@@ -884,7 +884,7 @@ describe('args', () => {
           [
             {
               exhausted: false,
-              commands: ['user'],
+              commands: [{ name: 'user' }],
               nodeStart: 'user '.length,
               options: [
                 {
@@ -918,7 +918,7 @@ describe('args', () => {
           [
             {
               exhausted: false,
-              commands: ['user'],
+              commands: [{ name: 'user' }],
               nodeStart: 'user '.length,
               options: [
                 {
@@ -951,7 +951,7 @@ describe('args', () => {
           [
             {
               exhausted: true,
-              commands: ['user'],
+              commands: [{ name: 'user', args: { email: 'foo' } }],
               args: { email: 'foo' },
               nodeStart: 'user '.length,
               options: [
@@ -987,7 +987,7 @@ describe('args', () => {
           [
             {
               exhausted: false,
-              commands: ['user'],
+              commands: [{ name: 'user', args: { name: 'f' } }],
               args: { name: 'f' },
               nodeStart: 'user --name f '.length,
               options: [
@@ -1030,7 +1030,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
-              commands: ['user'],
+              commands: [{ name: 'user', args: { name: 'bar' } }],
               args: { name: 'bar' },
               exhausted: false,
               nodeStart: 'user --name bar '.length,
@@ -1065,7 +1065,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
-              commands: ['user'],
+              commands: [{ name: 'user', args: { verbose: true } }],
               args: { verbose: true },
               exhausted: false,
               nodeStart: 'user --verbose '.length,
@@ -1111,7 +1111,7 @@ describe('options variations', () => {
           expect(mock.calls).toEqual([
             [
               {
-                commands: ['user'],
+                commands: [{ name: 'user', args: { verbose: true } }],
                 args,
                 exhausted: true,
                 nodeStart: 'user --verbose '.length,
@@ -1134,7 +1134,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
-              commands: ['user'],
+              commands: [{ name: 'user' }],
               exhausted: false,
               nodeStart: 'user --name '.length,
               options: [

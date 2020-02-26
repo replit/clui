@@ -4,6 +4,7 @@ import {
   ICommand,
   IOption,
   ArgType,
+  ArgsMap,
   ICommandArgs,
   IArgsOption,
 } from './types';
@@ -13,7 +14,7 @@ type SearchFn = (args: ISearchArgs) => boolean;
 
 export interface IInputUpdates<D = any, R = any> {
   nodeStart?: number;
-  commands: Array<string>;
+  commands: Array<{ name: string; args?: ArgsMap }>;
   args?: Record<string, ArgType>;
   exhausted: boolean;
   options: Array<IOption>;
@@ -554,12 +555,38 @@ export const createInput = (config: IConfig) => {
       }
     }
 
+    let run: void | (<O = any>(o?: O) => any);
+
+    const commandsList = astCommands.map((c) => {
+      const cargs = toArgs(c);
+
+      return {
+        args: cargs.parsed,
+        name: c.token.value,
+      };
+    });
+
+    if (last && last.ref.run) {
+      run = <O>(opt: O) => {
+        if (!last.ref.run) {
+          return;
+        }
+
+        last.ref.run({
+          commands: commandsList,
+          args: commandsList[commandsList.length - 1].args,
+          options: opt,
+        });
+      };
+    }
+
     config.onUpdate({
       args: args?.parsed,
       nodeStart,
       exhausted: !!args?.exhausted && !last.ref.commands,
-      commands: astCommands.map((c) => c.token.value),
+      commands: commandsList,
       options,
+      run: run || undefined,
     });
   };
 
