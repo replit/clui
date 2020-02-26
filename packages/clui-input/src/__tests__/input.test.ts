@@ -1,4 +1,4 @@
-// import { ICommand } from '../types';
+import { ICommand, ICommands } from '../types';
 import { createInput } from '../input';
 
 const crud = {
@@ -13,6 +13,596 @@ const mockFn = (cb: (mock: jest.Mock) => void) => {
 
   return fn;
 };
+
+describe('no input', () => {
+  it('suggests commands', (done) => {
+    const root: ICommand = { commands: { user: { commands: { add: {} } } } };
+
+    createInput({
+      command: root,
+      value: '',
+      index: ''.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user',
+            data: { commands: { add: {} } },
+            inputValue: 'user',
+            cursorTarget: 'user'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+});
+
+describe('previousNode', () => {
+  it('suggests commands', (done) => {
+    const root: ICommand = { commands: { user: { commands: { add: {} } } } };
+
+    createInput({
+      command: root,
+      value: 'us',
+      index: 'us'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user',
+            data: { commands: { add: {} } },
+            inputValue: 'user',
+            searchValue: 'us',
+            cursorTarget: 'user'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('suggests subcommands', (done) => {
+    const root: ICommand = { commands: { user: { commands: { add: {} } } } };
+
+    createInput({
+      command: root,
+      value: 'user a',
+      index: 'user a'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'add',
+            data: {},
+            inputValue: 'user add',
+            searchValue: 'a',
+            cursorTarget: 'user add'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('suggests subcommands after arg flag', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: { args: { add: { type: Boolean } }, commands: { add: {} } },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user --add ',
+      index: 'user --add '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'add',
+            data: {},
+            inputValue: 'user --add add',
+            cursorTarget: 'user --add add'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('does not suggest subcommands after arg value', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: { args: { add: { type: String } }, commands: { add: {} } },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user --add ',
+      index: 'user --add '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([]);
+        done();
+      },
+    });
+  });
+
+  it('suggests subcommands and arg flag', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: { args: { add: { type: Boolean } }, commands: { add: {} } },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user ',
+      index: 'user '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: '--add',
+            data: { type: Boolean },
+            inputValue: 'user --add',
+            cursorTarget: 'user --add'.length,
+          },
+          {
+            value: 'add',
+            data: {},
+            inputValue: 'user add',
+            cursorTarget: 'user add'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  describe('arg flags', () => {
+    const root: ICommand = {
+      commands: {
+        user: { args: { id: { type: Boolean }, info: { type: Boolean } } },
+      },
+    };
+
+    it('suggests args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --i',
+        index: 'user --i'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--id',
+              data: { type: Boolean },
+              inputValue: 'user --id',
+              searchValue: 'i',
+              cursorTarget: 'user --id'.length,
+            },
+            {
+              value: '--info',
+              data: { type: Boolean },
+              inputValue: 'user --info',
+              searchValue: 'i',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+
+    it('suggests filtred args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --in',
+        index: 'user --in'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--info',
+              data: { type: Boolean },
+              inputValue: 'user --info',
+              searchValue: 'in',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('args', () => {
+    const root: ICommand = {
+      commands: { user: { args: { id: {}, info: {} } } },
+    };
+
+    it('suggests args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --i',
+        index: 'user --i'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--id',
+              data: {},
+              inputValue: 'user --id',
+              searchValue: 'i',
+              cursorTarget: 'user --id'.length,
+            },
+            {
+              value: '--info',
+              data: {},
+              inputValue: 'user --info',
+              searchValue: 'i',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+
+    it('suggests filtred args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --in',
+        index: 'user --in'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--info',
+              data: {},
+              inputValue: 'user --info',
+              searchValue: 'in',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('arg options', () => {
+    const root: ICommand = {
+      commands: { user: { args: { id: { options: [{ value: 'foo' }] } } } },
+    };
+
+    it('suggests arg options', (done) => {
+      createInput({
+        command: root,
+        value: 'user --id ',
+        index: 'user --id '.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: 'foo',
+              data: { value: 'foo' },
+              inputValue: 'user --id foo',
+              cursorTarget: 'user --id foo'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+
+    it('suggests filtred arg options', (done) => {
+      createInput({
+        command: root,
+        value: 'user --id f',
+        index: 'user --id f'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: 'foo',
+              data: { value: 'foo' },
+              inputValue: 'user --id foo',
+              searchValue: 'f',
+              cursorTarget: 'user --id foo'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+});
+
+describe('currentNode', () => {
+  it('suggests commands', (done) => {
+    const root: ICommand = { commands: { user: { commands: { add: {} } } } };
+
+    createInput({
+      command: root,
+      value: 'user',
+      index: 'us'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user',
+            data: { commands: { add: {} } },
+            inputValue: 'user',
+            searchValue: 'us',
+            cursorTarget: 'user'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('suggests subcommands', (done) => {
+    const root: ICommand = { commands: { user: { commands: { add: {} } } } };
+
+    createInput({
+      command: root,
+      value: 'user add',
+      index: 'user a'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'add',
+            data: {},
+            inputValue: 'user add',
+            searchValue: 'a',
+            cursorTarget: 'user add'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  describe('arg flags', () => {
+    const root: ICommand = {
+      commands: {
+        user: { args: { id: { type: Boolean }, info: { type: Boolean } } },
+      },
+    };
+
+    it('suggests args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --info --i',
+        index: 'user --i'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--id',
+              data: { type: Boolean },
+              inputValue: 'user --id --i',
+              searchValue: 'i',
+              cursorTarget: 'user --id'.length,
+            },
+            {
+              value: '--info',
+              data: { type: Boolean },
+              inputValue: 'user --info --i',
+              searchValue: 'i',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+
+    it('suggests filtred args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --inf',
+        index: 'user --in'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--info',
+              data: { type: Boolean },
+              inputValue: 'user --info',
+              searchValue: 'in',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('args', () => {
+    const root: ICommand = {
+      commands: { user: { args: { id: {}, info: {} } } },
+    };
+
+    it('suggests args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --in',
+        index: 'user --i'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--id',
+              data: {},
+              inputValue: 'user --id',
+              searchValue: 'i',
+              cursorTarget: 'user --id'.length,
+            },
+            {
+              value: '--info',
+              data: {},
+              inputValue: 'user --info',
+              searchValue: 'i',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+
+    it('suggests filtred args', (done) => {
+      createInput({
+        command: root,
+        value: 'user --inf',
+        index: 'user --in'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: '--info',
+              data: {},
+              inputValue: 'user --info',
+              searchValue: 'in',
+              cursorTarget: 'user --info'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+
+  describe('arg options', () => {
+    const root: ICommand = {
+      commands: { user: { args: { id: { options: [{ value: 'foo' }] } } } },
+    };
+
+    it('suggests arg options', (done) => {
+      createInput({
+        command: root,
+        value: 'user --id fo',
+        index: 'user --id f'.length,
+        onUpdate: (updates) => {
+          expect(updates.options).toEqual([
+            {
+              value: 'foo',
+              data: { value: 'foo' },
+              inputValue: 'user --id foo',
+              searchValue: 'f',
+              cursorTarget: 'user --id foo'.length,
+            },
+          ]);
+          done();
+        },
+      });
+    });
+  });
+});
+
+describe('commands function', () => {
+  it('suggests commands', (done) => {
+    const commands = jest.fn(
+      async (str?: string): Promise<ICommands> => {
+        if (str === 'ad') {
+          return { add: {} };
+        }
+
+        return {
+          all: {},
+        };
+      },
+    );
+
+    const root: ICommand = {
+      commands: {
+        user: { commands },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user add',
+      index: 'user a'.length,
+      onUpdate: (updates) => {
+        expect(commands.mock.calls).toEqual([['add'], ['a']]);
+
+        expect(updates.options).toEqual([
+          {
+            value: 'all',
+            data: {},
+            inputValue: 'user all',
+            searchValue: 'a',
+            cursorTarget: 'user all'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('suggests commands dynamically', (done) => {
+    const commands = jest.fn(
+      async (str?: string): Promise<ICommands> => {
+        if (str === 'ad') {
+          return { add: {} };
+        }
+
+        return {
+          all: {},
+        };
+      },
+    );
+
+    const root: ICommand = {
+      commands: {
+        user: { commands },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user add',
+      index: 'user ad'.length,
+      onUpdate: (updates) => {
+        expect(commands.mock.calls).toEqual([['add'], ['ad']]);
+
+        expect(updates.options).toEqual([
+          {
+            value: 'add',
+            data: {},
+            inputValue: 'user add',
+            searchValue: 'ad',
+            cursorTarget: 'user add'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('suggests subcommands dynamically', (done) => {
+    const commands = jest.fn(
+      async (): Promise<ICommands> => ({ add: { commands: { info: {} } } }),
+    );
+
+    const root: ICommand = {
+      commands: {
+        user: { commands },
+      },
+    };
+
+    createInput({
+      command: root,
+      value: 'user add info',
+      index: 'user add i'.length,
+      onUpdate: (updates) => {
+        // expect(commands.mock.calls).toEqual([['add'], ['ad']]);
+
+        expect(updates.options).toEqual([
+          {
+            value: 'info',
+            data: {},
+            inputValue: 'user add info',
+            searchValue: 'i',
+            cursorTarget: 'user add info'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+});
 
 describe('commands', () => {
   describe('object', () => {
@@ -126,30 +716,6 @@ describe('commands', () => {
         }),
       });
     });
-
-    // TODO: decide how to handle function search
-    // ([
-    // [undefined, undefined, undefined],
-    // ['u', 1, 'u'],
-    // ['user', 1, 'u'],
-    // ['user', 'user'.length, 'user'],
-    // ] as Array<[string?, number?, string?]>).forEach(
-    // ([value, index, expected]) => {
-    // it.only(`calls function with '${expected}' for input '${value}' at index: ${index}`, (done) => {
-    // const commands = jest.fn(async () => ({ user: {} }));
-
-    // createInput({
-    // command: { commands },
-    // value,
-    // index,
-    // onUpdate: mockFn(() => {
-    // expect(commands).toHaveBeenCalledWith(expected);
-    // done();
-    // }),
-    // });
-    // });
-    // },
-    // );
   });
 });
 
@@ -238,114 +804,62 @@ describe('sub-commands', () => {
     });
   });
 
-  // describe('async function with args', () => {
-  // const root = {
-  // commands: {
-  // a: {
-  // args: {
-  // name: {},
-  // },
-  // commands: {
-  // b: {},
-  // c: {},
-  // },
-  // },
-  // },
-  // };
+  describe('async function', () => {
+    const commands = {
+      profile: { commands: crud },
+      user: { commands: crud },
+    };
 
-  // ([
-  // ['a --name b', 'a --name b'.length, 'a --name '.length, { name: 'b' }],
-  // ['a --name b', 'a --name '.length, 'a --name '.length, { name: 'b' }],
-  // ['a --name b', 'a --name'.length, 'a '.length, { name: 'b' }],
-  // [
-  // 'a --name b ',
-  // 'a --name b '.length,
-  // 'a --name b '.length,
-  // { name: 'b' },
-  // ],
-  // ] as Array<[string, number, number, {}]>).forEach(
-  // ([value, index, nodeStart, args]) => {
-  // it('returns sub-commands', (done) => {
-  // createInput({
-  // command: root,
-  // value,
-  // index,
-  // onUpdate: mockFn(({ mock }) => {
-  // expect(mock.calls).toEqual([
-  // [
-  // {
-  // exhausted: false,
-  // commands: ['a'],
-  // args,
-  // nodeStart,
-  // options: [],
-  // },
-  // ],
-  // ]);
-  // done();
-  // }),
-  // });
-  // });
-  // },
-  // );
-  // });
+    const root = {
+      commands: async () => commands,
+    };
 
-  // describe('async function', () => {
-  // const commands = {
-  // profile: { commands: crud },
-  // user: { commands: crud },
-  // };
-
-  // const root = {
-  // commands: async () => commands,
-  // };
-
-  // it('returns sub-commands', (done) => {
-  // createInput({
-  // command: root,
-  // value: 'user ',
-  // index: 'user '.length,
-  // onUpdate: mockFn(({ mock }) => {
-  // expect(mock.calls).toEqual([
-  // [
-  // {
-  // commands: ['user'],
-  // exhausted: false,
-  // nodeStart: 'user '.length,
-  // options: [
-  // {
-  // value: 'create',
-  // inputValue: 'user create',
-  // cursorTarget: 11,
-  // data: commands.user.commands?.create,
-  // },
-  // {
-  // value: 'read',
-  // inputValue: 'user read',
-  // cursorTarget: 9,
-  // data: commands.user.commands?.read,
-  // },
-  // {
-  // value: 'update',
-  // inputValue: 'user update',
-  // cursorTarget: 11,
-  // data: commands.user.commands?.update,
-  // },
-  // {
-  // value: 'destroy',
-  // inputValue: 'user destroy',
-  // cursorTarget: 12,
-  // data: commands.user.commands?.destroy,
-  // },
-  // ],
-  // },
-  // ],
-  // ]);
-  // done();
-  // }),
-  // });
-  // });
-  // });
+    it('returns sub-commands', (done) => {
+      createInput({
+        command: root,
+        value: 'user ',
+        index: 'user '.length,
+        onUpdate: mockFn(({ mock }) => {
+          expect(mock.calls).toEqual([
+            [
+              {
+                commands: ['user'],
+                exhausted: false,
+                nodeStart: 'user '.length,
+                options: [
+                  {
+                    value: 'create',
+                    inputValue: 'user create',
+                    cursorTarget: 11,
+                    data: commands.user.commands?.create,
+                  },
+                  {
+                    value: 'read',
+                    inputValue: 'user read',
+                    cursorTarget: 9,
+                    data: commands.user.commands?.read,
+                  },
+                  {
+                    value: 'update',
+                    inputValue: 'user update',
+                    cursorTarget: 11,
+                    data: commands.user.commands?.update,
+                  },
+                  {
+                    value: 'destroy',
+                    inputValue: 'user destroy',
+                    cursorTarget: 12,
+                    data: commands.user.commands?.destroy,
+                  },
+                ],
+              },
+            ],
+          ]);
+          done();
+        }),
+      });
+    });
+  });
 });
 
 describe('args', () => {
@@ -577,23 +1091,30 @@ describe('options variations', () => {
     });
   });
 
-  ([
-    ['user --verbose ', 'user --verbose'.length, { verbose: true }],
-    ['user --name ', 'user --name'.length, undefined],
-  ] as Array<[string, number, {}]>).forEach(([value, index, args]) => {
+  ([['user --verbose ', 'user --verbose '.length, { verbose: true }]] as Array<
+    [string, number, {}]
+  >).forEach(([value, index, args]) => {
     it('returns no options', (done) => {
       createInput({
         value,
         index,
-        command: root,
+        command: {
+          commands: {
+            user: {
+              args: {
+                verbose: { type: Boolean },
+              },
+            },
+          },
+        },
         onUpdate: mockFn(({ mock }) => {
           expect(mock.calls).toEqual([
             [
               {
                 commands: ['user'],
                 args,
-                exhausted: false,
-                nodeStart: 'user '.length,
+                exhausted: true,
+                nodeStart: 'user --verbose '.length,
                 options: [],
               },
             ],
@@ -604,7 +1125,7 @@ describe('options variations', () => {
     });
   });
 
-  it.skip('returns arg value options when value type is not Boolean', (done) => {
+  it('returns arg value options when value type is not Boolean', (done) => {
     createInput({
       value: 'user --name ',
       index: 'user --name '.length,

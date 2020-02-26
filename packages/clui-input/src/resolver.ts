@@ -1,30 +1,40 @@
-import { parse } from './parser2';
+import { parse } from './parser';
 import { IAst } from './ast';
 import { ICommand, ICommands } from './types';
 
-const join = (path: Array<string>) => path.join(':');
+interface IOptions {
+  input: string;
+  command: ICommand;
+  cache?: Record<string, ICommands>;
+}
 
-export const resolve = async (input: string, program: ICommand) => {
+export const resolve = async (options: IOptions) => {
   let tries = 0;
-  const cache: Record<string, ICommands> = {};
+  const cacheGet = (key: string): ICommands | null => {
+    if (options.cache) {
+      return options.cache[key] || null;
+    }
 
-  const cacheGet = (path: Array<string>): ICommands | null =>
-    cache[join(path)] || null;
+    return null;
+  };
 
-  const cacheSet = (path: Array<string>, commands: ICommands) => {
-    cache[join(path)] = commands;
+  const cacheSet = (key: string, commands: ICommands) => {
+    if (options.cache) {
+      options.cache[key] = commands;
+    }
+
+    return null;
   };
 
   const run = async (): Promise<IAst> => {
     tries++;
+    const ast = parse(options.input, options.command, cacheGet);
 
-    const ast = parse(input, program, cacheGet);
-
-    if (ast.pending && tries < 20) {
+    if (ast.pending && options.cache && tries < 50) {
       const { value } = ast.pending.token;
       const result = await ast.pending.resolve(value || undefined);
       if (result) {
-        cacheSet(ast.pending.path, result);
+        cacheSet(ast.pending.key, result);
 
         return run();
       }

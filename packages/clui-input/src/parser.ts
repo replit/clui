@@ -1,144 +1,177 @@
-// @ts-nocheck
-// Wating for better typescript support https://github.com/francisrstokes/arcsecond/pull/35
-import * as A from 'arcsecond';
-import { INode, IData } from './types';
+import { tokenize } from './tokenizer';
+import { ICommand, ICommands } from './types';
 
-const keyword = A.regex(/^[a-zA-Z0-9][^\s\\]*/);
-const flagPrefix = A.regex(/^-?(-)/);
+import { IArgFlagNode, IArgNode, ICmdNode, IAst } from './ast';
 
-type IBaseNode = Pick<INode, 'type' | 'node'>;
+const flagPrefix = /^-(-?)/;
 
-interface IFromData {
-  data: IData;
-  result: IBaseNode;
-}
+export const parse = (
+  source: string,
+  program: ICommand,
+  cacheGet?: (key: string) => null | ICommands,
+): IAst => {
+  const tokens = tokenize(source).filter((t) => t.kind !== 'WHITESPACE');
 
-const toNode = (type: NodeType) => (result: IBaseNode) => ({
-  value: result,
-  type,
-});
+  const ast: IAst = { source };
+  let cmdNodeCtx: ICmdNode | null = null;
+  let argNodeCtx: IArgNode | null = null;
 
-const toLocation = ({ data, result }: IFromData) => ({
-  ...result,
-  start: data.index,
-  end: data.index + (result.value ? result.value.length : 0),
-});
+  const queue = [...tokens];
+  let done = false;
 
-const setIndex = ({ result, data }: IFromData) =>
-  A.setData({
-    ...data,
-    index:
-      result && result.value ? data.index + result.value.length : data.index,
-  });
+  while (queue.length && !done) {
+    const token = queue.shift();
 
-const whitespace = A.whitespace
-  .map(toNode('WHITESPACE'))
-  .mapFromData(toLocation)
-  .chainFromData(setIndex);
-
-const argKey = A.sequenceOf([
-  flagPrefix,
-  A.everythingUntil(A.choice([A.endOfInput, whitespace])),
-])
-  .map(nullify)
-  .map((result) => result.join(''))
-  .map(toNode('ARG_KEY'))
-  .mapFromData(toLocation)
-  .chainFromData(setIndex);
-
-const between = (char: string) =>
-  A.sequenceOf([
-    A.char(char),
-    A.everythingUntil(A.char(char)),
-    A.char(char),
-  ]).map((r) => r.join(''));
-
-const quoted = A.choice([between('"'), between("'")]).map(
-  toNode('ARG_VALUE_QUOTED'),
-);
-
-const literal = keyword.map(toNode('ARG_VALUE'));
-
-const argValue = A.choice([quoted, literal])
-  .mapFromData(toLocation)
-  .chainFromData(setIndex);
-
-const arg = A.sequenceOf([
-  argKey,
-  A.possibly(whitespace),
-  A.possibly(argValue),
-]).map(nullify);
-
-const args = A.many(
-  A.sequenceOf([arg, A.possibly(A.choice([whitespace, A.endOfInput]))]),
-)
-  .map(flatten)
-  .map(nullify)
-  .map(flatten);
-
-const command = keyword
-  .map(toNode('COMMAND'))
-  .mapFromData(toLocation)
-  .chainFromData(setIndex);
-
-const commandTerminator = A.choice([A.endOfInput, A.whitespace])
-  .mapFromData(({ data, result }) => {
-    if (!result) {
-      return null;
+    if (!token) {
+      throw new Error('Expected token');
     }
 
-    return {
-      start: data.index,
-      end: data.index + result.length,
-      type: 'WHITESPACE',
-      value: result,
-    };
-  })
-  .chainFromData(setIndex);
+    const isFlag = flagPrefix.test(token.value);
+    const argKey = isFlag ? token.value.replace(/^-(-?)/, '') : null;
 
-function flatten<D>(list: Array<Array<D>>): Array<D> {
-  return list.reduce((acc, item) => {
-    if (Array.isArray(item)) {
-      return [...acc, ...item];
+    if (!cmdNodeCtx) {
+      // Try to resolve first command
+      if (
+        typeof program.commands === 'object' &&
+        program.commands[token.value]
+      ) {
+        // Set initial command context
+        cmdNodeCtx = {
+          kind: 'COMMAND',
+          ref: program.commands[token.value],
+          token,
+        };
+
+        ast.command = cmdNodeCtx;
+      } else if (typeof program.commands === 'function') {
+        const key = source.slice(0, token.end);
+        const hit: ICommands | null = cacheGet ? cacheGet(key) : null;
+
+        if (hit && hit[token.value]) {
+          // Found match in cache
+          const ref: ICommand = hit[token.value];
+          cmdNodeCtx = { ref, token, kind: 'COMMAND' };
+          ast.command = cmdNodeCtx;
+        } else if (!hit) {
+          // First command's commands function needs to be resolved
+          ast.pending = {
+            kind: 'PENDING',
+            token,
+            resolve: program.commands,
+            key,
+          };
+          done = true;
+        }
+      } else {
+        // No match found for top-level command
+        ast.remainder = {
+          kind: 'REMAINDER',
+          token,
+          cmdNodeCtx: { ref: program, token, kind: 'COMMAND' },
+        };
+        // ast.remainder = { node };
+      }
+    } else if (argNodeCtx) {
+      // Set value for matching arg key
+      argNodeCtx.value = {
+        kind: 'ARG_VALUE',
+        parent: argNodeCtx,
+        token,
+      };
+      // Unset arg context now that the value has been set
+      argNodeCtx = null;
+    } else if (
+      argKey &&
+      cmdNodeCtx &&
+      cmdNodeCtx.ref.args &&
+      cmdNodeCtx.ref.args[argKey]
+    ) {
+      // Found a matching arg key, setting context
+      const argCtx = cmdNodeCtx.ref.args[argKey];
+
+      let argNode;
+      if (argCtx.type === Boolean) {
+        argNode = {
+          parent: cmdNodeCtx,
+          ref: argCtx,
+          kind: 'ARG_FLAG',
+          token,
+          name: token.value.replace(/^-(-?)/, ''),
+        } as IArgFlagNode;
+      } else {
+        argNode = {
+          parent: cmdNodeCtx,
+          ref: argCtx,
+          kind: 'ARG',
+        } as IArgNode;
+        argNode.key = {
+          parent: argNode,
+          token,
+          kind: 'ARG_KEY',
+          name: token.value.replace(/^-(-?)/, ''),
+        };
+
+        // Set arg context since arg's value is a key/value pair (rather than flag)
+        argNodeCtx = argNode;
+      }
+
+      if (cmdNodeCtx.args) {
+        cmdNodeCtx.args.push(argNode);
+      } else {
+        cmdNodeCtx.args = [argNode];
+      }
+    } else if (
+      cmdNodeCtx &&
+      typeof cmdNodeCtx.ref.commands === 'object' &&
+      cmdNodeCtx.ref.commands[token.value]
+    ) {
+      // Found matching subcommand, update context
+      const ref = cmdNodeCtx.ref.commands[token.value];
+      cmdNodeCtx.command = {
+        ref,
+        token,
+        parent: cmdNodeCtx,
+        kind: 'COMMAND',
+      };
+      cmdNodeCtx = cmdNodeCtx.command;
+    } else if (cmdNodeCtx && typeof cmdNodeCtx.ref.commands === 'function') {
+      const key = source.slice(0, token.end);
+      const hit: ICommands | null = cacheGet ? cacheGet(key) : null;
+
+      if (hit && hit[token.value]) {
+        // Found match in cache
+        const ref: ICommand = hit[token.value];
+        cmdNodeCtx.command = {
+          ref,
+          token,
+          parent: cmdNodeCtx,
+          kind: 'COMMAND',
+        };
+        cmdNodeCtx = cmdNodeCtx.command;
+      } else if (!hit) {
+        // Command's commands function needs to be resolved
+        ast.pending = {
+          kind: 'PENDING',
+          token,
+          resolve: cmdNodeCtx.ref.commands,
+          key,
+        };
+        done = true;
+      }
+    } else {
+      if (token) {
+        // Return leftover node
+        ast.remainder = {
+          kind: 'REMAINDER',
+          token,
+          cmdNodeCtx: cmdNodeCtx || undefined,
+          argNodeCtx: argNodeCtx || undefined,
+        };
+      }
+
+      done = true;
     }
+  }
 
-    if (item) {
-      return [...acc, item];
-    }
-
-    return acc;
-  }, []);
-}
-
-function nullify<D>(list: Array<Array<D>>): Array<D> {
-  return list.reduce((acc: Array<D>, item: Array<D>) => {
-    if (!item) {
-      return acc;
-    }
-
-    if (typeof item === 'object' && item.value === '') {
-      return acc;
-    }
-
-    return [...acc, item];
-  }, []);
-}
-
-const commands = A.many(A.sequenceOf([command, commandTerminator]))
-  .map(flatten)
-  .map(nullify);
-
-const parser = A.withData(
-  A.sequenceOf([commands, A.possibly(args)]).map(flatten),
-);
-
-export const parse = (source: string) => {
-  const parsed = parser({ index: 0 }).run(source);
-
-  return {
-    isError: parsed.isError,
-    index: parsed.data.index,
-    source,
-    result: parsed.result,
-  };
+  return ast;
 };

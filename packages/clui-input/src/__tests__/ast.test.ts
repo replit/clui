@@ -1,5 +1,5 @@
-import { parse } from '../parser2';
-import { find, closestPrevious, IArgNode } from '../ast';
+import { parse } from '../parser';
+import { find, closestPrevious, IArgNode, toArgs } from '../ast';
 
 const root = {
   commands: {
@@ -7,10 +7,10 @@ const root = {
       commands: {
         add: {
           args: {
-            name: {
-              type: String,
+            name: {},
+            info: {
+              type: Boolean,
             },
-            info: {},
           },
         },
       },
@@ -18,9 +18,8 @@ const root = {
   },
 };
 
-const ast = parse('user add --info --name foo', root);
-
 describe('find', () => {
+  const ast = parse('user add --info --name foo', root);
   it('finds command node', async () => {
     [0, 1, 2, 3].forEach((num) => {
       const node = find(ast, num);
@@ -92,7 +91,36 @@ describe('find', () => {
 });
 
 describe('closestPrevious', () => {
+  const ast = parse('user add --info --name foo', root);
+
   it('finds closest previous command node', async () => {
     expect(closestPrevious(ast, 4)).toEqual(ast.command);
+  });
+});
+
+describe('toArgs', () => {
+  it('parses args', async () => {
+    const ast = parse('user --name "Foo Bar" --id 2 --username bar', {
+      commands: {
+        user: {
+          args: {
+            name: {},
+            info: { type: Boolean },
+            id: { type: Number },
+            username: { type: String },
+          },
+        },
+      },
+    });
+
+    if (!ast.command) {
+      throw Error('expected command');
+    }
+
+    expect(toArgs(ast.command).parsed).toEqual({
+      id: 2,
+      name: 'Foo Bar',
+      username: 'bar',
+    });
   });
 });

@@ -57,12 +57,13 @@ interface IRemainder {
 
 interface IPending {
   kind: 'PENDING';
-  path: Array<string>;
+  key: string;
   token: IToken;
   resolve: (str?: string) => Promise<ICommands>;
 }
 
 export interface IAst {
+  source: string;
   command?: ICmdNode;
   remainder?: IRemainder;
   pending?: IPending;
@@ -156,7 +157,18 @@ export const commandPath = (root: ICmdNode): Array<ICmdNode> => {
   return path;
 };
 
-type ArgsMap = Record<string, string | boolean | number>;
+type ArgType = string | boolean | number;
+type ArgsMap = Record<string, ArgType>;
+
+const removeQuotes = (str: string) => {
+  for (const quote of ["'", '"']) {
+    if (str.startsWith(quote) && str.endsWith(quote)) {
+      return str.slice(1, str.length - 1);
+    }
+  }
+
+  return str;
+};
 
 export const toArgs = (
   command: ICmdNode,
@@ -172,10 +184,12 @@ export const toArgs = (
       if (arg.kind === 'ARG_FLAG') {
         parsed[arg.name] = true;
       } else {
-        const value = arg.value?.token.value;
+        const str = arg.value?.token.value;
 
-        if (value) {
-          parsed[arg.key.name] = arg.ref.type ? arg.ref.type(value) : value;
+        if (str) {
+          const value: ArgType = arg.ref.type ? arg.ref.type(str) : str;
+          parsed[arg.key.name] =
+            typeof value === 'string' ? removeQuotes(value) : value;
         }
       }
     }

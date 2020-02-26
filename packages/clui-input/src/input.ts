@@ -8,9 +8,10 @@ import {
   // IArgsOption,
   ArgType,
   ICommandArgs,
+  IArgsOption,
 } from './types';
 import { resolve } from './resolver';
-// import { IAst } from './parser2';
+// import { IAst } from './parser';
 
 type SearchFn = (args: ISearchArgs) => boolean;
 
@@ -50,7 +51,6 @@ const commandOptions = (options: {
       options.searchFn({ source: key, search: options.search })
     ) {
       const { sliceStart, sliceEnd, inputValue } = options;
-      console.log({ sliceStart, sliceEnd, inputValue });
 
       const newInputValueStart =
         inputValue && sliceStart !== undefined
@@ -119,21 +119,21 @@ const argsOptions = (options: {
   }, []);
 };
 
-const valueOptions = (options: {
-  commands: ICommands;
+const valueOptions = <V extends { value: string }>(options: {
+  options: Array<V>;
   inputValue: string;
   searchFn: SearchFn;
   search?: string;
   sliceStart?: number;
   sliceEnd?: number;
 }): Array<IOption> =>
-  Object.keys(options.commands).reduce((acc: Array<IOption>, key) => {
+  options.options.reduce((acc: Array<IOption>, option) => {
+    const key = option.value;
     if (
       !options.search ||
       options.searchFn({ source: key, search: options.search })
     ) {
       const { sliceStart, sliceEnd, inputValue } = options;
-      console.log({ sliceStart, sliceEnd, inputValue });
 
       const newInputValueStart =
         inputValue && sliceStart !== undefined
@@ -147,7 +147,7 @@ const valueOptions = (options: {
 
       acc.push({
         value: key,
-        data: options.commands[key],
+        data: option,
         inputValue: newInputValue,
         cursorTarget: newInputValueStart.length,
         searchValue: options.search,
@@ -178,8 +178,9 @@ const getRootCommands = async (
 };
 
 export const createInput = (config: IConfig) => {
-  // const commandsCache: Record<string, ICommands> = {};
-  // const optionsCache: Record<string, Array<IArgsOption>> = {};
+  const commandsCache: Record<string, ICommands> = {};
+  const optionsCache: Record<string, Array<IArgsOption>> = {};
+
   const searchFn =
     config.searchFn ||
     ((opt: { source: string; search: string }) =>
@@ -190,19 +191,41 @@ export const createInput = (config: IConfig) => {
   let index = config.index || 0;
 
   const processUpdates = async () => {
+    const valueStart = value.slice(0, index);
     const current = updatedAt;
 
-    const ast = await resolve(value, config.command);
+    const ast = await resolve({
+      input: value,
+      command: config.command,
+      cache: commandsCache,
+    });
+
+    const currentNode = find(ast, index);
+
+    if (value.length > index) {
+      const previousNode = closestPrevious(ast, index);
+      if (
+        previousNode?.kind === 'COMMAND' &&
+        typeof previousNode.ref.commands === 'function' &&
+        !commandsCache[valueStart]
+      ) {
+        const search = valueStart.slice(previousNode.token.end).trim();
+        const result = await previousNode.ref.commands(search || undefined);
+
+        if (result) {
+          commandsCache[valueStart] = result;
+        }
+      }
+    }
+
+    const astCommands = ast.command ? commandPath(ast.command) : [];
 
     if (current !== updatedAt) {
       // Bail if an update happened before this function completes
       return;
     }
 
-    const currentNode = find(ast, index);
-
-    const commands = ast.command ? commandPath(ast.command) : [];
-    const last = commands[commands.length - 1];
+    const last = astCommands[astCommands.length - 1];
     const args = last ? toArgs(last) : undefined;
     const parsedArgKeys =
       args && args.parsed ? Object.keys(args.parsed) : undefined;
@@ -215,10 +238,14 @@ export const createInput = (config: IConfig) => {
     }
 
     if (!value) {
-      console.log(1);
       // Handle top-level options when there is no input value
       const rootCommands = await getRootCommands(ast, config.command);
-      console.log(rootCommands);
+
+      if (current !== updatedAt) {
+        // Bail if an update happened before this function completes
+        return;
+      }
+
       if (rootCommands) {
         options.push(
           ...commandOptions({
@@ -228,15 +255,65 @@ export const createInput = (config: IConfig) => {
           }),
         );
       }
+    } else if (currentNode?.kind === 'COMMAND') {
+      let parentCommands =
+        currentNode.parent?.ref.commands || config.command.commands;
+
+      if (typeof parentCommands === 'function' && commandsCache[valueStart]) {
+        parentCommands = commandsCache[valueStart];
+      }
+
+      if (typeof parentCommands === 'object') {
+        options.push(
+          ...commandOptions({
+            commands: parentCommands,
+            searchFn,
+            sliceStart: nodeStart,
+            sliceEnd: currentNode.token.end,
+            search: value.slice(nodeStart, index),
+            inputValue: value,
+          }),
+        );
+      }
+    } else if (currentNode?.kind === 'ARG_VALUE') {
+      const search = value.slice(nodeStart, index);
+      const { ref } = currentNode.parent;
+
+      let argOptions: Array<IArgsOption> | null = null;
+
+      if (Array.isArray(ref.options)) {
+        argOptions = ref.options;
+      } else if (typeof ref.options === 'function') {
+        if (optionsCache[valueStart]) {
+          argOptions = optionsCache[valueStart];
+        } else {
+          argOptions = await ref.options(search || undefined);
+          if (current !== updatedAt) {
+            // Bail if an update happened before this function completes
+            return;
+          }
+
+          if (argOptions) {
+            optionsCache[valueStart] = argOptions;
+          }
+        }
+      }
+
+      if (argOptions) {
+        options.push(
+          ...valueOptions({
+            options: argOptions,
+            search,
+            searchFn,
+            sliceStart: nodeStart,
+            inputValue: value,
+          }),
+        );
+      }
     } else if (currentNode?.kind === 'ARG_FLAG') {
-      console.log(1.2, 'handle:', { ast, index, value, currentNode });
-    } else if (currentNode?.kind === 'ARG_KEY') {
-      console.log(1.3, 'handle:', { ast, index, value, currentNode });
-      nodeStart = currentNode.token.start;
-      const argsMap = currentNode.parent.parent.parent?.ref.args || {
-        [currentNode.token.value.replace(/^-(-?)/, '')]: currentNode.parent.ref,
+      const argsMap = currentNode.parent?.ref.args || {
+        [currentNode.token.value.replace(/^-(-?)/, '')]: currentNode.ref,
       };
-      console.log(argsMap);
 
       options.push(
         ...argsOptions({
@@ -246,61 +323,89 @@ export const createInput = (config: IConfig) => {
           search: value.slice(nodeStart, index),
           inputValue: value,
           args: argsMap,
-          // exclude: parsedArgKeys,
         }),
       );
-    } else if (currentNode) {
-      console.log(2, 'handle:', { ast, index, value, currentNode });
-    } else {
-      console.log(3);
-      const atWhitespace = value[index - 1] === ' ';
-      const previous = closestPrevious(ast, index);
+    } else if (currentNode?.kind === 'ARG_KEY') {
+      const argsMap = currentNode.parent.parent.parent?.ref.args || {
+        [currentNode.token.value.replace(/^-(-?)/, '')]: currentNode.parent.ref,
+      };
 
-      const sliceStart =
-        previous && 'token' in previous ? previous.token.start : index;
+      options.push(
+        ...argsOptions({
+          searchFn,
+          sliceStart: nodeStart,
+          sliceEnd: currentNode.token.end,
+          search: value.slice(nodeStart, index),
+          inputValue: value,
+          args: argsMap,
+        }),
+      );
+    } else if (currentNode?.kind === 'REMAINDER') {
+      if (currentNode.cmdNodeCtx) {
+        const argsMap = currentNode.cmdNodeCtx.ref.args;
 
-      const search = value.slice(sliceStart, index).trim();
-
-      // nodeStart = index;
-      // if (!atWhitespace) {
-      // console.log(3.01, { search, value, previous, atWhitespace });
-      // nodeStart = index;
-      // } else
-      if (previous?.kind === 'COMMAND' && atWhitespace) {
-        if (typeof previous.ref.commands === 'object') {
-          console.log(3.1, { search, value, previous, atWhitespace });
-          nodeStart = index;
+        if (argsMap) {
           options.push(
-            ...commandOptions({
+            ...argsOptions({
+              args: argsMap,
               searchFn,
               sliceStart: nodeStart,
-              // search: undefined,
+              sliceEnd: currentNode.token.end,
+              search: value.slice(nodeStart, index),
               inputValue: value,
-              commands: previous.ref.commands,
             }),
           );
         }
+      }
+    } else {
+      const atWhitespace = value[index - 1] === ' ';
+      const previousNode = closestPrevious(ast, index);
 
-        if (previous.ref.args) {
-          console.log(3.11, { search, value, previous, atWhitespace });
-          nodeStart = index;
+      // TODO: fix lastIndexOf logic when inside quoted string (ie: add -m "a b")
+      const sliceStart = atWhitespace ? index : value.lastIndexOf(' ') + 1;
+      const search = !atWhitespace
+        ? value.slice(sliceStart, index).trim()
+        : undefined;
+
+      nodeStart = sliceStart;
+
+      if (previousNode?.kind === 'COMMAND') {
+        if (previousNode.ref.args) {
           options.push(
             ...argsOptions({
               searchFn,
               sliceStart: nodeStart,
-              // search: undefined,
+              search,
               inputValue: value,
-              args: previous.ref.args,
+              args: previousNode.ref.args,
               exclude: parsedArgKeys,
             }),
           );
         }
-      } else if (previous?.kind === 'REMAINDER') {
-        if (previous.argNodeCtx) {
-          console.log(3.21, { previous, search, value });
-        } else if (previous.cmdNodeCtx?.ref.args) {
-          console.log(3.22, { previous, search, value });
-          const { token } = previous;
+
+        let commands: ICommands | null = null;
+        const { ref } = previousNode;
+
+        if (typeof ref.commands === 'object') {
+          commands = ref.commands;
+        } else if (typeof ref.commands === 'function') {
+          commands = commandsCache[valueStart];
+        }
+
+        if (commands) {
+          options.push(
+            ...commandOptions({
+              searchFn,
+              sliceStart: nodeStart,
+              search,
+              inputValue: value,
+              commands,
+            }),
+          );
+        }
+      } else if (previousNode?.kind === 'REMAINDER') {
+        if (previousNode.cmdNodeCtx?.ref.args) {
+          const { token } = previousNode;
           nodeStart = token.start;
           options.push(
             ...argsOptions({
@@ -308,39 +413,38 @@ export const createInput = (config: IConfig) => {
               sliceStart: nodeStart,
               search: token.value.replace(/^-(-?)/, ''),
               inputValue: value,
-              args: previous.cmdNodeCtx.ref.args,
+              args: previousNode.cmdNodeCtx.ref.args,
               exclude: parsedArgKeys,
             }),
           );
         } else {
           // Handle top-level options when there is no parent command
-          console.log(3.23, { previous, search, value });
           const rootCommands = await getRootCommands(
             ast,
             config.command,
             search,
           );
+
           if (rootCommands) {
-            nodeStart = previous.token.start;
+            nodeStart = previousNode.token.start;
             options.push(
               ...commandOptions({
                 inputValue: value,
                 commands: rootCommands,
                 searchFn,
                 sliceStart: nodeStart,
-                search: previous.token.value,
+                search: previousNode.token.value,
               }),
             );
           }
         }
-      } else if (atWhitespace && previous?.kind === 'ARG_VALUE') {
-        console.log(3.3, { ast, index, value, previous });
-        nodeStart = index;
-        const argsMap = previous.parent.parent.ref.args;
+      } else if (previousNode?.kind === 'ARG_VALUE' && atWhitespace) {
+        const argsMap = previousNode.parent.parent.ref.args;
 
         if (argsMap) {
           options.push(
             ...argsOptions({
+              search,
               searchFn,
               sliceStart: nodeStart,
               inputValue: value,
@@ -349,13 +453,46 @@ export const createInput = (config: IConfig) => {
             }),
           );
         }
-      } else if (atWhitespace && previous?.kind === 'ARG_FLAG') {
-        nodeStart = index;
-        const argsMap = previous.parent.ref.args;
+      } else if (previousNode?.kind === 'ARG_VALUE') {
+        let argOptions: Array<IArgsOption> | null = null;
+        const { ref } = previousNode.parent;
+
+        if (Array.isArray(ref.options)) {
+          argOptions = ref.options;
+        } else if (typeof ref.options === 'function') {
+          if (optionsCache[valueStart]) {
+            argOptions = optionsCache[valueStart];
+          } else {
+            argOptions = await ref.options(search || undefined);
+            if (current !== updatedAt) {
+              // Bail if an update happened before this function completes
+              return;
+            }
+
+            if (argOptions) {
+              optionsCache[valueStart] = argOptions;
+            }
+          }
+        }
+
+        if (argOptions) {
+          options.push(
+            ...valueOptions({
+              options: argOptions,
+              search,
+              searchFn,
+              sliceStart: nodeStart,
+              inputValue: value,
+            }),
+          );
+        }
+      } else if (previousNode?.kind === 'ARG_FLAG') {
+        const argsMap = previousNode.parent.ref.args;
 
         if (argsMap) {
           options.push(
             ...argsOptions({
+              search,
               searchFn,
               sliceStart: nodeStart,
               inputValue: value,
@@ -364,13 +501,60 @@ export const createInput = (config: IConfig) => {
             }),
           );
         }
-      } else if (atWhitespace && previous?.kind === 'ARG_KEY') {
-        nodeStart = index;
-        //
-      } else if (!atWhitespace && previous && 'token' in previous) {
-        nodeStart = previous.token.start;
-      } else {
-        console.log(3.4, { ast, index, value, previous });
+
+        let commands: ICommands | null = null;
+        const { ref } = previousNode.parent;
+
+        if (typeof ref.commands === 'object') {
+          commands = ref.commands;
+        } else if (typeof ref.commands === 'function') {
+          commands = commandsCache[valueStart];
+        }
+
+        if (commands) {
+          options.push(
+            ...commandOptions({
+              searchFn,
+              sliceStart: nodeStart,
+              search,
+              inputValue: value,
+              commands,
+            }),
+          );
+        }
+      } else if (previousNode?.kind === 'ARG_KEY') {
+        let argOptions: Array<IArgsOption> | null = null;
+        const { ref } = previousNode.parent;
+
+        if (Array.isArray(ref.options)) {
+          argOptions = ref.options;
+        } else if (typeof ref.options === 'function') {
+          if (optionsCache[valueStart]) {
+            argOptions = optionsCache[valueStart];
+          } else {
+            argOptions = await ref.options(search || undefined);
+            if (current !== updatedAt) {
+              // Bail if an update happened before this function completes
+              return;
+            }
+
+            if (argOptions) {
+              optionsCache[valueStart] = argOptions;
+            }
+          }
+        }
+
+        if (argOptions) {
+          options.push(
+            ...valueOptions({
+              options: argOptions,
+              search,
+              searchFn,
+              sliceStart: nodeStart,
+              inputValue: value,
+            }),
+          );
+        }
       }
     }
 
@@ -378,7 +562,7 @@ export const createInput = (config: IConfig) => {
       args: args?.parsed,
       nodeStart,
       exhausted: !!args?.exhausted && !last.ref.commands,
-      commands: commands.map((c) => c.token.value),
+      commands: astCommands.map((c) => c.token.value),
       options,
     });
   };

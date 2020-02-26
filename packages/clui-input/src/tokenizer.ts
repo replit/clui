@@ -1,4 +1,4 @@
-export type TokenKind = 'KEYWORD' | 'KEYWORD_QUOTED' | 'WHITESPACE';
+export type TokenKind = 'KEYWORD' | 'WHITESPACE';
 
 export interface IToken {
   kind: TokenKind;
