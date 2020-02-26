@@ -3,19 +3,15 @@ import {
   ICommands,
   ICommand,
   IOption,
-  // IResult,
-  // IArg,
-  // IArgsOption,
   ArgType,
   ICommandArgs,
   IArgsOption,
 } from './types';
 import { resolve } from './resolver';
-// import { IAst } from './parser';
 
 type SearchFn = (args: ISearchArgs) => boolean;
 
-export interface IInputStateUpdates<D = any, R = any> {
+export interface IInputUpdates<D = any, R = any> {
   nodeStart?: number;
   commands: Array<string>;
   args?: Record<string, ArgType>;
@@ -26,7 +22,7 @@ export interface IInputStateUpdates<D = any, R = any> {
 
 export interface IConfig<C extends ICommand = ICommand> {
   searchFn?: SearchFn;
-  onUpdate: (updates: IInputStateUpdates) => void;
+  onUpdate: (updates: IInputUpdates) => void;
   command: C;
   value?: string;
   index?: number;

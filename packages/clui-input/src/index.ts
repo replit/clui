@@ -1,5 +1,4 @@
-import { IConfig, IInputStateUpdates } from './state';
-import { createInput } from './input';
+import { createInput, IConfig, IInputUpdates } from './input';
 
 export {
   ICommands,
@@ -13,6 +12,6 @@ export {
   SubCommands,
 } from './types';
 
-export { IConfig, IInputStateUpdates };
+export { IConfig, IInputUpdates };
 
 export default createInput;
