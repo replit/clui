@@ -567,17 +567,13 @@ export const createInput = (config: IConfig) => {
     });
 
     if (last && last.ref.run) {
-      run = <O>(opt: O) => {
-        if (!last.ref.run) {
-          return;
-        }
-
-        last.ref.run({
+      const { run: refRun } = last.ref;
+      run = <O>(opt: O): any =>
+        refRun({
           commands: commandsList,
           args: commandsList[commandsList.length - 1].args,
           options: opt,
         });
-      };
     }
 
     config.onUpdate({
