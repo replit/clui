@@ -151,7 +151,7 @@ export const commandPath = (root: ICmdNode): Array<ICmdNode> => {
 
   while (node) {
     path.push(node);
-    node = node.parent;
+    node = node.command;
   }
 
   return path;

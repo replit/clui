@@ -1,5 +1,5 @@
 import { parse } from '../parser';
-import { find, closestPrevious, IArgNode, toArgs } from '../ast';
+import { find, closestPrevious, IArgNode, toArgs, commandPath } from '../ast';
 
 const root = {
   commands: {
@@ -87,6 +87,17 @@ describe('find', () => {
     const node = find(ast2, 1);
 
     expect(node?.kind).toEqual('REMAINDER');
+  });
+});
+
+describe('commandPath', () => {
+  it('finds command path', async () => {
+    const ast = parse('user add --info', root);
+    if (!ast.command) {
+      throw Error('Expected command');
+    }
+    const path = commandPath(ast.command);
+    expect(path.map((p) => p.token.value)).toEqual(['user', 'add']);
   });
 });
 
