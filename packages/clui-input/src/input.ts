@@ -197,9 +197,9 @@ export const createInput = (config: IConfig) => {
       cache: commandsCache,
     });
 
-    const currentNode = find(ast, index);
+    const atWhitespace = value[index - 1] === ' ';
 
-    if (value.length > index) {
+    if (value.length > index || atWhitespace) {
       const previousNode = closestPrevious(ast, index);
       if (
         previousNode?.kind === 'COMMAND' &&
@@ -215,13 +215,13 @@ export const createInput = (config: IConfig) => {
       }
     }
 
-    const astCommands = ast.command ? commandPath(ast.command) : [];
-
     if (current !== updatedAt) {
       // Bail if an update happened before this function completes
       return;
     }
 
+    const currentNode = find(ast, index);
+    const astCommands = ast.command ? commandPath(ast.command) : [];
     const last = astCommands[astCommands.length - 1];
     const args = last ? toArgs(last) : undefined;
     const parsedArgKeys =
@@ -355,7 +355,6 @@ export const createInput = (config: IConfig) => {
         }
       }
     } else {
-      const atWhitespace = value[index - 1] === ' ';
       const previousNode = closestPrevious(ast, index);
 
       // TODO: fix lastIndexOf logic when inside quoted string (ie: add -m "a b")

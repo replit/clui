@@ -60,6 +60,49 @@ describe('previousNode', () => {
     });
   });
 
+  it('suggests subcommands from function', (done) => {
+    const root: ICommand = {
+      commands: { user: { commands: async () => ({ add: {} }) } },
+    };
+
+    const expected = {
+      value: 'add',
+      data: {},
+      inputValue: 'user add',
+      cursorTarget: 'user add'.length,
+    };
+
+    createInput({
+      command: root,
+      value: 'user ',
+      index: 'user '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([expected]);
+        done();
+      },
+    });
+
+    createInput({
+      command: root,
+      value: 'user a',
+      index: 'user '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([expected]);
+        done();
+      },
+    });
+
+    createInput({
+      command: root,
+      value: 'user a',
+      index: 'user a'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([{ ...expected, searchValue: 'a' }]);
+        done();
+      },
+    });
+  });
+
   it('suggests subcommands', (done) => {
     const root: ICommand = { commands: { user: { commands: { add: {} } } } };
 
