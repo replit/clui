@@ -1,8 +1,8 @@
 # CLUI
 
-[![Run on Repl.it](https://repl.it/badge/github/replit/clui)](https://repl.it/github/replit/clui)
-
 CLUI is a collection of JavaScript libraries for building command-line interfaces with context-aware autocomplete.
+
+[See Demo](https://repl.it/@clui/demo)
 
 ## Packages
 

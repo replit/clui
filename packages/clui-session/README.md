@@ -1,4 +1,4 @@
-# `@replit/clui-session`
+# CLUI Session
 
 A utility for manipulating a list of React children.
 
