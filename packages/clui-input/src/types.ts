@@ -7,10 +7,7 @@ export interface IOption<D = any> {
   data?: D;
 }
 
-export type ArgTypeDef =
-  | BooleanConstructor
-  | StringConstructor
-  | NumberConstructor;
+export type ArgTypeDef = 'boolean' | 'string' | 'int' | 'float';
 
 export interface IArgsOption {
   value: string;

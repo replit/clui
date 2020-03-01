@@ -1,5 +1,12 @@
 import { IToken } from './tokenizer';
-import { ICommand, ICommands, IArg, ArgsMap, ArgType } from './types';
+import {
+  ICommand,
+  ICommands,
+  IArg,
+  ArgsMap,
+  ArgType,
+  ArgTypeDef,
+} from './types';
 
 export type ASTNodeKind =
   | 'COMMAND'
@@ -167,6 +174,19 @@ const removeQuotes = (str: string) => {
   return str;
 };
 
+const pasrseValue = ({ value, type }: { value: string; type: ArgTypeDef }) => {
+  switch (type) {
+    case 'boolean':
+      return !!value;
+    case 'int':
+      return parseInt(value, 10);
+    case 'float':
+      return parseFloat(value);
+    default:
+      return value;
+  }
+};
+
 export const toArgs = (
   command: ICmdNode,
 ): { parsed?: ArgsMap; remaining?: Array<IArg>; exhausted: boolean } => {
@@ -184,7 +204,9 @@ export const toArgs = (
         const str = arg.value?.token.value;
 
         if (str) {
-          const value: ArgType = arg.ref.type ? arg.ref.type(str) : str;
+          const value: ArgType = arg.ref.type
+            ? pasrseValue({ value: str, type: arg.ref.type })
+            : str;
           parsed[arg.key.name] =
             typeof value === 'string' ? removeQuotes(value) : value;
         }

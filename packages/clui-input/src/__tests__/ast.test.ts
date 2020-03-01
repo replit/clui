@@ -1,7 +1,8 @@
 import { parse } from '../parser';
 import { find, closestPrevious, IArgNode, toArgs, commandPath } from '../ast';
+import { ICommand } from '../types';
 
-const root = {
+const root: ICommand = {
   commands: {
     user: {
       commands: {
@@ -9,7 +10,7 @@ const root = {
           args: {
             name: {},
             info: {
-              type: Boolean,
+              type: 'boolean',
             },
           },
         },
@@ -111,18 +112,20 @@ describe('closestPrevious', () => {
 
 describe('toArgs', () => {
   it('parses args', async () => {
-    const ast = parse('user --name "Foo Bar" --id 2 --username bar', {
+    const command: ICommand = {
       commands: {
         user: {
           args: {
             name: {},
-            info: { type: Boolean },
-            id: { type: Number },
-            username: { type: String },
+            info: { type: 'boolean' },
+            id: { type: 'int' },
+            username: { type: 'string' },
           },
         },
       },
-    });
+    };
+
+    const ast = parse('user --name "Foo Bar" --id 2 --username bar', command);
 
     if (!ast.command) {
       throw Error('expected command');

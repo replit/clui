@@ -1,8 +1,9 @@
 import { IArgNode, IArgFlagNode } from '../ast';
 import { parse } from '../parser';
+import { ICommand } from '../types';
 
 describe('command parsing', () => {
-  const root = {
+  const root: ICommand = {
     commands: {
       user: {
         commands: {
@@ -15,6 +16,10 @@ describe('command parsing', () => {
   it('parses subcommand', () => {
     const ast = parse('user add', root);
 
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
+
     expect(ast.command?.ref).toEqual(root.commands.user);
     expect(ast.command?.kind).toEqual('COMMAND');
     expect(ast.command?.token).toEqual({
@@ -23,6 +28,10 @@ describe('command parsing', () => {
       start: 0,
       end: 4,
     });
+
+    if (typeof root.commands.user.commands !== 'object') {
+      throw new Error('Expected object');
+    }
 
     expect(ast.command?.command?.kind).toEqual('COMMAND');
     expect(ast.command?.command?.ref).toEqual(root.commands.user.commands.add);
@@ -38,6 +47,10 @@ describe('command parsing', () => {
   it('parses command', () => {
     const ast = parse('user', root);
 
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
+
     expect(ast.command?.command).toBe(undefined);
     expect(ast.command?.ref).toEqual(root.commands.user);
     expect(ast.command?.token).toEqual({
@@ -50,15 +63,15 @@ describe('command parsing', () => {
 });
 
 describe('arg parsing', () => {
-  const root = {
+  const root: ICommand = {
     commands: {
       user: {
         args: {
           info: {
-            type: Boolean,
+            type: 'boolean',
           },
           name: {
-            type: String,
+            type: 'string',
           },
         },
       },
@@ -67,6 +80,10 @@ describe('arg parsing', () => {
 
   it('parses string flag', () => {
     const ast = parse('user --name foo', root);
+
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
 
     expect(ast.command?.ref).toEqual(root.commands.user);
     expect(ast.command?.token).toEqual({
@@ -107,6 +124,10 @@ describe('arg parsing', () => {
   it('parses boolean flag', () => {
     const ast = parse('user --info', root);
 
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
+
     expect(ast.command?.ref).toEqual(root.commands.user);
     expect(ast.command?.token).toEqual({
       value: 'user',
@@ -133,6 +154,10 @@ describe('arg parsing', () => {
 
   it('parses string and boolean flag', () => {
     const ast = parse('user --info --name foo', root);
+
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
 
     expect(ast.command?.ref).toEqual(root.commands.user);
     expect(ast.command?.token).toEqual({
@@ -182,13 +207,13 @@ describe('arg parsing', () => {
 });
 
 describe('pending commands', () => {
-  const root = {
+  const root: ICommand = {
     commands: {
       user: {
         args: {
           info: {},
           name: {
-            type: String,
+            type: 'string',
           },
         },
         commands: async () => ({
@@ -217,6 +242,10 @@ describe('pending commands', () => {
   it('returns pending for subcommand', () => {
     const ast = parse('user add', root);
 
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
+
     expect(ast.pending?.resolve).toEqual(root.commands.user.commands);
     expect(ast.pending?.key).toEqual('user add');
 
@@ -231,6 +260,10 @@ describe('pending commands', () => {
   it('returns pending for partrial subcommand', () => {
     const ast = parse('user a', root);
 
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
+
     expect(ast.pending?.resolve).toEqual(root.commands.user.commands);
     expect(ast.pending?.key).toEqual('user a');
 
@@ -244,13 +277,13 @@ describe('pending commands', () => {
 });
 
 describe('remainder', () => {
-  const root = {
+  const root: ICommand = {
     commands: {
       user: {
         args: {
           info: {},
           name: {
-            type: String,
+            type: 'string',
           },
         },
         commands: {
@@ -273,6 +306,10 @@ describe('remainder', () => {
 
   it('returns remainder for sub command', () => {
     const ast = parse('user a', root);
+
+    if (typeof root.commands !== 'object') {
+      throw new Error('Expected object');
+    }
 
     expect(ast.remainder?.cmdNodeCtx?.ref).toEqual(root.commands.user);
     expect(ast.remainder?.cmdNodeCtx?.token).toEqual({

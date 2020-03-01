@@ -128,7 +128,7 @@ describe('previousNode', () => {
   it('suggests subcommands after arg flag', (done) => {
     const root: ICommand = {
       commands: {
-        user: { args: { add: { type: Boolean } }, commands: { add: {} } },
+        user: { args: { add: { type: 'boolean' } }, commands: { add: {} } },
       },
     };
 
@@ -153,7 +153,7 @@ describe('previousNode', () => {
   it('does not suggest subcommands after arg value', (done) => {
     const root: ICommand = {
       commands: {
-        user: { args: { add: { type: String } }, commands: { add: {} } },
+        user: { args: { add: { type: 'string' } }, commands: { add: {} } },
       },
     };
 
@@ -171,7 +171,7 @@ describe('previousNode', () => {
   it('suggests subcommands and arg flag', (done) => {
     const root: ICommand = {
       commands: {
-        user: { args: { add: { type: Boolean } }, commands: { add: {} } },
+        user: { args: { add: { type: 'boolean' } }, commands: { add: {} } },
       },
     };
 
@@ -183,7 +183,7 @@ describe('previousNode', () => {
         expect(updates.options).toEqual([
           {
             value: '--add',
-            data: { type: Boolean },
+            data: { type: 'boolean' },
             inputValue: 'user --add',
             cursorTarget: 'user --add'.length,
           },
@@ -202,7 +202,7 @@ describe('previousNode', () => {
   describe('arg flags', () => {
     const root: ICommand = {
       commands: {
-        user: { args: { id: { type: Boolean }, info: { type: Boolean } } },
+        user: { args: { id: { type: 'boolean' }, info: { type: 'boolean' } } },
       },
     };
 
@@ -215,14 +215,14 @@ describe('previousNode', () => {
           expect(updates.options).toEqual([
             {
               value: '--id',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --id',
               searchValue: 'i',
               cursorTarget: 'user --id'.length,
             },
             {
               value: '--info',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --info',
               searchValue: 'i',
               cursorTarget: 'user --info'.length,
@@ -242,7 +242,7 @@ describe('previousNode', () => {
           expect(updates.options).toEqual([
             {
               value: '--info',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --info',
               searchValue: 'in',
               cursorTarget: 'user --info'.length,
@@ -401,7 +401,7 @@ describe('currentNode', () => {
   describe('arg flags', () => {
     const root: ICommand = {
       commands: {
-        user: { args: { id: { type: Boolean }, info: { type: Boolean } } },
+        user: { args: { id: { type: 'boolean' }, info: { type: 'boolean' } } },
       },
     };
 
@@ -414,14 +414,14 @@ describe('currentNode', () => {
           expect(updates.options).toEqual([
             {
               value: '--id',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --id --i',
               searchValue: 'i',
               cursorTarget: 'user --id'.length,
             },
             {
               value: '--info',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --info --i',
               searchValue: 'i',
               cursorTarget: 'user --info'.length,
@@ -441,7 +441,7 @@ describe('currentNode', () => {
           expect(updates.options).toEqual([
             {
               value: '--info',
-              data: { type: Boolean },
+              data: { type: 'boolean' },
               inputValue: 'user --info',
               searchValue: 'in',
               cursorTarget: 'user --info'.length,
@@ -1052,17 +1052,17 @@ describe('args', () => {
 
 describe('options variations', () => {
   const options = [{ value: 'foo' }];
-  const commands = {
+  const commands: ICommands = {
     user: {
       args: {
-        verbose: { type: Boolean },
+        verbose: { type: 'boolean' },
         email: { options },
         name: { options },
       },
     },
   };
 
-  const root = { commands };
+  const root: ICommand = { commands };
 
   it('returns remaining arg options', (done) => {
     createInput({
@@ -1082,13 +1082,13 @@ describe('options variations', () => {
                   value: '--verbose',
                   inputValue: 'user --name bar --verbose',
                   cursorTarget: 'user --name bar --verbose'.length,
-                  data: commands.user.args.verbose,
+                  data: commands.user.args?.verbose,
                 },
                 {
                   value: '--email',
                   inputValue: 'user --name bar --email',
                   cursorTarget: 'user --name bar --email'.length,
-                  data: commands.user.args.email,
+                  data: commands.user.args?.email,
                 },
               ],
             },
@@ -1099,7 +1099,7 @@ describe('options variations', () => {
     });
   });
 
-  it('returns options after Boolean flag', (done) => {
+  it('returns options after "boolean" flag', (done) => {
     createInput({
       value: 'user --verbose ',
       index: 'user --verbose '.length,
@@ -1117,13 +1117,13 @@ describe('options variations', () => {
                   value: '--email',
                   inputValue: 'user --verbose --email',
                   cursorTarget: 'user --verbose --email'.length,
-                  data: commands.user.args.email,
+                  data: commands.user.args?.email,
                 },
                 {
                   value: '--name',
                   inputValue: 'user --verbose --name',
                   cursorTarget: 'user --verbose --name'.length,
-                  data: commands.user.args.name,
+                  data: commands.user.args?.name,
                 },
               ],
             },
@@ -1145,7 +1145,7 @@ describe('options variations', () => {
           commands: {
             user: {
               args: {
-                verbose: { type: Boolean },
+                verbose: { type: 'boolean' },
               },
             },
           },
@@ -1168,7 +1168,7 @@ describe('options variations', () => {
     });
   });
 
-  it('returns arg value options when value type is not Boolean', (done) => {
+  it('returns arg value options when value type is not "boolean"', (done) => {
     createInput({
       value: 'user --name ',
       index: 'user --name '.length,

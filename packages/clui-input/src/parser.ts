@@ -90,7 +90,7 @@ export const parse = (
       const argCtx = cmdNodeCtx.ref.args[argKey];
 
       let argNode;
-      if (argCtx.type === Boolean) {
+      if (argCtx.type === 'boolean') {
         argNode = {
           parent: cmdNodeCtx,
           ref: argCtx,
