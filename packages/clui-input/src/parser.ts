@@ -157,6 +157,14 @@ export const parse = (
           key,
         };
         done = true;
+      } else {
+        // Return leftover node
+        ast.remainder = {
+          kind: 'REMAINDER',
+          token,
+          cmdNodeCtx: cmdNodeCtx || undefined,
+          argNodeCtx: argNodeCtx || undefined,
+        };
       }
     } else {
       if (token) {

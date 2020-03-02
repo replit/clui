@@ -7,6 +7,13 @@ export interface IOption<D = any> {
   data?: D;
 }
 
+interface ISearchArgs {
+  source: string;
+  search: string;
+}
+
+export type SearchFn = (args: ISearchArgs) => boolean;
+
 export type ArgTypeDef = 'boolean' | 'string' | 'int' | 'float';
 
 export interface IArgsOption {

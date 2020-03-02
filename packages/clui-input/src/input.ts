@@ -5,12 +5,11 @@ import {
   IOption,
   ArgType,
   ArgsMap,
-  ICommandArgs,
   IArgsOption,
+  SearchFn,
 } from './types';
 import { resolve } from './resolver';
-
-type SearchFn = (args: ISearchArgs) => boolean;
+import { commandOptions, argsOptions, valueOptions } from './optoion';
 
 export interface IInputUpdates<D = any, R = any> {
   nodeStart?: number;
@@ -28,131 +27,6 @@ export interface IConfig<C extends ICommand = ICommand> {
   value?: string;
   index?: number;
 }
-
-interface ISearchArgs {
-  source: string;
-  search: string;
-}
-
-const commandOptions = (options: {
-  commands: ICommands;
-  inputValue: string;
-  searchFn: SearchFn;
-  search?: string;
-  sliceStart?: number;
-  sliceEnd?: number;
-}): Array<IOption> =>
-  Object.keys(options.commands).reduce((acc: Array<IOption>, key) => {
-    if (
-      !options.search ||
-      options.searchFn({ source: key, search: options.search })
-    ) {
-      const { sliceStart, sliceEnd, inputValue } = options;
-
-      const newInputValueStart =
-        inputValue && sliceStart !== undefined
-          ? inputValue.slice(0, sliceStart) + key
-          : key;
-      const newInputValue =
-        newInputValueStart +
-        (inputValue && sliceEnd !== undefined
-          ? inputValue.slice(sliceEnd)
-          : '');
-
-      acc.push({
-        value: key,
-        data: options.commands[key],
-        inputValue: newInputValue,
-        cursorTarget: newInputValueStart.length,
-        searchValue: options.search,
-      });
-    }
-
-    return acc;
-  }, []);
-
-const argsOptions = (options: {
-  args: ICommandArgs;
-  inputValue: string;
-  searchFn: SearchFn;
-  search?: string;
-  sliceStart?: number;
-  sliceEnd?: number;
-  exclude?: Array<string>;
-}): Array<IOption> => {
-  const search = options.search
-    ? options.search?.replace(/^-(-?)/, '')
-    : undefined;
-
-  return Object.keys(options.args).reduce((acc: Array<IOption>, key) => {
-    if (options.exclude && options.exclude.includes(key)) {
-      return acc;
-    }
-
-    if (!search || options.searchFn({ source: key, search })) {
-      const value = `--${key}`;
-      const { sliceStart, sliceEnd, inputValue } = options;
-
-      const newInputValueStart =
-        inputValue && sliceStart !== undefined
-          ? inputValue.slice(0, sliceStart) + value
-          : value;
-      const newInputValue =
-        newInputValueStart +
-        (inputValue && sliceEnd !== undefined
-          ? inputValue.slice(sliceEnd)
-          : '');
-
-      acc.push({
-        value,
-        data: options.args[key],
-        inputValue: newInputValue,
-        cursorTarget: newInputValueStart.length,
-        searchValue: search,
-      });
-    }
-
-    return acc;
-  }, []);
-};
-
-const valueOptions = <V extends { value: string }>(options: {
-  options: Array<V>;
-  inputValue: string;
-  searchFn: SearchFn;
-  search?: string;
-  sliceStart?: number;
-  sliceEnd?: number;
-}): Array<IOption> =>
-  options.options.reduce((acc: Array<IOption>, option) => {
-    const key = option.value;
-    if (
-      !options.search ||
-      options.searchFn({ source: key, search: options.search })
-    ) {
-      const { sliceStart, sliceEnd, inputValue } = options;
-
-      const newInputValueStart =
-        inputValue && sliceStart !== undefined
-          ? inputValue.slice(0, sliceStart) + key
-          : key;
-      const newInputValue =
-        newInputValueStart +
-        (inputValue && sliceEnd !== undefined
-          ? inputValue.slice(sliceEnd)
-          : '');
-
-      acc.push({
-        value: key,
-        data: option,
-        inputValue: newInputValue,
-        cursorTarget: newInputValueStart.length,
-        searchValue: options.search,
-      });
-    }
-
-    return acc;
-  }, []);
 
 const getRootCommands = async (
   ast: IAst,
@@ -208,6 +82,19 @@ export const createInput = (config: IConfig) => {
       ) {
         const search = valueStart.slice(previousNode.token.end).trim();
         const result = await previousNode.ref.commands(search || undefined);
+
+        if (result) {
+          commandsCache[valueStart] = result;
+        }
+      } else if (
+        !atWhitespace &&
+        previousNode?.kind === 'REMAINDER' &&
+        typeof previousNode.cmdNodeCtx?.ref.commands === 'function'
+      ) {
+        const search = valueStart.slice(previousNode.token.start).trim();
+        const result = await previousNode.cmdNodeCtx.ref.commands(
+          search || undefined,
+        );
 
         if (result) {
           commandsCache[valueStart] = result;
@@ -340,6 +227,7 @@ export const createInput = (config: IConfig) => {
     } else if (currentNode?.kind === 'REMAINDER') {
       if (currentNode.cmdNodeCtx) {
         const argsMap = currentNode.cmdNodeCtx.ref.args;
+        const search = value.slice(nodeStart, index) || undefined;
 
         if (argsMap) {
           options.push(
@@ -348,22 +236,47 @@ export const createInput = (config: IConfig) => {
               searchFn,
               sliceStart: nodeStart,
               sliceEnd: currentNode.token.end,
-              search: value.slice(nodeStart, index),
+              search,
               inputValue: value,
             }),
           );
+        }
+
+        if (currentNode.cmdNodeCtx.ref.commands) {
+          let commands: ICommands | null = null;
+          const { ref } = currentNode.cmdNodeCtx;
+
+          if (typeof ref.commands === 'object') {
+            commands = ref.commands;
+          } else if (typeof ref.commands === 'function') {
+            commands = commandsCache[valueStart];
+          }
+
+          if (commands) {
+            options.push(
+              ...commandOptions({
+                searchFn,
+                sliceStart: nodeStart,
+                search,
+                inputValue: value,
+                commands,
+              }),
+            );
+          }
         }
       }
     } else {
       const previousNode = closestPrevious(ast, index);
 
-      // TODO: fix lastIndexOf logic when inside quoted string (ie: add -m "a b")
-      const sliceStart = atWhitespace ? index : value.lastIndexOf(' ') + 1;
-      const search = !atWhitespace
-        ? value.slice(sliceStart, index).trim()
-        : undefined;
+      if (!atWhitespace && previousNode && 'token' in previousNode) {
+        nodeStart = previousNode.token.start;
+      } else {
+        nodeStart = index;
+      }
 
-      nodeStart = sliceStart;
+      const search = !atWhitespace
+        ? value.slice(nodeStart, index).trim()
+        : undefined;
 
       if (previousNode?.kind === 'COMMAND') {
         if (previousNode.ref.args) {
@@ -399,10 +312,10 @@ export const createInput = (config: IConfig) => {
             }),
           );
         }
-      } else if (previousNode?.kind === 'REMAINDER') {
+      } else if (previousNode?.kind === 'REMAINDER' && !atWhitespace) {
+        const { token } = previousNode;
+        nodeStart = token.start;
         if (previousNode.cmdNodeCtx?.ref.args) {
-          const { token } = previousNode;
-          nodeStart = token.start;
           options.push(
             ...argsOptions({
               searchFn,
@@ -422,14 +335,13 @@ export const createInput = (config: IConfig) => {
           );
 
           if (rootCommands) {
-            nodeStart = previousNode.token.start;
             options.push(
               ...commandOptions({
                 inputValue: value,
                 commands: rootCommands,
                 searchFn,
                 sliceStart: nodeStart,
-                search: previousNode.token.value,
+                search: token.value,
               }),
             );
           }

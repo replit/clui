@@ -1014,6 +1014,31 @@ describe('args', () => {
     });
   });
 
+  it('returns no options when at no previous node matches', (done) => {
+    const options = [{ value: 'foo' }];
+
+    createInput({
+      value: 'user --em ',
+      index: 'user --em '.length,
+      command: {
+        commands: { user: { args: { email: { options } } } },
+      },
+      onUpdate: mockFn(({ mock }) => {
+        expect(mock.calls).toEqual([
+          [
+            {
+              exhausted: false,
+              commands: [{ name: 'user' }],
+              nodeStart: 'user --em '.length,
+              options: [],
+            },
+          ],
+        ]);
+        done();
+      }),
+    });
+  });
+
   it('returns unique args', (done) => {
     const options = [{ value: 'foo' }];
 
