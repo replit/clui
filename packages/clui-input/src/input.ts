@@ -9,7 +9,8 @@ import {
   SearchFn,
 } from './types';
 import { resolve } from './resolver';
-import { commandOptions, argsOptions, valueOptions } from './optoion';
+import { commandOptions } from './optionsList';
+import { optionsProvider } from './options';
 
 export interface IInputUpdates<D = any, R = any> {
   nodeStart?: number;
@@ -121,9 +122,29 @@ export const createInput = (config: IConfig) => {
       nodeStart = currentNode.token.start;
     }
 
+    const commonParams = {
+      parsedArgKeys,
+      value,
+      index,
+    };
+
+    const getOptions = optionsProvider({
+      command: config.command,
+      commandsCache,
+      optionsCache,
+      searchFn,
+    });
+
     if (!value) {
       // Handle top-level options when there is no input value
-      const rootCommands = await getRootCommands(ast, config.command);
+      let rootCommands: ICommands | null = commandsCache[''] || null;
+
+      if (!rootCommands) {
+        rootCommands = await getRootCommands(ast, config.command);
+        if (rootCommands) {
+          commandsCache[''] = rootCommands;
+        }
+      }
 
       if (current !== updatedAt) {
         // Bail if an update happened before this function completes
@@ -139,132 +160,24 @@ export const createInput = (config: IConfig) => {
           }),
         );
       }
-    } else if (currentNode?.kind === 'COMMAND') {
-      let parentCommands =
-        currentNode.parent?.ref.commands || config.command.commands;
+    } else if (currentNode) {
+      if (currentNode.kind === 'ARG_VALUE') {
+        const search = value.slice(nodeStart, index);
+        const { ref } = currentNode.parent;
 
-      if (typeof parentCommands === 'function' && commandsCache[valueStart]) {
-        parentCommands = commandsCache[valueStart];
-      }
-
-      if (typeof parentCommands === 'object') {
-        options.push(
-          ...commandOptions({
-            commands: parentCommands,
-            searchFn,
-            sliceStart: nodeStart,
-            sliceEnd: currentNode.token.end,
-            search: value.slice(nodeStart, index),
-            inputValue: value,
-          }),
-        );
-      }
-    } else if (currentNode?.kind === 'ARG_VALUE') {
-      const search = value.slice(nodeStart, index);
-      const { ref } = currentNode.parent;
-
-      let argOptions: Array<IArgsOption> | null = null;
-
-      if (Array.isArray(ref.options)) {
-        argOptions = ref.options;
-      } else if (typeof ref.options === 'function') {
-        if (optionsCache[valueStart]) {
-          argOptions = optionsCache[valueStart];
-        } else {
-          argOptions = await ref.options(search || undefined);
-          if (current !== updatedAt) {
-            // Bail if an update happened before this function completes
-            return;
-          }
-
+        if (typeof ref.options === 'function' && !optionsCache[valueStart]) {
+          const argOptions = await ref.options(search || undefined);
           if (argOptions) {
             optionsCache[valueStart] = argOptions;
           }
-        }
-      }
 
-      if (argOptions) {
-        options.push(
-          ...valueOptions({
-            options: argOptions,
-            search,
-            searchFn,
-            sliceStart: nodeStart,
-            inputValue: value,
-          }),
-        );
-      }
-    } else if (currentNode?.kind === 'ARG_FLAG') {
-      const argsMap = currentNode.parent?.ref.args || {
-        [currentNode.token.value.replace(/^-(-?)/, '')]: currentNode.ref,
-      };
-
-      options.push(
-        ...argsOptions({
-          searchFn,
-          sliceStart: nodeStart,
-          sliceEnd: currentNode.token.end,
-          search: value.slice(nodeStart, index),
-          inputValue: value,
-          args: argsMap,
-        }),
-      );
-    } else if (currentNode?.kind === 'ARG_KEY') {
-      const argsMap = currentNode.parent.parent.parent?.ref.args || {
-        [currentNode.token.value.replace(/^-(-?)/, '')]: currentNode.parent.ref,
-      };
-
-      options.push(
-        ...argsOptions({
-          searchFn,
-          sliceStart: nodeStart,
-          sliceEnd: currentNode.token.end,
-          search: value.slice(nodeStart, index),
-          inputValue: value,
-          args: argsMap,
-        }),
-      );
-    } else if (currentNode?.kind === 'REMAINDER') {
-      if (currentNode.cmdNodeCtx) {
-        const argsMap = currentNode.cmdNodeCtx.ref.args;
-        const search = value.slice(nodeStart, index) || undefined;
-
-        if (argsMap) {
-          options.push(
-            ...argsOptions({
-              args: argsMap,
-              searchFn,
-              sliceStart: nodeStart,
-              sliceEnd: currentNode.token.end,
-              search,
-              inputValue: value,
-            }),
-          );
-        }
-
-        if (currentNode.cmdNodeCtx.ref.commands) {
-          let commands: ICommands | null = null;
-          const { ref } = currentNode.cmdNodeCtx;
-
-          if (typeof ref.commands === 'object') {
-            commands = ref.commands;
-          } else if (typeof ref.commands === 'function') {
-            commands = commandsCache[valueStart];
-          }
-
-          if (commands) {
-            options.push(
-              ...commandOptions({
-                searchFn,
-                sliceStart: nodeStart,
-                search,
-                inputValue: value,
-                commands,
-              }),
-            );
+          if (current !== updatedAt) {
+            return;
           }
         }
       }
+
+      options.push(...getOptions({ currentNode, ...commonParams }));
     } else {
       const previousNode = closestPrevious(ast, index);
 
@@ -278,100 +191,12 @@ export const createInput = (config: IConfig) => {
         ? value.slice(nodeStart, index).trim()
         : undefined;
 
-      if (previousNode?.kind === 'COMMAND') {
-        if (previousNode.ref.args) {
-          options.push(
-            ...argsOptions({
-              searchFn,
-              sliceStart: nodeStart,
-              search,
-              inputValue: value,
-              args: previousNode.ref.args,
-              exclude: parsedArgKeys,
-            }),
-          );
-        }
+      if (previousNode) {
+        if (previousNode.kind === 'ARG_VALUE') {
+          const { ref } = previousNode.parent;
 
-        let commands: ICommands | null = null;
-        const { ref } = previousNode;
-
-        if (typeof ref.commands === 'object') {
-          commands = ref.commands;
-        } else if (typeof ref.commands === 'function') {
-          commands = commandsCache[valueStart];
-        }
-
-        if (commands) {
-          options.push(
-            ...commandOptions({
-              searchFn,
-              sliceStart: nodeStart,
-              search,
-              inputValue: value,
-              commands,
-            }),
-          );
-        }
-      } else if (previousNode?.kind === 'REMAINDER' && !atWhitespace) {
-        const { token } = previousNode;
-        nodeStart = token.start;
-        if (previousNode.cmdNodeCtx?.ref.args) {
-          options.push(
-            ...argsOptions({
-              searchFn,
-              sliceStart: nodeStart,
-              search: token.value.replace(/^-(-?)/, ''),
-              inputValue: value,
-              args: previousNode.cmdNodeCtx.ref.args,
-              exclude: parsedArgKeys,
-            }),
-          );
-        } else {
-          // Handle top-level options when there is no parent command
-          const rootCommands = await getRootCommands(
-            ast,
-            config.command,
-            search,
-          );
-
-          if (rootCommands) {
-            options.push(
-              ...commandOptions({
-                inputValue: value,
-                commands: rootCommands,
-                searchFn,
-                sliceStart: nodeStart,
-                search: token.value,
-              }),
-            );
-          }
-        }
-      } else if (previousNode?.kind === 'ARG_VALUE' && atWhitespace) {
-        const argsMap = previousNode.parent.parent.ref.args;
-
-        if (argsMap) {
-          options.push(
-            ...argsOptions({
-              search,
-              searchFn,
-              sliceStart: nodeStart,
-              inputValue: value,
-              args: argsMap,
-              exclude: parsedArgKeys,
-            }),
-          );
-        }
-      } else if (previousNode?.kind === 'ARG_VALUE') {
-        let argOptions: Array<IArgsOption> | null = null;
-        const { ref } = previousNode.parent;
-
-        if (Array.isArray(ref.options)) {
-          argOptions = ref.options;
-        } else if (typeof ref.options === 'function') {
-          if (optionsCache[valueStart]) {
-            argOptions = optionsCache[valueStart];
-          } else {
-            argOptions = await ref.options(search || undefined);
+          if (typeof ref.options === 'function' && !optionsCache[valueStart]) {
+            const argOptions = await ref.options(search || undefined);
             if (current !== updatedAt) {
               // Bail if an update happened before this function completes
               return;
@@ -383,86 +208,7 @@ export const createInput = (config: IConfig) => {
           }
         }
 
-        if (argOptions) {
-          options.push(
-            ...valueOptions({
-              options: argOptions,
-              search,
-              searchFn,
-              sliceStart: nodeStart,
-              inputValue: value,
-            }),
-          );
-        }
-      } else if (previousNode?.kind === 'ARG_FLAG') {
-        const argsMap = previousNode.parent.ref.args;
-
-        if (argsMap) {
-          options.push(
-            ...argsOptions({
-              search,
-              searchFn,
-              sliceStart: nodeStart,
-              inputValue: value,
-              args: argsMap,
-              exclude: parsedArgKeys,
-            }),
-          );
-        }
-
-        let commands: ICommands | null = null;
-        const { ref } = previousNode.parent;
-
-        if (typeof ref.commands === 'object') {
-          commands = ref.commands;
-        } else if (typeof ref.commands === 'function') {
-          commands = commandsCache[valueStart];
-        }
-
-        if (commands) {
-          options.push(
-            ...commandOptions({
-              searchFn,
-              sliceStart: nodeStart,
-              search,
-              inputValue: value,
-              commands,
-            }),
-          );
-        }
-      } else if (previousNode?.kind === 'ARG_KEY') {
-        let argOptions: Array<IArgsOption> | null = null;
-        const { ref } = previousNode.parent;
-
-        if (Array.isArray(ref.options)) {
-          argOptions = ref.options;
-        } else if (typeof ref.options === 'function') {
-          if (optionsCache[valueStart]) {
-            argOptions = optionsCache[valueStart];
-          } else {
-            argOptions = await ref.options(search || undefined);
-            if (current !== updatedAt) {
-              // Bail if an update happened before this function completes
-              return;
-            }
-
-            if (argOptions) {
-              optionsCache[valueStart] = argOptions;
-            }
-          }
-        }
-
-        if (argOptions) {
-          options.push(
-            ...valueOptions({
-              options: argOptions,
-              search,
-              searchFn,
-              sliceStart: nodeStart,
-              inputValue: value,
-            }),
-          );
-        }
+        options.push(...getOptions({ previousNode, ...commonParams }));
       }
     }
 
@@ -485,6 +231,11 @@ export const createInput = (config: IConfig) => {
           args: commandsList[commandsList.length - 1].args,
           options: opt,
         });
+    }
+
+    if (current !== updatedAt) {
+      // Bail if an update happened before this function completes
+      return;
     }
 
     config.onUpdate({

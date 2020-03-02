@@ -55,14 +55,14 @@ export interface ICmdNode {
   args?: Array<IArgNode | IArgFlagNode>;
 }
 
-interface IRemainder {
+export interface IRemainder {
   kind: 'REMAINDER';
   token: IToken;
   cmdNodeCtx?: ICmdNode;
   argNodeCtx?: IArgNode;
 }
 
-interface IPending {
+export interface IPending {
   kind: 'PENDING';
   key: string;
   token: IToken;
