@@ -1,14 +1,10 @@
 {
   "name": "@replit/clui-gql",
-  "version": "0.0.5",
+  "version": "0.0.6",
+  "private": true,
   "description": "A utility to transform GraphQL introspection type into a CLUI command",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && tsc && node ./scripts/postBuild.js",
     "codegen": "graphql-codegen --config codegen.yml",
     "prepublishOnly": "npm run test && npm run build",
     "typedoc:build": "typedoc src",

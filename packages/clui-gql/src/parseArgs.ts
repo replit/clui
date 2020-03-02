@@ -19,12 +19,9 @@ const parseValue = (options: { value: string; arg: IGQLCommandArg }) => {
   }
 };
 
-// The submitted data from the user is just a map to strings
-// to string | boolean. This takes that map and casts it's values
-// to match the types defined by the graphql field arguments
-// so the query/mutation is called with valid variables
-// Not hanldeing every case (like nested lists) and just
-// uppercasing ENUM stings for now (could get actual ENUM type info later?)
+// Takes a map to strings to string | boolean and casts it's values
+// to match the types defined by the graphql field arguments. Also
+// returns any missing and extra values
 const parseArgs = (options: {
   args: PromptArgs;
   command: IGQLCommand;
