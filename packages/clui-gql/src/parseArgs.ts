@@ -47,9 +47,9 @@ const parseArgs = (options: {
     };
   }
 
-  for (const [key, arg] of Object.entries(options.command.args)) {
-    const value = options.args[key];
-    delete extra[key];
+  for (const arg of Object.values(options.command.args)) {
+    const value = options.args[arg.name];
+    delete extra[arg.name];
 
     if (value === undefined) {
       if (arg.required) {

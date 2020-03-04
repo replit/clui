@@ -13,8 +13,8 @@ test('parseArgs', () => {
         type: 'string',
         graphql: { kind: 'SCALAR', list: false },
       },
-      count: {
-        name: 'count',
+      'unread-count': {
+        name: 'unreadCount',
         type: 'int',
         graphql: { kind: 'SCALAR', list: false },
       },
@@ -55,7 +55,7 @@ test('parseArgs', () => {
   const parsed = parseArgs({
     args: {
       role: 'admin',
-      count: '2',
+      unreadCount: '2',
       amount: 0.2,
       force: true,
       info: 0,
@@ -67,7 +67,7 @@ test('parseArgs', () => {
   expect(parsed).toEqual({
     variables: {
       role: 'admin',
-      count: 2,
+      unreadCount: 2,
       amount: 0.2,
       force: true,
       info: true,
