@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui-input",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A utility library for building CLI style interfaces with autocomplete",
   "main": "dist/index.js",
   "files": [
