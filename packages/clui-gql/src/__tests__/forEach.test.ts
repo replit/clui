@@ -1,7 +1,7 @@
-import visit from '../visit';
+import forEach from '../forEach';
 import { IGQLCommand } from '../types';
 
-it('visits each command', () => {
+it('call function for each command', () => {
   const fn = jest.fn();
 
   const command: IGQLCommand = {
@@ -13,7 +13,7 @@ it('visits each command', () => {
     },
   };
 
-  visit(command, fn);
+  forEach(command, fn);
 
   expect(fn).toHaveBeenCalledTimes(3);
 });

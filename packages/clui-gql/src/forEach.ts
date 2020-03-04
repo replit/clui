@@ -1,11 +1,14 @@
 import { IGQLCommand } from './types';
 
-const visit = (root: IGQLCommand, fn: (c: IGQLCommand) => void) => {
+const forEach = (
+  root: IGQLCommand,
+  fn: (params: { command: IGQLCommand; root: IGQLCommand }) => void,
+) => {
   if (typeof root.commands !== 'object') {
     throw Error('Expected commands object');
   }
 
-  fn(root);
+  fn({ command: root, root });
 
   const queue: Array<IGQLCommand> = [...Object.values(root.commands)];
 
@@ -13,7 +16,7 @@ const visit = (root: IGQLCommand, fn: (c: IGQLCommand) => void) => {
     const command = queue.shift();
 
     if (command) {
-      fn(command);
+      fn({ command, root });
 
       if (command.commands) {
         queue.push(...Object.values(command.commands));
@@ -22,4 +25,4 @@ const visit = (root: IGQLCommand, fn: (c: IGQLCommand) => void) => {
   }
 };
 
-export default visit;
+export default forEach;

@@ -10,10 +10,10 @@ npm install @replit/clui-gql
 
 ## Usage
 
-To create a tree of CLUI commands call `toCommand` and then `visit` eash command to defined a run function.
+To create a tree of CLUI commands call `toCommand` and then call `forEach` to defined a run function for each command.
 
 ```jsx
-import { toCommand, visit } from '@replit/clui-gql';
+import { toCommand, forEach } from '@replit/clui-gql';
 import { introspectionFromSchema } from 'graphql';
 import schema from './your-graphql-schema';
 
@@ -54,7 +54,7 @@ const root = toCommand({
 });
 
 // Define some application specific behavior for when a command is `run`
-visit(root, (command) => {
+forEach(root, ({ command }) => {
   if (command.outputType !== 'YourOutputTypes') {
     // If command does not match an output type you may want do something differeny.
     By omitting the run function the command acts as a namespace for sub-commands.
