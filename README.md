@@ -61,7 +61,7 @@ update({ value: 'o', index: 1 });
 update({ value: 'open s', index: 6 });
 ```
 
-When the input matches a command with a `run` function, the `onUpdate` callback will include a refrence to it.
+When the input matches a command with a `run` function, the `onUpdate` callback will include a reference to it.
 
 ```jsx
 const update = input({
@@ -141,7 +141,7 @@ const root = toCommand({
   // The name of the graphql type that has the fields that act as top level commands
   rootTypeName: 'CluiCommands'
 
-  // the path at wich the above type appears in the graph
+  // the path at which the above type appears in the graph
   mountPath: ['cli', 'admin'],
 
   // GraphQL introspection data
@@ -207,7 +207,7 @@ const OutputView = (props) => {
     graphQLClient.mutate(parse(command.mutation), { variables: parsed.variables })
   }
 
-  // ...some component to comunicate above state
+  // ...some component to communicate above state
 }
 
 ```
