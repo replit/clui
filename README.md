@@ -8,7 +8,7 @@ CLUI is a collection of JavaScript libraries for building command-line interface
 
 ### `@replit/clui-input`
 
-`@replit/clui-input` implementes the logic for mapping text input to suggestions and a potential `run` function.
+`@replit/clui-input` implements the logic for mapping text input to suggestions and a potential `run` function.
 
 ```jsx
 import input from '@replit/clui-input';
@@ -78,7 +78,7 @@ update({ value: 'open sesame', index: 6 });
 
 ### `@replit/clui-session`
 
-`@replit/clui-session` implementes the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
+`@replit/clui-session` implements the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
 
 ```jsx
 import React from 'react'
@@ -109,7 +109,7 @@ render(
 
 ### `@replit/clui-gql`
 
-`@replit/clui-gql` is a utility libray for building [CLUI](https://github.com/replit/clui) commands from [GraphQL introspection](https://graphql.org/learn/introspection) data.
+`@replit/clui-gql` is a utility library for building [CLUI](https://github.com/replit/clui) commands from [GraphQL introspection](https://graphql.org/learn/introspection) data.
 
 ## Install
 
@@ -165,7 +165,7 @@ const root = toCommand({
 // Define some application specific behavior for when a command is `run`
 visit(root, (command) => {
   if (command.outputType !== 'YourOutputTypes') {
-    // If command does not match an output type you may want do something differeny.
+    // If command does not match an output type you may want do something different.
     By omitting the run function the command acts as a namespace for sub-commands.
     return;
   }
