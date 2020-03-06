@@ -8,7 +8,7 @@ CLUI is a collection of JavaScript libraries for building command-line interface
 
 ### `@replit/clui-input`
 
-`@replit/clui-input` implementes the logic for mapping text input to suggestions and a potential `run` function.
+`@replit/clui-input` implements the logic for mapping text input to suggestions and a potential `run` function.
 
 ```jsx
 import input from '@replit/clui-input';
