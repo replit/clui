@@ -61,7 +61,7 @@ update({ value: 'o', index: 1 });
 update({ value: 'open s', index: 6 });
 ```
 
-When the input matches a command with a `run` function, the `onUpdate` callback will include a refrence to it.
+When the input matches a command with a `run` function, the `onUpdate` callback will include a reference to it.
 
 ```jsx
 const update = input({
