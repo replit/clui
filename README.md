@@ -207,7 +207,7 @@ const OutputView = (props) => {
     graphQLClient.mutate(parse(command.mutation), { variables: parsed.variables })
   }
 
-  // ...some component to comunicate above state
+  // ...some component to communicate above state
 }
 
 ```
