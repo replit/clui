@@ -119,7 +119,7 @@ npm install @replit/clui-gql
 
 ## Usage
 
-To create a tree of CLUI commands call `toCommand` and then `visit`each command to define a run function.
+To create a tree of CLUI commands call `toCommand` and then `visit` each command to define a run function.
 
 ```jsx
 import { toCommand, visit } from '@replit/clui-gql';
