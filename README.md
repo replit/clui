@@ -85,7 +85,7 @@ import React from 'react'
 import { render } from 'react-dom'
 import Session, { Do } from '@replit/clui-session';
 
-/* `Do` is helper that exposes the `item` prop
+/* `Do` is a helper that exposes the `item` prop
  * You will most likey render your own component
  * which will get `item` injected as a prop so 
  * that component can call `item.next` based
@@ -119,7 +119,7 @@ npm install @replit/clui-gql
 
 ## Usage
 
-To create a tree of CLUI commands call `toCommand` and then `visit` eash command to defined a run function.
+To create a tree of CLUI commands call `toCommand` and then `visit` each command to define a run function.
 
 ```jsx
 import { toCommand, visit } from '@replit/clui-gql';
