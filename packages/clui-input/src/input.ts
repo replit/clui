@@ -208,6 +208,21 @@ export const createInput = (config: IConfig) => {
           }
         }
 
+        if (previousNode.kind === 'ARG_KEY') {
+          const { ref } = previousNode.parent;
+          if (typeof ref.options === 'function' && !optionsCache[valueStart]) {
+            const argOptions = await ref.options(search || undefined);
+            if (current !== updatedAt) {
+              // Bail if an update happened before this function completes
+              return;
+            }
+
+            if (argOptions) {
+              optionsCache[valueStart] = argOptions;
+            }
+          }
+        }
+
         options.push(...getOptions({ previousNode, ...commonParams }));
       }
     }

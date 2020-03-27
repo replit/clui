@@ -1220,4 +1220,48 @@ describe('options variations', () => {
       }),
     });
   });
+
+  it('suggests default options', (done) => {
+    const cmd: ICommand = {
+      commands: {
+        user: {
+          commands: {
+            add: {
+              args: {
+                user: {
+                  options: async (_?: string) => [
+                    { value: 'a' },
+                    { value: 'b' },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    createInput({
+      command: cmd,
+      value: 'user add --user ',
+      index: 'user add --user '.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'a',
+            data: { value: 'a' },
+            inputValue: 'user add --user a',
+            cursorTarget: 'user add --user a'.length,
+          },
+          {
+            value: 'b',
+            data: { value: 'b' },
+            inputValue: 'user add --user b',
+            cursorTarget: 'user add --user b'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
 });
