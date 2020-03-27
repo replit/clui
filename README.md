@@ -8,7 +8,7 @@ CLUI is a collection of JavaScript libraries for building command-line interface
 
 ### `@replit/clui-input`
 
-`@replit/clui-input` implementes the logic for mapping text input to suggestions and a potential `run` function.
+`@replit/clui-input` implements the logic for mapping text input to suggestions and a potential `run` function.
 
 ```jsx
 import input from '@replit/clui-input';
@@ -61,7 +61,7 @@ update({ value: 'o', index: 1 });
 update({ value: 'open s', index: 6 });
 ```
 
-When the input matches a command with a `run` function, the `onUpdate` callback will include a refrence to it.
+When the input matches a command with a `run` function, the `onUpdate` callback will include a reference to it.
 
 ```jsx
 const update = input({
@@ -78,14 +78,14 @@ update({ value: 'open sesame', index: 6 });
 
 ### `@replit/clui-session`
 
-`@replit/clui-session` implementes the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
+`@replit/clui-session` implements the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
 
 ```jsx
 import React from 'react'
 import { render } from 'react-dom'
 import Session, { Do } from '@replit/clui-session';
 
-/* `Do` is helper that exposes the `item` prop
+/* `Do` is a helper that exposes the `item` prop
  * You will most likey render your own component
  * which will get `item` injected as a prop so 
  * that component can call `item.next` based
@@ -109,7 +109,7 @@ render(
 
 ### `@replit/clui-gql`
 
-`@replit/clui-gql` is a utility libray for building [CLUI](https://github.com/replit/clui) commands from [GraphQL introspection](https://graphql.org/learn/introspection) data.
+`@replit/clui-gql` is a utility library for building [CLUI](https://github.com/replit/clui) commands from [GraphQL introspection](https://graphql.org/learn/introspection) data.
 
 ## Install
 
@@ -119,7 +119,7 @@ npm install @replit/clui-gql
 
 ## Usage
 
-To create a tree of CLUI commands call `toCommand` and then `visit` eash command to defined a run function.
+To create a tree of CLUI commands call `toCommand` and then `visit` each command to define a run function.
 
 ```jsx
 import { toCommand, visit } from '@replit/clui-gql';
@@ -141,7 +141,7 @@ const root = toCommand({
   // The name of the graphql type that has the fields that act as top level commands
   rootTypeName: 'CluiCommands'
 
-  // the path at wich the above type appears in the graph
+  // the path at which the above type appears in the graph
   mountPath: ['cli', 'admin'],
 
   // GraphQL introspection data
@@ -165,7 +165,7 @@ const root = toCommand({
 // Define some application specific behavior for when a command is `run`
 visit(root, (command) => {
   if (command.outputType !== 'YourOutputTypes') {
-    // If command does not match an output type you may want do something differeny.
+    // If command does not match an output type you may want do something different.
     By omitting the run function the command acts as a namespace for sub-commands.
     return;
   }
@@ -207,7 +207,7 @@ const OutputView = (props) => {
     graphQLClient.mutate(parse(command.mutation), { variables: parsed.variables })
   }
 
-  // ...some component to comunicate above state
+  // ...some component to communicate above state
 }
 
 ```

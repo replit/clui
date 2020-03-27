@@ -32,7 +32,7 @@ const root = toCommand({
   // The name of the graphql type that has the fields that act as top level commands
   rootTypeName: 'CluiCommands'
 
-  // the path at wich the above type appears in the graph
+  // the path at which the above type appears in the graph
   mountPath: ['cli', 'admin'],
 
   // GraphQL introspection data
@@ -98,7 +98,7 @@ const OutputView = (props) => {
     graphQLClient.mutate(parse(command.mutation), { variables: parsed.variables })
   }
 
-  // ...render UI to comunicate above state
+  // ...render UI to communicate above state
 }
 
 ```
