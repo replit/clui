@@ -1265,3 +1265,69 @@ describe('options variations', () => {
     });
   });
 });
+
+describe('quoted string', () => {
+  it('allows single quote inside double quotes', (done) => {
+    const root: ICommand = {
+      commands: { user: { args: { reason: { type: 'string' } } } },
+    };
+
+    createInput({
+      command: root,
+      value: 'user --reason "It\'s complicated"',
+      index: 'user --reason "It\'s complicated"'.length,
+      onUpdate: (updates) => {
+        expect(updates.args).toEqual({ reason: "It's complicated" });
+        done();
+      },
+    });
+  });
+
+  it('allows double quotes inside single quotes', (done) => {
+    const root: ICommand = {
+      commands: { user: { args: { reason: { type: 'string' } } } },
+    };
+
+    createInput({
+      command: root,
+      value: "user --reason 'It\"s complicated'",
+      index: "user --reason 'It\"s complicated'".length,
+      onUpdate: (updates) => {
+        expect(updates.args).toEqual({ reason: 'It"s complicated' });
+        done();
+      },
+    });
+  });
+
+  it('allows double quoted string inside single quotes', (done) => {
+    const root: ICommand = {
+      commands: { user: { args: { reason: { type: 'string' } } } },
+    };
+
+    createInput({
+      command: root,
+      value: 'user --reason \'It is "complicated"\'',
+      index: 'user --reason \'It is "complicated"\''.length,
+      onUpdate: (updates) => {
+        expect(updates.args).toEqual({ reason: 'It is "complicated"' });
+        done();
+      },
+    });
+  });
+
+  it('allows single quoted string inside double quotes', (done) => {
+    const root: ICommand = {
+      commands: { user: { args: { reason: { type: 'string' } } } },
+    };
+
+    createInput({
+      command: root,
+      value: 'user --reason "It is \'complicated\'"',
+      index: 'user --reason "It is \'complicated\'"'.length,
+      onUpdate: (updates) => {
+        expect(updates.args).toEqual({ reason: "It is 'complicated'" });
+        done();
+      },
+    });
+  });
+});

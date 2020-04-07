@@ -110,6 +110,28 @@ import { tokenize, Tokens } from '../tokenizer';
     ],
   ],
   [
+    "AB'C DEF",
+    [
+      {
+        kind: 'KEYWORD',
+        value: "AB'C DEF",
+        start: 0,
+        end: "AB'C DEF".length,
+      },
+    ],
+  ],
+  [
+    'AB"CDE F',
+    [
+      {
+        kind: 'KEYWORD',
+        value: 'AB"CDE F',
+        start: 0,
+        end: 'AB"CDE F'.length,
+      },
+    ],
+  ],
+  [
     '"A \'BC\' F"',
     [
       {
