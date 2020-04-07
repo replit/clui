@@ -23,13 +23,13 @@ export const tokenize = (input: string) => {
     const isWhitespace = whitespace.test(char) && !openQuote;
     const ctx = isWhitespace ? 'WHITESPACE' : 'KEYWORD';
 
-    if (char === '"') {
+    if (char === '"' && openQuote !== "'") {
       if (openQuote === '"') {
         openQuote = null;
       } else {
         openQuote = char;
       }
-    } else if (char === "'") {
+    } else if (char === "'" && openQuote !== '"') {
       if (openQuote === "'") {
         openQuote = null;
       } else {
