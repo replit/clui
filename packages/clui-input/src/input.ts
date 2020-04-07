@@ -13,6 +13,7 @@ import { commandOptions } from './optionsList';
 import { optionsProvider } from './options';
 
 export interface IInputUpdates<D = any, R = any> {
+  ast: IAst;
   nodeStart?: number;
   commands: Array<{ name: string; args?: ArgsMap }>;
   args?: Record<string, ArgType>;
@@ -254,6 +255,7 @@ export const createInput = (config: IConfig) => {
     }
 
     config.onUpdate({
+      ast,
       args: args?.parsed,
       nodeStart,
       exhausted: !!args?.exhausted && !last.ref.commands,

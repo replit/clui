@@ -1,5 +1,6 @@
 import { ICommand, ICommands } from '../types';
 import { createInput } from '../input';
+import { parse } from '../parser';
 
 const crud = {
   create: {},
@@ -663,6 +664,7 @@ describe('commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('', root),
                 commands: [],
                 exhausted: false,
                 nodeStart: 0,
@@ -697,6 +699,7 @@ describe('commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('use', root),
                 commands: [],
                 exhausted: false,
                 nodeStart: 0,
@@ -735,6 +738,7 @@ describe('commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('', root),
                 commands: [],
                 exhausted: false,
                 nodeStart: 0,
@@ -780,6 +784,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('user ', root),
                 commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
@@ -826,6 +831,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('user crea', root),
                 commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
@@ -866,6 +872,7 @@ describe('sub-commands', () => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse('user ', { commands }),
                 commands: [{ name: 'user' }],
                 exhausted: false,
                 nodeStart: 'user '.length,
@@ -926,6 +933,7 @@ describe('args', () => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user ', root),
               exhausted: false,
               commands: [{ name: 'user' }],
               nodeStart: 'user '.length,
@@ -960,6 +968,7 @@ describe('args', () => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --em', root),
               exhausted: false,
               commands: [{ name: 'user' }],
               nodeStart: 'user '.length,
@@ -982,17 +991,19 @@ describe('args', () => {
 
   it('returns filtred args at index', (done) => {
     const options = [{ value: 'foo' }];
+    const command = {
+      commands: { user: { args: { email: { options } } } },
+    };
 
     createInput({
       value: 'user --email foo',
       index: 'user --em'.length,
-      command: {
-        commands: { user: { args: { email: { options } } } },
-      },
+      command,
       onUpdate: mockFn(({ mock }) => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --email foo', command),
               exhausted: true,
               commands: [{ name: 'user', args: { email: 'foo' } }],
               args: { email: 'foo' },
@@ -1016,17 +1027,19 @@ describe('args', () => {
 
   it('returns no options when at no previous node matches', (done) => {
     const options = [{ value: 'foo' }];
+    const command = {
+      commands: { user: { args: { email: { options } } } },
+    };
 
     createInput({
       value: 'user --em ',
       index: 'user --em '.length,
-      command: {
-        commands: { user: { args: { email: { options } } } },
-      },
+      command,
       onUpdate: mockFn(({ mock }) => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --em ', command),
               exhausted: false,
               commands: [{ name: 'user' }],
               nodeStart: 'user --em '.length,
@@ -1041,19 +1054,21 @@ describe('args', () => {
 
   it('returns unique args', (done) => {
     const options = [{ value: 'foo' }];
+    const command = {
+      commands: {
+        user: { args: { email: { options }, name: { options } } },
+      },
+    };
 
     createInput({
       value: 'user --name f -',
       index: 'user --name f -'.length,
-      command: {
-        commands: {
-          user: { args: { email: { options }, name: { options } } },
-        },
-      },
+      command,
       onUpdate: mockFn(({ mock }) => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --name f -', command),
               exhausted: false,
               commands: [{ name: 'user', args: { name: 'f' } }],
               args: { name: 'f' },
@@ -1098,6 +1113,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --name bar ', root),
               commands: [{ name: 'user', args: { name: 'bar' } }],
               args: { name: 'bar' },
               exhausted: false,
@@ -1133,6 +1149,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --verbose ', root),
               commands: [{ name: 'user', args: { verbose: true } }],
               args: { verbose: true },
               exhausted: false,
@@ -1163,22 +1180,25 @@ describe('options variations', () => {
     [string, number, {}]
   >).forEach(([value, index, args]) => {
     it('returns no options', (done) => {
-      createInput({
-        value,
-        index,
-        command: {
-          commands: {
-            user: {
-              args: {
-                verbose: { type: 'boolean' },
-              },
+      const command: ICommand = {
+        commands: {
+          user: {
+            args: {
+              verbose: { type: 'boolean' },
             },
           },
         },
+      };
+
+      createInput({
+        value,
+        index,
+        command,
         onUpdate: mockFn(({ mock }) => {
           expect(mock.calls).toEqual([
             [
               {
+                ast: parse(value, command),
                 commands: [{ name: 'user', args: { verbose: true } }],
                 args,
                 exhausted: true,
@@ -1202,6 +1222,7 @@ describe('options variations', () => {
         expect(mock.calls).toEqual([
           [
             {
+              ast: parse('user --name ', root),
               commands: [{ name: 'user' }],
               exhausted: false,
               nodeStart: 'user --name '.length,
