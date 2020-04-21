@@ -174,7 +174,7 @@ const removeQuotes = (str: string) => {
   return str;
 };
 
-const pasrseValue = ({ value, type }: { value: string; type: ArgTypeDef }) => {
+const parseValue = ({ value, type }: { value: string; type: ArgTypeDef }) => {
   switch (type) {
     case 'boolean':
       return !!value;
@@ -205,7 +205,7 @@ export const toArgs = (
 
         if (str) {
           const value: ArgType = arg.ref.type
-            ? pasrseValue({ value: str, type: arg.ref.type })
+            ? parseValue({ value: str, type: arg.ref.type })
             : str;
           parsed[arg.key.name] =
             typeof value === 'string' ? removeQuotes(value) : value;
