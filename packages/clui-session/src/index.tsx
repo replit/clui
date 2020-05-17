@@ -1,5 +1,6 @@
 export {
   default as Session,
+  default,
   ISession,
   ISessionItem,
   ISessionItemProps,
