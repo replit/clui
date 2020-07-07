@@ -24,6 +24,7 @@ export interface IInputUpdates<D = any, R = any> {
 
 export interface IConfig<C extends ICommand = ICommand> {
   searchFn?: SearchFn;
+  includeExactMatch?: boolean;
   onUpdate: (updates: IInputUpdates) => void;
   command: C;
   value?: string;
@@ -130,6 +131,7 @@ export const createInput = (config: IConfig) => {
     };
 
     const getOptions = optionsProvider({
+      includeExactMatch: config.includeExactMatch,
       command: config.command,
       commandsCache,
       optionsCache,

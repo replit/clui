@@ -3,6 +3,7 @@ import { ASTNodeKind, ASTNode } from './ast';
 import { ICommands, ICommand, IArgsOption, SearchFn, IOption } from './types';
 
 interface IConfig {
+  includeExactMatch?: boolean;
   command: ICommand;
   commandsCache: Record<string, ICommands>;
   optionsCache: Record<string, Array<IArgsOption>>;
@@ -412,11 +413,7 @@ const NodeTypes: Record<ASTNodeKind, OptionsFn> = {
     return options;
   },
 
-  PENDING: (params) => {
-    console.log(params);
-
-    return [];
-  },
+  PENDING: (__params) => [],
 };
 
 export const optionsProvider = (config: IConfig) => (
@@ -460,10 +457,43 @@ export const optionsProvider = (config: IConfig) => (
       ? params.value.slice(nodeStart, params.index).trim()
       : undefined;
 
-    return NodeTypes[params.previousNode.kind](
-      { valueStart, nodeStart, search, atWhitespace, ...params },
-      config,
+    const options: Options = [];
+
+    if (
+      config.includeExactMatch &&
+      'token' in params.previousNode &&
+      params.previousNode.token.value === search
+    ) {
+      const { previousNode } = params;
+      const value = `${previousNode.token.value} `;
+      const inputValue = params.value.slice(0, nodeStart) + value;
+
+      let data: any;
+
+      if ('ref' in previousNode) {
+        data = previousNode.ref;
+      } else if ('parent' in previousNode) {
+        data = previousNode.parent.ref;
+      }
+
+      if (data) {
+        options.push({
+          cursorTarget: inputValue.length,
+          value,
+          inputValue,
+          data,
+        });
+      }
+    }
+
+    options.push(
+      ...NodeTypes[params.previousNode.kind](
+        { valueStart, nodeStart, search, atWhitespace, ...params },
+        config,
+      ),
     );
+
+    return options;
   }
 
   return [];

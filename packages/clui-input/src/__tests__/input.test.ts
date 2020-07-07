@@ -38,6 +38,158 @@ describe('no input', () => {
   });
 });
 
+describe('includeExactMatch', () => {
+  it('includes exact command match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          commands: { add: {} },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'user',
+      index: 'user'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user ',
+            data: { commands: { add: {} } },
+            inputValue: 'user ',
+            cursorTarget: 'user '.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('includes exact sub-command match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          commands: { add: {} },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'user add',
+      index: 'user add'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'add ',
+            data: {},
+            inputValue: 'user add ',
+            cursorTarget: 'user add '.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('includes exact arg key match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          args: {
+            id: {},
+          },
+          commands: { add: {} },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'user --id',
+      index: 'user --id'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: '--id ',
+            data: {},
+            inputValue: 'user --id ',
+            cursorTarget: 'user --id '.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('includes exact arg flag match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          args: {
+            id: {
+              type: 'boolean',
+            },
+          },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'user --id',
+      index: 'user --id'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: '--id ',
+            data: { type: 'boolean' },
+            inputValue: 'user --id ',
+            cursorTarget: 'user --id '.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('searches when there is no exact match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          commands: {
+            add: {},
+          },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'use',
+      index: 'use'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user',
+            data: { commands: { add: {} } },
+            inputValue: 'user',
+            searchValue: 'use',
+            cursorTarget: 'user'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+});
+
 describe('previousNode', () => {
   it('suggests commands', (done) => {
     const root: ICommand = { commands: { user: { commands: { add: {} } } } };
