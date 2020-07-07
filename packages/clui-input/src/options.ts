@@ -476,12 +476,14 @@ export const optionsProvider = (config: IConfig) => (
         data = previousNode.parent.ref;
       }
 
-      options.push({
-        cursorTarget: inputValue.length,
-        value,
-        inputValue,
-        data,
-      });
+      if (data) {
+        options.push({
+          cursorTarget: inputValue.length,
+          value,
+          inputValue,
+          data,
+        });
+      }
     }
 
     options.push(

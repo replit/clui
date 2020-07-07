@@ -157,6 +157,37 @@ describe('includeExactMatch', () => {
       },
     });
   });
+
+  it('searches when there is no exact match', (done) => {
+    const root: ICommand = {
+      commands: {
+        user: {
+          commands: {
+            add: {},
+          },
+        },
+      },
+    };
+
+    createInput({
+      includeExactMatch: true,
+      command: root,
+      value: 'use',
+      index: 'use'.length,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'user',
+            data: { commands: { add: {} } },
+            inputValue: 'user',
+            searchValue: 'use',
+            cursorTarget: 'user'.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
 });
 
 describe('previousNode', () => {
