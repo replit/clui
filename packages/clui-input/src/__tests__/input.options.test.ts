@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { ICommand } from '../types';
 import { createInput } from '../input';
 
@@ -7,7 +6,7 @@ const options = [{ value: 'foo bar' }];
 const root: ICommand = {
   commands: {
     search: {
-      options: async (__search?: string) => options,
+      options: async (__search?: string) => Promise.resolve(options),
       commands: {
         foo: {},
       },
