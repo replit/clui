@@ -14,6 +14,34 @@ const root: ICommand = {
   },
 };
 
+it('suggests commands and options without search', (done) => {
+  createInput({
+    command: root,
+    value: 'search ',
+    index: 'search '.length,
+    includeExactMatch: true,
+    onUpdate: (updates) => {
+      expect(updates.options).toEqual([
+        {
+          value: 'foo bar',
+          searchValue: undefined,
+          data: { value: 'foo bar' },
+          inputValue: 'search foo bar',
+          cursorTarget: 'search foo bar'.length,
+        },
+        {
+          value: 'foo',
+          searchValue: undefined,
+          data: {},
+          inputValue: 'search foo',
+          cursorTarget: 'search foo'.length,
+        },
+      ]);
+      done();
+    },
+  });
+});
+
 it('suggests options', (done) => {
   createInput({
     command: root,

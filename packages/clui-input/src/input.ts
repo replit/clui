@@ -196,6 +196,37 @@ export const createInput = (config: IConfig) => {
 
       if (previousNode) {
         if (
+          previousNode.kind === 'COMMAND' &&
+          typeof previousNode?.ref.options === 'function'
+        ) {
+          const optionsFn = previousNode.ref.options;
+          const { token } = previousNode;
+          const prefix = ast.source.slice(0, token.end);
+          const suffix = ast.source.slice(token.end);
+          const searchValue = suffix.trimLeft() || undefined;
+          const results = await optionsFn(searchValue);
+
+          if (current !== updatedAt) {
+            // Bail if an update happened before this function completes
+            return;
+          }
+
+          options.push(
+            ...results.map((result) => {
+              const inputValue = `${prefix} ${result.value}`;
+
+              return {
+                value: result.value,
+                inputValue,
+                cursorTarget: inputValue.length,
+                searchValue,
+                data: result,
+              };
+            }),
+          );
+        }
+
+        if (
           'cmdNodeCtx' in previousNode &&
           typeof previousNode.cmdNodeCtx?.ref.options === 'function'
         ) {
@@ -203,7 +234,7 @@ export const createInput = (config: IConfig) => {
           const { token } = previousNode.cmdNodeCtx;
           const prefix = ast.source.slice(0, token.end);
           const suffix = ast.source.slice(token.end);
-          const searchValue = suffix.trimLeft();
+          const searchValue = suffix.trimLeft() || undefined;
           const results = await optionsFn(searchValue);
 
           if (current !== updatedAt) {
