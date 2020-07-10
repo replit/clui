@@ -53,9 +53,14 @@ type Thunk<V> = V | ThunkFn<V>;
 
 type RunFn<O, R> = (options: IRunOptions<O>) => R;
 
+interface IOptionResult {
+  value: string;
+}
+
 export interface ICommand<O = any, R = any> {
   args?: ICommandArgs;
   commands?: Thunk<ICommands<ICommand>>;
+  options?: <D extends IOptionResult>(search?: string) => Promise<Array<D>>;
   run?: RunFn<O, R>;
 }
 
