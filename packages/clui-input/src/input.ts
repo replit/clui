@@ -195,6 +195,37 @@ export const createInput = (config: IConfig) => {
         : undefined;
 
       if (previousNode) {
+        if (
+          'cmdNodeCtx' in previousNode &&
+          typeof previousNode.cmdNodeCtx?.ref.options === 'function'
+        ) {
+          const optionsFn = previousNode.cmdNodeCtx.ref.options;
+          const { token } = previousNode.cmdNodeCtx;
+          const prefix = ast.source.slice(0, token.end);
+          const suffix = ast.source.slice(token.end);
+          const searchValue = suffix.trimLeft();
+          const results = await optionsFn(searchValue);
+
+          if (current !== updatedAt) {
+            // Bail if an update happened before this function completes
+            return;
+          }
+
+          options.push(
+            ...results.map((result) => {
+              const inputValue = `${prefix} ${result.value}`;
+
+              return {
+                value: result.value,
+                inputValue,
+                cursorTarget: inputValue.length,
+                searchValue,
+                data: result,
+              };
+            }),
+          );
+        }
+
         if (previousNode.kind === 'ARG_VALUE') {
           const { ref } = previousNode.parent;
 
