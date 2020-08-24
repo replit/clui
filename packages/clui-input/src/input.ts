@@ -139,6 +139,29 @@ export const createInput = (config: IConfig) => {
     });
 
     if (!value) {
+      if (typeof config.command.options === 'function') {
+        const optionsFn = config.command.options;
+        const results = await optionsFn();
+
+        if (current !== updatedAt) {
+          // Bail if an update happened before this function completes
+          return;
+        }
+
+        options.push(
+          ...results.map((result) => {
+            const inputValue = result.value;
+
+            return {
+              value: result.value,
+              inputValue,
+              cursorTarget: inputValue.length,
+              data: result,
+            };
+          }),
+        );
+      }
+
       // Handle top-level options when there is no input value
       let rootCommands: ICommands | null = commandsCache[''] || null;
 
@@ -244,7 +267,10 @@ export const createInput = (config: IConfig) => {
 
           options.push(
             ...results.map((result) => {
-              const inputValue = `${prefix} ${result.value}`;
+              const inputValue =
+                previousNode.token.start === 0
+                  ? result.value
+                  : `${prefix} ${result.value}`;
 
               return {
                 value: result.value,
