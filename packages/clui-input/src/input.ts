@@ -366,9 +366,8 @@ export const createInput = (config: IConfig) => {
            * ```
            */
           const optionsFn = previousNode.ref.options;
-          const { token } = previousNode;
-          const prefix = ast.source.slice(0, token.end);
-          const suffix = ast.source.slice(token.end);
+          const prefix = ast.source.slice(0, nodeStart - 1);
+          const suffix = ast.source.slice(nodeStart);
           const searchValue = suffix.trimLeft() || undefined;
           // TODO cache like commands/arg options?
           const results = await optionsFn(searchValue);
@@ -415,9 +414,8 @@ export const createInput = (config: IConfig) => {
            * ```
            */
           const optionsFn = previousNode.cmdNodeCtx.ref.options;
-          const { token } = previousNode.cmdNodeCtx;
-          const prefix = ast.source.slice(0, token.end);
-          const suffix = ast.source.slice(token.end);
+          const prefix = ast.source.slice(0, nodeStart - 1);
+          const suffix = ast.source.slice(nodeStart);
           const searchValue = suffix.trimLeft() || undefined;
           const results = await optionsFn(searchValue);
 

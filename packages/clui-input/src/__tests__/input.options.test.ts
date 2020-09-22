@@ -37,6 +37,7 @@ describe('root command options', () => {
       onUpdate: (updates) => {
         expect(updates.options).toEqual([
           {
+            searchValue: 'a',
             value: 'ab',
             data: {
               value: 'ab',
