@@ -12,8 +12,6 @@ export const resolve = async (options: IOptions) => {
   let tries = 0;
   const cacheGet = (key: string): ICommands | null => {
     if (options.cache) {
-      console.log('cacheGet', key);
-
       return options.cache[key] || null;
     }
 
@@ -32,13 +30,10 @@ export const resolve = async (options: IOptions) => {
     tries++;
     const ast = parse(options.input, options.command, cacheGet);
 
-    console.log('run', ast.pending);
-
     if (ast.pending && options.cache && tries < 50) {
       const { value } = ast.pending.token;
       const result = await ast.pending.resolve(value || undefined);
       if (result) {
-        console.log('cacheSet', ast.pending.key, result);
         cacheSet(ast.pending.key, result);
 
         return run();
