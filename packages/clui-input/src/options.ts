@@ -426,6 +426,11 @@ export const optionsProvider = (config: IConfig) => (
   const valueStart = params.value.slice(0, params.index);
   const atWhitespace = params.value[params.index - 1] === ' ';
 
+  // console.log(config);
+  // console.log(params);
+  // if (params.previousNode?.kind === 'REMAINDER') {
+  // console.log(params.previousNode.cmdNodeCtx?.ref);
+  // }
   if (params.currentNode && NodeTypes[params.currentNode.kind]) {
     let nodeStart = 0;
 
