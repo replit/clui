@@ -59,7 +59,7 @@ export const createInput = (config: IConfig) => {
   const commandsCache: Record<string, ICommands> = {};
 
   /*
-   * This map is used for caching the result of aynsc `options`
+   * This map is used for caching the result of aysnc `options`
    * functions between calls to `update`
    */
   const optionsCache: Record<string, Array<IArgsOption>> = {};
@@ -151,7 +151,7 @@ export const createInput = (config: IConfig) => {
     }
 
     /*
-     * If the cursor is not position at the end of the input we're
+     * If the cursor is not positioned at the end of the input we're
      * positioned on a `currentNode`
      */
     const currentNode = find(ast, index);
@@ -174,7 +174,7 @@ export const createInput = (config: IConfig) => {
     if (currentNode && 'token' in currentNode) {
       /*
        * We're positioned on a `currentNode`, use it's starting location
-       * as point from witch to suggest options from.
+       * as point from which to suggest options from.
        *
        * Example:
        *
@@ -182,7 +182,7 @@ export const createInput = (config: IConfig) => {
        * - "user add"
        * - "user update"
        *
-       * If the input string is "user ad" anf cursor position is "user a|".
+       * If the input string is "user ad" and cursor position is "user a|".
        * We suggest:
        *  - user add
        *  - user update
@@ -312,7 +312,7 @@ export const createInput = (config: IConfig) => {
           const argOptions = await ref.options(search || undefined);
           if (argOptions) {
             /*
-             * Add to cache. `getOptions` below will read form this value from the
+             * Add to cache. `getOptions` below will read this value from the cache
              * cache and add results top `options`
              */
             optionsCache[valueStart] = argOptions;
