@@ -346,6 +346,7 @@ export const createInput = (config: IConfig) => {
         // Cursor is at the end of the input. Get options based on the previous node
         if (
           previousNode.kind === 'COMMAND' &&
+          index > previousNode.token.end &&
           typeof previousNode?.ref.options === 'function'
         ) {
           /*
