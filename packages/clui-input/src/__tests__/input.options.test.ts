@@ -55,14 +55,16 @@ describe('root command options', () => {
 describe('command options', () => {
   const options = [{ value: 'foo bar' }];
 
+  const search = {
+    options: async (__search?: string) => Promise.resolve(options),
+    commands: {
+      foo: {},
+    },
+  };
+
   const root: ICommand = {
     commands: {
-      search: {
-        options: async (__search?: string) => Promise.resolve(options),
-        commands: {
-          foo: {},
-        },
-      },
+      search,
     },
   };
 
@@ -143,7 +145,27 @@ describe('command options', () => {
     });
   });
 
-  it('does not suggest options when a command is matched', (done) => {
+  it('does not suggest options when a command is matched exactly', (done) => {
+    createInput({
+      command: root,
+      value: 'search',
+      index: 'search'.length,
+      includeExactMatch: true,
+      onUpdate: (updates) => {
+        expect(updates.options).toEqual([
+          {
+            value: 'search ',
+            data: search,
+            inputValue: 'search ',
+            cursorTarget: 'search '.length,
+          },
+        ]);
+        done();
+      },
+    });
+  });
+
+  it('does not suggest options after a command is matched', (done) => {
     createInput({
       command: root,
       value: 'search foo b',
