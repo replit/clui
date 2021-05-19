@@ -74,11 +74,11 @@ const update = input({
 update({ value: 'open sesame', index: 6 });
 ```
 
-`@replit/clui-input` a framework agnostic primitive that can be wrapped by more specific framework or application code (like a react hook). If using react you will most likey want to keep the result of `onUpdate` in a state object. For managing dropdown selection UX I highly recommend [downshift](https://github.com/downshift-js/downshift).
+`@replit/clui-input` a framework agnostic primitive that can be wrapped by more specific framework or application code (like a react hook). If using react you will most likely want to keep the result of `onUpdate` in a state object. For managing dropdown selection UX I highly recommend [downshift](https://github.com/downshift-js/downshift).
 
 ### `@replit/clui-session`
 
-`@replit/clui-session` implements the logic for rendering a list of react children. For building a CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
+`@replit/clui-session` implements the logic for rendering a list of react children. For building CLI-style interfaces this can be useful for adding and removing lines when the prompt is submitted.
 
 ```jsx
 import React from 'react'
@@ -86,7 +86,7 @@ import { render } from 'react-dom'
 import Session, { Do } from '@replit/clui-session';
 
 /* `Do` is a helper that exposes the `item` prop
- * You will most likey render your own component
+ * You will most likely render your own component
  * which will get `item` injected as a prop so 
  * that component can call `item.next` based
  * on specific application logic
