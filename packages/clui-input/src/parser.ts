@@ -82,7 +82,6 @@ export const parse = (
       argNodeCtx = null;
     } else if (
       argKey &&
-      cmdNodeCtx &&
       cmdNodeCtx.ref.args &&
       cmdNodeCtx.ref.args[argKey]
     ) {
@@ -121,7 +120,6 @@ export const parse = (
         cmdNodeCtx.args = [argNode];
       }
     } else if (
-      cmdNodeCtx &&
       typeof cmdNodeCtx.ref.commands === 'object' &&
       cmdNodeCtx.ref.commands[token.value]
     ) {
@@ -134,7 +132,7 @@ export const parse = (
         kind: 'COMMAND',
       };
       cmdNodeCtx = cmdNodeCtx.command;
-    } else if (cmdNodeCtx && typeof cmdNodeCtx.ref.commands === 'function') {
+    } else if (typeof cmdNodeCtx.ref.commands === 'function') {
       const key = source.slice(0, token.end);
       const hit: ICommands | null = cacheGet ? cacheGet(key) : null;
 
@@ -162,7 +160,7 @@ export const parse = (
         ast.remainder = {
           kind: 'REMAINDER',
           token,
-          cmdNodeCtx: cmdNodeCtx || undefined,
+          cmdNodeCtx: cmdNodeCtx,
           argNodeCtx: argNodeCtx || undefined,
         };
       }
@@ -172,7 +170,7 @@ export const parse = (
         ast.remainder = {
           kind: 'REMAINDER',
           token,
-          cmdNodeCtx: cmdNodeCtx || undefined,
+          cmdNodeCtx: cmdNodeCtx,
           argNodeCtx: argNodeCtx || undefined,
         };
       }
