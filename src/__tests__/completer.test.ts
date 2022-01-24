@@ -13,7 +13,7 @@ type TestCommand = Command<Data, ScoredMatchResult>;
 
 const root: TestCommand = {
   data: {
-    label: 'Root',
+    label: 'Parent',
   },
   commands: {
     child1: {
