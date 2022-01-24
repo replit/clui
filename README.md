@@ -97,5 +97,5 @@ update({ value: '2' });
 A React hook is also included. See the [demo app](https://github.com/replit/clui/tree/next/src/demo/CommandBar.tsx) for an example of how it's used.
 
 ```js
-import { useCompleter } from '@replit/clui/react';
+import { useCompleter } from '@replit/clui/dist/react';
 ```
