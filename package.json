@@ -1,9 +1,11 @@
 {
   "name": "@replit/clui",
-  "version": "1.0.0-beta1",
+  "version": "1.0.0-beta2",
   "description": "A utility library for building command-based interfaces",
   "main": "dist/index.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.json",
     "demo": "vite",
