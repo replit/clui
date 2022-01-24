@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui",
-  "version": "0.0.0",
+  "version": "1.0.0-beta1",
   "description": "A utility library for building command-based interfaces",
   "main": "dist/index.js",
   "scripts": {
