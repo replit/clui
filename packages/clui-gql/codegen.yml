@@ -1,6 +1,0 @@
-overwrite: true
-generates:
-  src/__tests__/generated/schema.ts:
-    schema: "./src/__tests__/schema.graphql"
-    plugins:
-      - "typescript"
