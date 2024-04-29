@@ -62,7 +62,7 @@ const parseArgs = (options: {
     } else {
       const val = parseValue({ value: value.toString(), arg });
 
-      if (val !== undefined) {
+      if (typeof val !== 'undefined') {
         variables[arg.name] = val;
       }
     }
