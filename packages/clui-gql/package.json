@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui-gql",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "description": "A utility to transform GraphQL introspection type into a CLUI command",
   "scripts": {
