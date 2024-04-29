@@ -1,6 +1,6 @@
 {
   "name": "@replit/clui-gql",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "private": true,
   "description": "A utility to transform GraphQL introspection type into a CLUI command",
   "scripts": {
@@ -46,7 +46,7 @@
     "typescript": "^3.7.5"
   },
   "peerDependencies": {
-    "@replit/clui-input": "^0.0.8",
+    "@replit/clui-input": "^0.0.18",
     "graphql": "^14.5.8"
   },
   "husky": {
